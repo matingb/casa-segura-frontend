@@ -1,0 +1,227 @@
+erDiagram
+  TENANT ||--o{ USUARIO : tiene
+  TENANT ||--o{ SUCURSAL : tiene
+  TENANT ||--o{ PRODUCTO : tiene
+  TENANT ||--o{ CATEGORIA : tiene
+  TENANT ||--o{ CUENTA_FINANCIERA : tiene
+  TENANT ||--o{ ROL : tiene
+  TENANT ||--o{ PROVEEDOR : tiene
+
+  USUARIO ||--o{ USUARIO_SUCURSAL : accede
+  SUCURSAL ||--o{ USUARIO_SUCURSAL : asignada
+  ROL ||--o{ USUARIO_SUCURSAL : define
+  ROL ||--o{ PERMISO_ROL : otorga
+  PERMISO ||--o{ PERMISO_ROL : incluido_en
+
+  TIPO_OPERACION ||--o{ OPERACION : clasifica
+  USUARIO_SUCURSAL ||--o{ OPERACION : origina
+  OPERACION ||--o{ OPERACION_DETALLE : contiene
+  PRODUCTO_SUCURSAL ||--o{ OPERACION_DETALLE : referencia
+
+  OPERACION ||--o| COMPRA : extiende
+  OPERACION ||--o| VENTA : extiende
+  OPERACION ||--o| TRASLADO : extiende
+  OPERACION ||--o| MOVIMIENTO : extiende
+
+  PRODUCTO_SUCURSAL ||--o{ PEDIDO_REPOSICION : genera
+  USUARIO ||--o{ PEDIDO_REPOSICION : crea
+  PROVEEDOR ||--o{ PEDIDO_REPOSICION : abastece
+
+  PROVEEDOR ||--o{ COMPRA : provee
+  SUCURSAL ||--o{ TRASLADO : destino
+
+  OPERACION ||--o{ OPERACION_CUENTA : divide
+  CUENTA_FINANCIERA ||--o{ OPERACION_CUENTA : recibe
+
+  CATEGORIA ||--o{ PRODUCTO : agrupa
+  PRODUCTO ||--o{ PRODUCTO_SUCURSAL : comercializa
+  SUCURSAL ||--o{ PRODUCTO_SUCURSAL : ofrece
+
+
+  TENANT {
+    uuid id PK
+    string nombre_empresa
+    datetime created_at
+    datetime updated_at
+  }
+  USUARIO {
+    uuid id PK
+    uuid tenant_id FK
+    uuid auth_id
+    string email
+    string nombre
+    bool activo
+    datetime created_at
+    datetime updated_at
+  }
+  SUCURSAL {
+    uuid id PK
+    uuid tenant_id FK
+    string nombre
+    bool es_central
+    decimal valor_dolar
+    datetime created_at
+    datetime updated_at
+  }
+  USUARIO_SUCURSAL {
+    uuid id PK
+    uuid usuario_id FK
+    uuid sucursal_id FK
+    uuid id_rol FK
+  }
+  ROL {
+    uuid id PK
+    uuid tenant_id FK
+    string nombre
+    datetime created_at
+    datetime updated_at
+  }
+  PERMISO {
+    uuid id PK
+    string nombre
+  }
+  PERMISO_ROL {
+    uuid id_rol FK
+    uuid id_permiso FK
+  }
+  PROVEEDOR {
+    uuid id PK
+    uuid tenant_id FK
+    string nombre
+    string cuit
+    string email
+    string telefono
+    datetime created_at
+    datetime updated_at
+  }
+  CATEGORIA {
+    uuid id PK
+    uuid tenant_id FK
+    string nombre
+    datetime created_at
+    datetime updated_at
+  }
+  PRODUCTO {
+    uuid id PK
+    uuid tenant_id FK
+    uuid categoria_id FK
+    string codigo
+    string nombre
+    string marca
+    string modelo
+    string color
+    string imagen_url
+    string descripcion
+    bool activo
+    datetime created_at
+    datetime updated_at
+  }
+  PRODUCTO_SUCURSAL {
+    uuid id PK
+    uuid producto_id FK
+    uuid sucursal_id FK
+    bool habilitado
+    decimal costo_reposicion
+    decimal precio_venta_ars
+    decimal precio_venta_usd
+    decimal iva
+    decimal margen_minimo
+    int stock_minimo
+    int cantidad_disponible
+    int cantidad_reservada
+    datetime created_at
+    datetime updated_at
+  }
+  TIPO_OPERACION {
+    uuid id PK
+    string nombre
+  }
+  OPERACION {
+    uuid id PK
+    uuid tenant_id FK
+    uuid usuario_sucursal_id FK
+    uuid tipo_id FK
+    datetime fecha
+    datetime created_at
+    datetime updated_at
+  }
+  OPERACION_DETALLE {
+    uuid id PK
+    uuid operacion_id FK
+    uuid producto_sucursal_id FK
+    int cantidad
+    decimal alicuota_iva
+    decimal iva_ars
+    decimal iva_usd
+    decimal precio_unit_ars
+    decimal precio_unit_usd
+    decimal costo_unit_ars
+    decimal costo_unit_usd
+  }
+  COMPRA {
+    uuid operacion_id PK
+    uuid proveedor_id FK
+    string numero_remito
+    string numero_factura
+    decimal subtotal_ars
+    decimal subtotal_usd
+    decimal otros_impuestos_ars
+    decimal otros_impuestos_usd
+    decimal total_ars
+    decimal total_usd
+  }
+  VENTA {
+    uuid operacion_id PK
+    string numero_comprobante
+    decimal subtotal_ars
+    decimal subtotal_usd
+    decimal descuento_ars
+    decimal descuento_usd
+    decimal total_ars
+    decimal total_usd
+  }
+  TRASLADO {
+    uuid operacion_id PK
+    uuid sucursal_destino_id FK
+    uuid traslado_id
+    decimal costo_flete_ars
+  }
+  OPERACION_CUENTA {
+    uuid id PK
+    uuid operacion_id FK
+    uuid cuenta_financiera_id FK
+    decimal porcentaje_venta
+    decimal porcentaje_extra
+    decimal monto_ars
+    decimal monto_usd
+  }
+  CUENTA_FINANCIERA {
+    uuid id PK
+    uuid tenant_id FK
+    string nombre
+    decimal saldo_inicial
+    decimal saldo_actual
+    decimal porcentaje_extra
+    datetime created_at
+    datetime updated_at
+  }
+  MOVIMIENTO {
+    uuid operacion_id PK
+    string tipo
+    string descripcion
+    decimal monto_ars
+    decimal monto_usd
+  }
+  PEDIDO_REPOSICION {
+    uuid id PK
+    uuid tenant_id FK
+    uuid producto_sucursal_id FK
+    uuid usuario_id FK
+    uuid proveedor_id FK
+    int cantidad
+    string estado
+    string origen
+    datetime fecha
+    datetime created_at
+    datetime updated_at
+  }
