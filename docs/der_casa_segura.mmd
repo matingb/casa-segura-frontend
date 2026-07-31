@@ -2,7 +2,7 @@ erDiagram
   TENANT ||--o{ USUARIO : tiene
   TENANT ||--o{ SUCURSAL : tiene
   TENANT ||--o{ PRODUCTO : tiene
-  TENANT ||--o{ CATEGORIA : tiene
+  TENANT ||--o{ TIPO : tiene
   TENANT ||--o{ CUENTA_FINANCIERA : tiene
   TENANT ||--o{ ROL : tiene
   TENANT ||--o{ PROVEEDOR : tiene
@@ -33,7 +33,8 @@ erDiagram
   OPERACION ||--o{ OPERACION_CUENTA : divide
   CUENTA_FINANCIERA ||--o{ OPERACION_CUENTA : recibe
 
-  CATEGORIA ||--o{ PRODUCTO : agrupa
+  TIPO ||--o{ SUBTIPO : agrupa
+  SUBTIPO ||--o{ PRODUCTO : clasifica
   PRODUCTO ||--o{ PRODUCTO_SUCURSAL : comercializa
   SUCURSAL ||--o{ PRODUCTO_SUCURSAL : ofrece
 
@@ -94,9 +95,16 @@ erDiagram
     datetime created_at
     datetime updated_at
   }
-  CATEGORIA {
+  TIPO {
     uuid id PK
     uuid tenant_id FK
+    string nombre
+    datetime created_at
+    datetime updated_at
+  }
+  SUBTIPO {
+    uuid id PK
+    uuid tipo_id FK
     string nombre
     datetime created_at
     datetime updated_at
@@ -104,12 +112,18 @@ erDiagram
   PRODUCTO {
     uuid id PK
     uuid tenant_id FK
-    uuid categoria_id FK
+    uuid subtipo_id FK
     string codigo
+    string codigo_barra_proveedor
     string nombre
     string marca
     string modelo
     string color
+    string presentacion
+    decimal alto
+    decimal ancho
+    decimal profundidad
+    decimal peso_unitario
     string imagen_url
     string descripcion
     bool activo

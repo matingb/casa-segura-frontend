@@ -1,7 +1,7 @@
 .logoutButton {
   padding: 8px 16px;
-  background-color: #e53e3e;
-  color: white;
+  background-color: var(--color-danger);
+  color: var(--color-primary-contrast);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -11,7 +11,7 @@
 }
 
 .logoutButton:hover {
-  background-color: #c53030;
+  background-color: var(--color-danger-hover);
 }
 
 .logoutButton:active {

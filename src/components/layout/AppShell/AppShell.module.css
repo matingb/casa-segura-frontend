@@ -1,0 +1,78 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.menuToggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-bg-elevated);
+  cursor: pointer;
+}
+
+.menuToggle:hover {
+  background: var(--color-bg);
+}
+
+.menuIconBar {
+  display: block;
+  width: 16px;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--color-text);
+  border-radius: 1px;
+}
+
+.overlay {
+  display: none;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 2rem;
+  }
+}
+
+/* En mobile el sidebar se superpone como drawer; overlay clickeable para cerrarlo. */
+@media (max-width: 767px) {
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    padding: 0;
+    z-index: 20;
+    cursor: default;
+  }
+}

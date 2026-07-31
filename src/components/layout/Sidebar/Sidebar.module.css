@@ -1,0 +1,90 @@
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: var(--color-sidebar-bg);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  flex-shrink: 0;
+}
+
+.brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-inverted);
+  padding: 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.navItem {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  color: var(--color-text-inverted-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.navItem:hover {
+  background: var(--color-sidebar-bg-hover);
+  color: var(--color-text-inverted);
+}
+
+.active {
+  background: var(--color-primary);
+  color: var(--color-text-inverted);
+}
+
+.footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-sidebar-bg-hover);
+}
+
+.footer > * {
+  width: 100%;
+}
+
+/* Mobile: drawer que se superpone al contenido, oculto por defecto */
+@media (max-width: 767px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .open {
+    transform: translateX(0);
+  }
+}
+
+/* Desktop: colapsable en el flujo normal, sin overlay */
+@media (min-width: 768px) {
+  .sidebar {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    overflow: hidden;
+    transition: width 0.2s ease, padding 0.2s ease;
+  }
+
+  .sidebar.open {
+    width: 260px;
+    padding: 1.5rem 1rem;
+  }
+
+  .brand,
+  .navItem,
+  .footer {
+    white-space: nowrap;
+  }
+}
