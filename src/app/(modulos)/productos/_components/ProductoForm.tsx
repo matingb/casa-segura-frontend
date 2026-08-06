@@ -21,11 +21,52 @@ export default function ProductoForm({ title, producto }: ProductoFormProps) {
   const router = useRouter();
   const [tipoId, setTipoId] = useState(producto ? getTipoIdDeSubtipo(producto.subtipoId) ?? '' : '');
   const subtipos = tipoId ? getSubtiposPorTipo(tipoId) : [];
+  const [imagenUrl, setImagenUrl] = useState<string | undefined>(producto?.imagenUrl);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Guardar producto', producto?.id ?? '(nuevo)');
-    router.push('/productos');
+
+    const formData = new FormData(e.currentTarget);
+    const body = {
+      codigo:                formData.get('codigo'),
+      codigo_barra_proveedor: formData.get('codigoBarraProveedor'),
+      nombre:                formData.get('nombre'),
+      marca:                 formData.get('marca'),
+      modelo:                formData.get('modelo'),
+      color:                 formData.get('color'),
+      presentacion:          formData.get('presentacion'),
+      subtipo_id:            formData.get('subtipoId') || null,
+      alto:                  formData.get('alto') ? Number(formData.get('alto')) : null,
+      ancho:                 formData.get('ancho') ? Number(formData.get('ancho')) : null,
+      profundidad:           formData.get('profundidad') ? Number(formData.get('profundidad')) : null,
+      peso_unitario:         formData.get('pesoUnitario') ? Number(formData.get('pesoUnitario')) : null,
+      descripcion:           formData.get('descripcion'),
+      activo:                formData.get('activo') === 'true',
+      imagen_url:            imagenUrl ?? null,
+    };
+
+    try {
+      const isEditing = Boolean(producto?.id);
+      const url = isEditing ? `/api/productos/${producto!.id}` : '/api/productos';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error('Error al guardar producto:', err.message);
+        return;
+      }
+
+      router.push('/productos');
+    } catch (err) {
+      console.error('Error de red al guardar producto:', err);
+    }
   };
 
   return (
@@ -35,7 +76,11 @@ export default function ProductoForm({ title, producto }: ProductoFormProps) {
       <Card>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.topSection}>
-            <ImageUploader initialImageUrl={producto?.imagenUrl} />
+            <ImageUploader
+              initialImageUrl={imagenUrl}
+              productoId={producto?.id}
+              onUpload={(url) => setImagenUrl(url)}
+            />
 
             <div className={styles.topFields}>
               <div className={styles.grid}>
