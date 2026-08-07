@@ -21,7 +21,6 @@ export default function ProductosCatalogo() {
       header: 'Imagen',
       render: (producto) =>
         producto.imagenUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={producto.imagenUrl} alt={producto.nombre} className={styles.thumbnail} />
         ) : (
           <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
