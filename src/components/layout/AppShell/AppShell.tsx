@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { useAuth } from '../../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
 import styles from './AppShell.module.css';
 
@@ -10,9 +11,22 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isLoading, user } = useAuth();
 
   const toggleSidebar = () => setIsSidebarOpen((open) => !open);
   const closeSidebar = () => setIsSidebarOpen(false);
+
+  if (isLoading) {
+    return (
+      <div className={styles.loadingScreen}>
+        <span className={styles.loadingSpinner} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className={styles.shell}>

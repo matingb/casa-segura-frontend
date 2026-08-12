@@ -1,4 +1,5 @@
 import { Producto } from '../types/Producto';
+import { apiFetch } from '../apiFetch';
 
 export function mapApiProductoToProducto(apiProd: any): Producto {
   return {
@@ -23,7 +24,7 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
 
 export const productoClient = {
   obtenerTodos: async (): Promise<Producto[]> => {
-    const res = await fetch('/api/productos', { credentials: 'include' });
+    const res = await apiFetch('/api/productos');
     if (!res.ok) throw new Error('Error al cargar productos');
     
     const json = await res.json();

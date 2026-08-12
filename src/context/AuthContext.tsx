@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { apiUrl } from '../lib/api';
 
 interface User {
@@ -20,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -43,12 +44,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(data.data.user);
           } else {
             setUser(null);
+            router.replace('/login');
           }
         }
       } catch (error: unknown) {
         console.error('Session check failed', error);
         if (isMounted) {
           setUser(null);
+          router.replace('/login');
         }
       } finally {
         if (isMounted) {
