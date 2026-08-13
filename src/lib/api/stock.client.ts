@@ -37,5 +37,16 @@ export const stockClient = {
       return json.data.map(mapApiProductoSucursalToStockItem);
     }
     return [];
-  }
+  },
+
+  obtenerPorId: async (id: string): Promise<StockItem | null> => {
+    const res = await apiFetch(`/api/producto-sucursal/${id}`);
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    if (json.status === 'success' && json.data) {
+      return mapApiProductoSucursalToStockItem(json.data);
+    }
+    return null;
+  },
 };
