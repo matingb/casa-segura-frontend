@@ -1,0 +1,146 @@
+/* ─── Layout principal ─────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.dropdownWrapper {
+  min-width: 220px;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.exportBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ─── Tabla ────────────────────────────────────────────────────── */
+.thumbnail {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.thumbnailPlaceholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: var(--color-surface-alt, #f3f4f6);
+  border: 1px dashed var(--color-border, #d1d5db);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: var(--color-text-muted, #9ca3af);
+  text-align: center;
+}
+
+.priceArs {
+  font-weight: 600;
+  color: var(--color-text, #111827);
+}
+
+.priceUsd {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ivaTag {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--color-surface-alt, #f3f4f6);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.loadingText {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.emptyStateTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.emptyStateHint {
+  font-size: 0.875rem;
+}
+
+/* ─── Print / PDF ──────────────────────────────────────────────── */
+@media print {
+  /* Ocultar todo menos el área imprimible */
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+  }
+
+  .printArea {
+    display: block !important;
+  }
+
+  .noPrint {
+    display: none !important;
+  }
+
+  .printArea table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .printArea th,
+  .printArea td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    text-align: left;
+  }
+
+  .printArea th {
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+
+  .printHeader {
+    margin-bottom: 1rem;
+  }
+
+  .printHeader h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+
+  .printHeader p {
+    font-size: 11px;
+    color: #555;
+    margin: 0;
+  }
+}
+
+/* Ocultar el área de impresión en pantalla */
+.printArea {
+  display: none;
+}
