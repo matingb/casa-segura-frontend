@@ -1,0 +1,104 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Summary cards ──────────────────────────────────────── */
+.summaryRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--color-surface, var(--color-bg-elevated));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  min-width: 180px;
+  flex: 1;
+}
+
+.summaryLabel {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Toolbar ────────────────────────────────────────────── */
+.toolbar {
+  max-width: 420px;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Table cells ────────────────────────────────────────── */
+.nombreCell {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.montoCell {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.montoPositivo {
+  color: var(--color-success);
+}
+
+.montoNegativo {
+  color: var(--color-danger);
+}
+
+.porcentajeCell {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Loading state ──────────────────────────────────────── */
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 0;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}

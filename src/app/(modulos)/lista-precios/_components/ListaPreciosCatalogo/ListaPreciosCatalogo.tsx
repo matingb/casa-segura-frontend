@@ -9,23 +9,9 @@ import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { useListaPrecios } from '../../_hooks/useListaPrecios';
+import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
 import styles from './ListaPreciosCatalogo.module.css';
 
-function formatARS(value: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-  }).format(value);
-}
-
-function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(value);
-}
 
 export default function ListaPreciosCatalogo() {
   const {

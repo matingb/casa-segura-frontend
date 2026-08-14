@@ -7,27 +7,9 @@ import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
 import { Operacion } from '../../../../../lib/types/Operacion';
 import { useOperacionesFiltrado } from '../../_hooks/useOperacionesFiltrado';
+import { formatFecha, formatMonto } from '../../../../../lib/utils/formatters';
 import styles from './OperacionesCatalogo.module.css';
 
-function formatFecha(isoString: string): string {
-  if (!isoString) return '—';
-  const date = new Date(isoString);
-  return new Intl.DateTimeFormat('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
-function formatMonto(monto: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-  }).format(monto);
-}
 
 function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 'neutral' {
   const lower = tipoNombre.toLowerCase();

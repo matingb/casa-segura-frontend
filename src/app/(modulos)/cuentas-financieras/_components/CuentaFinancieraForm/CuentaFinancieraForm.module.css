@@ -1,0 +1,79 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Form layout ─────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+/* ── Saldo actual (read-only info) ───────────────────────── */
+.infoField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.infoValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.infoHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.125rem;
+}
+
+/* ── Error banner ────────────────────────────────────────── */
+.errorBanner {
+  padding: 0.75rem 1rem;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ── Actions ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
