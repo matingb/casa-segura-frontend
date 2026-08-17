@@ -1,6 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Card from '../../../../../components/ui/Card/Card';
+import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
@@ -9,7 +11,6 @@ import { Operacion } from '../../../../../lib/types/Operacion';
 import { useOperacionesFiltrado } from '../../_hooks/useOperacionesFiltrado';
 import { formatFecha, formatMonto } from '../../../../../lib/utils/formatters';
 import styles from './OperacionesCatalogo.module.css';
-
 
 function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 'neutral' {
   const lower = tipoNombre.toLowerCase();
@@ -20,6 +21,7 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
 }
 
 export default function OperacionesCatalogo() {
+  const router = useRouter();
   const {
     operaciones,
     loading,
@@ -76,7 +78,20 @@ export default function OperacionesCatalogo() {
         </span>
       ),
     },
+    {
+      key: 'acciones',
+      header: '',
+      render: (op) => (
+        <Button
+          variant="secondary"
+          onClick={() => router.push(`/operaciones/${op.id}`)}
+        >
+          Ver detalle
+        </Button>
+      ),
+    },
   ];
+
 
   return (
     <div className={styles.wrapper}>
