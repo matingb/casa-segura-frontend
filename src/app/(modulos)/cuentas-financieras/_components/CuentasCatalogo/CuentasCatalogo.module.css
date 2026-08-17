@@ -50,6 +50,24 @@
   color: var(--color-text);
 }
 
+.nombreLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 600;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.nombreLink:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .montoCell {
   font-weight: 700;
   font-size: 0.95rem;
@@ -73,7 +91,9 @@
 .rowActions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
+
 
 /* ── Loading state ──────────────────────────────────────── */
 .loadingWrapper {

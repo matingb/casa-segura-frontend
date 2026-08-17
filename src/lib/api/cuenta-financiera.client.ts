@@ -1,4 +1,5 @@
 import { CuentaFinanciera } from '../types/CuentaFinanciera';
+import { MovimientoCuenta } from '../types/MovimientoCuenta';
 import { apiFetch } from '../apiFetch';
 
 export function mapApiToCuentaFinanciera(raw: any): CuentaFinanciera {
@@ -12,6 +13,25 @@ export function mapApiToCuentaFinanciera(raw: any): CuentaFinanciera {
     updatedAt:       raw.updated_at ?? '',
   };
 }
+
+export function mapApiToMovimientoCuenta(raw: any): MovimientoCuenta {
+  return {
+    id:                 raw.id,
+    operacionId:        raw.operacion_id ?? '',
+    cuentaFinancieraId: raw.cuenta_financiera_id ?? '',
+    fecha:              raw.fecha ?? '',
+    descripcion:        raw.descripcion ?? raw.tipo_nombre ?? raw.tipo ?? '—',
+    monto:              raw.monto_ars !== undefined && raw.monto_ars !== null ? Number(raw.monto_ars) : (raw.monto !== undefined ? Number(raw.monto) : 0),
+    montoUsd:           raw.monto_usd !== undefined && raw.monto_usd !== null ? Number(raw.monto_usd) : undefined,
+    porcentajeVenta:    raw.porcentaje_venta !== undefined && raw.porcentaje_venta !== null ? Number(raw.porcentaje_venta) : undefined,
+    porcentajeExtra:    raw.porcentaje_extra !== undefined && raw.porcentaje_extra !== null ? Number(raw.porcentaje_extra) : undefined,
+    tipo:               raw.tipo_nombre ?? raw.tipo,
+    usuarioNombre:      raw.usuario_nombre ?? '',
+    sucursalNombre:     raw.sucursal_nombre ?? '',
+    comprobante:         raw.comprobante ?? '',
+  };
+}
+
 
 export const cuentaFinancieraClient = {
   obtenerTodas: async (): Promise<CuentaFinanciera[]> => {
@@ -32,6 +52,16 @@ export const cuentaFinancieraClient = {
       return mapApiToCuentaFinanciera(json.data);
     }
     return null;
+  },
+
+  obtenerMovimientos: async (id: string): Promise<MovimientoCuenta[]> => {
+    const res = await apiFetch(`/api/cuentas-financieras/${id}/movimientos`);
+    if (!res.ok) throw new Error('Error al cargar movimientos de la cuenta');
+    const json = await res.json();
+    if (json.status === 'success' && Array.isArray(json.data)) {
+      return json.data.map(mapApiToMovimientoCuenta);
+    }
+    return [];
   },
 
   crear: async (data: {
@@ -73,3 +103,4 @@ export const cuentaFinancieraClient = {
     return mapApiToCuentaFinanciera(json.data);
   },
 };
+

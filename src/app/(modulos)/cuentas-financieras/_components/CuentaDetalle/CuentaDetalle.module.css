@@ -1,0 +1,200 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.backLink:hover {
+  color: var(--color-primary);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* ── Summary cards ──────────────────────────────────────── */
+.summaryRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--color-bg-elevated, #ffffff);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  min-width: 180px;
+  flex: 1;
+  box-shadow: var(--shadow-card);
+}
+
+.summaryLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.montoPositivo {
+  color: var(--color-success);
+}
+
+.montoNegativo {
+  color: var(--color-danger);
+}
+
+/* ── Table Cells ────────────────────────────────────────── */
+.fechaCell {
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.descripcionCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.descripcionText {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.operacionLink {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background-color: var(--color-primary-soft, #dbeafe);
+  transition: all 0.15s ease;
+}
+
+.operacionLink:hover {
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast, #ffffff);
+}
+
+
+.comprobanteTag {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-right: 0.35rem;
+}
+
+.montoCell {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* ── Loading / Error states ─────────────────────────────── */
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+}
+
+.loadingSpinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.errorBanner {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.notFoundWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.notFoundTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}

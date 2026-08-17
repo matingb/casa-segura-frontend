@@ -20,7 +20,15 @@ export default function CuentasCatalogo() {
     {
       key: 'nombre',
       header: 'Nombre',
-      render: (c) => <span className={styles.nombreCell}>{c.nombre}</span>,
+      render: (c) => (
+        <button
+          type="button"
+          className={styles.nombreLink}
+          onClick={() => router.push(`/cuentas-financieras/${c.id}`)}
+        >
+          {c.nombre}
+        </button>
+      ),
     },
     {
       key: 'saldoInicial',
@@ -58,6 +66,12 @@ export default function CuentasCatalogo() {
         <div className={styles.rowActions}>
           <Button
             variant="secondary"
+            onClick={() => router.push(`/cuentas-financieras/${c.id}`)}
+          >
+            Ver detalle
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => router.push(`/cuentas-financieras/${c.id}/editar`)}
           >
             Editar
@@ -66,6 +80,7 @@ export default function CuentasCatalogo() {
       ),
     },
   ];
+
 
   return (
     <div className={styles.wrapper}>
