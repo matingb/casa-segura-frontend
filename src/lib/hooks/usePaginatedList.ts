@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const DEFAULT_LIMIT_STEP = 10;
+const DEFAULT_LIMIT_STEP = 50;
 const DEFAULT_DEBOUNCE_MS = 300;
 
 interface UsePaginatedListConfig<T> {

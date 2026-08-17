@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useStockFiltrado } from './useStockFiltrado';
 import { stockClient } from '../../../../lib/api/stock.client';
-import { sucursalClient } from '../../../../lib/api/sucursal.client';
+import { useSucursales } from '../../../../context/SucursalContext';
 import { StockItem } from '../../../../lib/types/Stock';
 
 vi.mock('../../../../lib/api/stock.client', () => ({
@@ -11,10 +11,8 @@ vi.mock('../../../../lib/api/stock.client', () => ({
   },
 }));
 
-vi.mock('../../../../lib/api/sucursal.client', () => ({
-  sucursalClient: {
-    obtenerTodas: vi.fn(),
-  },
+vi.mock('../../../../context/SucursalContext', () => ({
+  useSucursales: vi.fn(),
 }));
 
 describe('Filtro de Stock (useStockFiltrado)', () => {
@@ -75,7 +73,17 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
       data: mockStock,
       hasMore: false,
     });
-    (sucursalClient.obtenerTodas as any).mockResolvedValue(mockSucursales);
+    vi.mocked(useSucursales).mockReturnValue({
+      sucursales: mockSucursales as any,
+      sucursalOptions: [
+        { value: '', label: 'Todas las sucursales' },
+        { value: 's1', label: 'Sucursal Centro' },
+        { value: 's2', label: 'Sucursal Norte' },
+      ],
+      isLoading: false,
+      error: null,
+      recargarSucursales: vi.fn(),
+    });
   });
 
   afterEach(() => {

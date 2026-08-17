@@ -80,19 +80,6 @@ export default function OperacionesCatalogo() {
 
   return (
     <div className={styles.wrapper}>
-      {/* Tarjeta de resumen */}
-      <div className={styles.summaryRow}>
-        <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Total operaciones</span>
-          <span className={styles.summaryValue}>{operaciones.length}</span>
-        </div>
-        <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Monto total (filtrado)</span>
-          <span className={`${styles.summaryValue} ${totalMonto < 0 ? styles.montoNegativo : styles.montoPositivo}`}>
-            {formatMonto(totalMonto)}
-          </span>
-        </div>
-      </div>
 
       <Card title="Historial de operaciones">
         <div className={styles.toolbar}>

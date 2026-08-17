@@ -5,6 +5,9 @@ export interface Sucursal {
   nombre: string;
   esCentral: boolean;
   valorDolar: number;
+  usuarioSucursalId?: string;
+  rolId?: string;
+  rolNombre?: string;
 }
 
 export const sucursalClient = {
@@ -18,6 +21,9 @@ export const sucursalClient = {
         nombre: s.nombre ?? '',
         esCentral: s.es_central ?? false,
         valorDolar: s.valor_dolar ? Number(s.valor_dolar) : 0,
+        usuarioSucursalId: s.usuario_sucursal_id,
+        rolId: s.id_rol,
+        rolNombre: s.rol_nombre,
       }));
     }
     return [];

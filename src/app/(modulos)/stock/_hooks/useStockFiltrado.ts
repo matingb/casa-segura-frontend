@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StockItem } from '../../../../lib/types/Stock';
 import { stockClient } from '../../../../lib/api/stock.client';
-import { sucursalClient, Sucursal } from '../../../../lib/api/sucursal.client';
+import { useSucursales, SucursalOption } from '../../../../context/SucursalContext';
 import { usePaginatedList } from '../../../../lib/hooks/usePaginatedList';
 
-export interface SucursalOption {
-  value: string; // '' para "Todas"
-  label: string;
-}
+export type { SucursalOption };
 
 interface UseStockFiltradoResult {
   search: string;
@@ -24,21 +21,7 @@ interface UseStockFiltradoResult {
 
 export function useStockFiltrado(): UseStockFiltradoResult {
   const [sucursalId, setSucursalId] = useState('');
-  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
-
-  useEffect(() => {
-    sucursalClient
-      .obtenerTodas()
-      .then(setSucursales)
-      .catch((err) => console.error('[useStockFiltrado] Error al cargar sucursales:', err));
-  }, []);
-
-  const sucursalOptions: SucursalOption[] = useMemo(() => {
-    return [
-      { value: '', label: 'Todas las sucursales' },
-      ...sucursales.map((s) => ({ value: s.id, label: s.nombre })),
-    ];
-  }, [sucursales]);
+  const { sucursalOptions } = useSucursales();
 
   const fetcher = useCallback(
     (params: { limit: number; offset: number; search?: string }) =>
@@ -67,3 +50,4 @@ export function useStockFiltrado(): UseStockFiltradoResult {
     loadMore,
   };
 }
+

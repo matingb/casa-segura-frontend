@@ -7,17 +7,13 @@ import Button from '../../../../components/ui/Button/Button';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
 import { StockItem } from '../../../../lib/types/Stock';
+import { useSucursales } from '../../../../context/SucursalContext';
 import styles from './StockForm.module.css';
 
 interface ProductoOption {
   id: string;
   nombre: string;
   codigo: string;
-}
-
-interface SucursalOption {
-  id: string;
-  nombre: string;
 }
 
 interface StockFormProps {
@@ -29,20 +25,16 @@ export default function StockForm({ title, stockItem }: StockFormProps) {
   const router = useRouter();
   const isEditing = Boolean(stockItem?.id);
 
+  const { sucursales } = useSucursales();
   const [productos, setProductos] = useState<ProductoOption[]>([]);
-  const [sucursales, setSucursales] = useState<SucursalOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(!isEditing);
 
-  // Solo cargamos listas de selects cuando creamos (no editamos)
   useEffect(() => {
     if (isEditing) return;
 
     const fetchOptions = async () => {
       try {
-        const [prodRes, sucRes] = await Promise.all([
-          fetch('/api/productos', { credentials: 'include' }),
-          fetch('/api/sucursal', { credentials: 'include' }),
-        ]);
+        const prodRes = await fetch('/api/productos', { credentials: 'include' });
 
         if (prodRes.ok) {
           const json = await prodRes.json();
@@ -52,18 +44,6 @@ export default function StockForm({ title, stockItem }: StockFormProps) {
                 id: p.id,
                 nombre: p.nombre ?? '',
                 codigo: p.codigo ?? '',
-              }))
-            );
-          }
-        }
-
-        if (sucRes.ok) {
-          const json = await sucRes.json();
-          if (json.status === 'success' && Array.isArray(json.data)) {
-            setSucursales(
-              json.data.map((s: any) => ({
-                id: s.id,
-                nombre: s.nombre ?? '',
               }))
             );
           }
