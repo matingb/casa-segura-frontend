@@ -1,14 +1,10 @@
-'use client';
-
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Operacion } from '../../../../lib/types/Operacion';
 import { operacionesClient } from '../../../../lib/api/operaciones.client';
+import { useSucursales, SucursalOption } from '../../../../context/SucursalContext';
 import { usePaginatedList } from '../../../../lib/hooks/usePaginatedList';
 
-export interface SucursalOption {
-  value: string;
-  label: string;
-}
+export type { SucursalOption };
 
 export interface TipoOption {
   value: string;
@@ -33,22 +29,21 @@ interface UseOperacionesFiltradoResult {
 export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
   const [sucursalId, setSucursalId] = useState('');
   const [tipoId, setTipoId] = useState('');
+  const { sucursalOptions } = useSucursales();
+
+  const fetcher = useCallback(
+    (params: { limit: number; offset: number }) =>
+      operacionesClient.obtenerPaginado({
+        ...params,
+        sucursalId: sucursalId || undefined,
+      }),
+    [sucursalId]
+  );
 
   const { items, loading, loadingMore, hasMore, loadMore } = usePaginatedList<Operacion>({
-    fetcher: operacionesClient.obtenerPaginado,
+    fetcher,
+    extraParams: { sucursalId },
   });
-  const sucursalOptions: SucursalOption[] = useMemo(() => {
-    const unique = new Map<string, string>();
-    items.forEach((op) => {
-      if (op.sucursalNombre && !unique.has(op.sucursalNombre)) {
-        unique.set(op.sucursalNombre, op.sucursalNombre);
-      }
-    });
-    return [
-      { value: '', label: 'Todas las sucursales' },
-      ...Array.from(unique.entries()).map(([value, label]) => ({ value, label })),
-    ];
-  }, [items]);
 
   const tipoOptions: TipoOption[] = useMemo(() => {
     const unique = new Map<string, string>();
@@ -64,12 +59,9 @@ export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
   }, [items]);
 
   const operacionesFiltradas = useMemo(() => {
-    return items.filter((op) => {
-      const pasaSucursal = !sucursalId || op.sucursalNombre === sucursalId;
-      const pasaTipo = !tipoId || op.tipoId === tipoId;
-      return pasaSucursal && pasaTipo;
-    });
-  }, [sucursalId, tipoId, items]);
+    if (!tipoId) return items;
+    return items.filter((op) => op.tipoId === tipoId);
+  }, [tipoId, items]);
 
   const totalMonto = useMemo(
     () => operacionesFiltradas.reduce((acc, op) => acc + op.monto, 0),

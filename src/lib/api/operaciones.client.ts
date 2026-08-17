@@ -4,6 +4,7 @@ import { apiFetch } from '../apiFetch';
 export function mapApiOperacionToOperacion(apiData: any): Operacion {
   return {
     id: apiData.id,
+    sucursalId: apiData.sucursal_id ?? '',
     tipoId: apiData.tipo_id ?? '',
     tipoNombre: apiData.tipo_nombre ?? '',
     usuarioNombre: apiData.usuario_nombre ?? '',
@@ -15,8 +16,16 @@ export function mapApiOperacionToOperacion(apiData: any): Operacion {
 }
 
 export const operacionesClient = {
-  obtenerTodas: async (): Promise<Operacion[]> => {
-    const res = await apiFetch('/api/operaciones');
+  obtenerTodas: async (params?: {
+    sucursalId?: string;
+    tipoId?: string;
+  }): Promise<Operacion[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.sucursalId) searchParams.set('sucursalId', params.sucursalId);
+    if (params?.tipoId) searchParams.set('tipoId', params.tipoId);
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+
+    const res = await apiFetch(`/api/operaciones${queryString}`);
     if (!res.ok) throw new Error('Error al cargar operaciones');
 
     const json = await res.json();
@@ -29,10 +38,14 @@ export const operacionesClient = {
   obtenerPaginado: async (params: {
     limit: number;
     offset: number;
+    sucursalId?: string;
+    tipoId?: string;
   }): Promise<{ data: Operacion[]; hasMore: boolean }> => {
     const searchParams = new URLSearchParams();
     searchParams.set('limit', String(params.limit));
     searchParams.set('offset', String(params.offset));
+    if (params.sucursalId) searchParams.set('sucursalId', params.sucursalId);
+    if (params.tipoId) searchParams.set('tipoId', params.tipoId);
 
     const res = await apiFetch(`/api/operaciones?${searchParams}`);
     if (!res.ok) throw new Error('Error al cargar operaciones');
