@@ -1,12 +1,12 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useProductosFiltrados } from './useProductosFiltrados';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { Producto } from '../../../../lib/types/Producto';
 
 vi.mock('../../../../lib/api/producto.client', () => ({
   productoClient: {
-    obtenerTodos: vi.fn(),
+    obtenerPaginado: vi.fn(),
   },
 }));
 
@@ -47,61 +47,108 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       imagenUrl: '',
       descripcion: '',
       activo: true,
-    }
+    },
   ];
 
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
-    (productoClient.obtenerTodos as any).mockResolvedValue(mockProductos);
-  });
-
-  it('debería mostrar el catálogo completo de productos cuando el usuario no ha ingresado ninguna búsqueda', async () => {
-    const { result } = renderHook(() => useProductosFiltrados());
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(result.current.productos).toHaveLength(2);
-    expect(result.current.productos).toEqual(mockProductos);
-  });
-
-  const busquedas = [
-    { campo: 'código', termino: 'PROD-001', esperado: 'Taladro Percutor' },
-    { campo: 'nombre', termino: 'Taladro', esperado: 'Taladro Percutor' },
-    { campo: 'marca', termino: 'Stanley', esperado: 'Martillo' },
-    { campo: 'modelo', termino: 'FatMax', esperado: 'Martillo' },
-  ];
-
-  busquedas.forEach(({ campo, termino, esperado }) => {
-    it(`debería encontrar productos coincidiendo por ${campo} (buscando: "${termino}")`, async () => {
-      const { result } = renderHook(() => useProductosFiltrados());
-
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      });
-
-      act(() => {
-        result.current.setBusqueda(termino);
-      });
-
-      expect(result.current.productos).toHaveLength(1);
-      expect(result.current.productos[0].nombre).toBe(esperado);
+    (productoClient.obtenerPaginado as any).mockResolvedValue({
+      data: mockProductos,
+      hasMore: false,
     });
   });
 
-  it('debería encontrar los productos independientemente de si el usuario busca usando mayúsculas o minúsculas', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('debería mostrar el catálogo completo de productos en la carga inicial', async () => {
     const { result } = renderHook(() => useProductosFiltrados());
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await Promise.resolve();
+    });
+
+    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items).toEqual(mockProductos);
+  });
+
+  it('debería realizar búsqueda server-side cuando se cambia search con debounce', async () => {
+    const mockFiltrado = [{ ...mockProductos[0] }];
+    (productoClient.obtenerPaginado as any)
+      .mockResolvedValueOnce({ data: mockProductos, hasMore: false })
+      .mockResolvedValueOnce({ data: mockFiltrado, hasMore: false });
+
+    const { result } = renderHook(() => useProductosFiltrados());
+
+    await act(async () => {
+      await Promise.resolve();
     });
 
     act(() => {
-      result.current.setBusqueda('   DeWALT   ');
+      result.current.setSearch('Taladro');
     });
 
-    expect(result.current.productos).toHaveLength(1);
-    expect(result.current.productos[0].marca).toBe('DeWalt');
+    // Antes de vencer el debounce
+    expect(productoClient.obtenerPaginado).toHaveBeenCalledTimes(1);
+
+    // Avanzar temporizador del debounce (300ms)
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await Promise.resolve();
+    });
+
+    expect(productoClient.obtenerPaginado).toHaveBeenCalledTimes(2);
+    expect(productoClient.obtenerPaginado).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'Taladro' })
+    );
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].nombre).toBe('Taladro Percutor');
+  });
+
+  it('debería permitir cargar más elementos con loadMore', async () => {
+    const masProductos: Producto[] = [
+      ...mockProductos,
+      {
+        id: '3',
+        codigo: 'PROD-003',
+        nombre: 'Sierra Circular',
+        marca: 'Bosch',
+        modelo: 'GKS 150',
+        subtipoId: 'herr',
+        codigoBarraProveedor: '',
+        color: '',
+        presentacion: '',
+        alto: 0,
+        ancho: 0,
+        profundidad: 0,
+        pesoUnitario: 0,
+        imagenUrl: '',
+        descripcion: '',
+        activo: true,
+      },
+    ];
+
+    (productoClient.obtenerPaginado as any)
+      .mockResolvedValueOnce({ data: mockProductos, hasMore: true })
+      .mockResolvedValueOnce({ data: masProductos, hasMore: false });
+
+    const { result } = renderHook(() => useProductosFiltrados());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.items).toHaveLength(2);
+    expect(result.current.hasMore).toBe(true);
+
+    await act(async () => {
+      result.current.loadMore();
+      await Promise.resolve();
+    });
+
+    expect(result.current.items).toHaveLength(3);
+    expect(result.current.hasMore).toBe(false);
   });
 });

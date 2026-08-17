@@ -2,9 +2,9 @@
 
 import Card from '../../../../../components/ui/Card/Card';
 import Badge from '../../../../../components/ui/Badge/Badge';
-import Input from '../../../../../components/ui/Input/Input';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
+import ScrollPage from '../../../../../components/ui/ScrollPage/ScrollPage';
 import { Operacion } from '../../../../../lib/types/Operacion';
 import { useOperacionesFiltrado } from '../../_hooks/useOperacionesFiltrado';
 import { formatFecha, formatMonto } from '../../../../../lib/utils/formatters';
@@ -22,9 +22,10 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
 export default function OperacionesCatalogo() {
   const {
     operaciones,
-    isLoading,
-    busqueda,
-    setBusqueda,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     sucursalId,
     setSucursalId,
     tipoId,
@@ -95,13 +96,6 @@ export default function OperacionesCatalogo() {
 
       <Card title="Historial de operaciones">
         <div className={styles.toolbar}>
-          <div className={styles.searchBar}>
-            <Input
-              placeholder="Buscar por tipo, usuario, sucursal, descripción..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-          </div>
           <div className={styles.filters}>
             <Dropdown
               id="filtro-sucursal"
@@ -120,19 +114,20 @@ export default function OperacionesCatalogo() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className={styles.loadingWrapper}>
-            <span className={styles.loadingSpinner} />
-            <p className={styles.loadingText}>Cargando operaciones...</p>
-          </div>
-        ) : (
+        <ScrollPage
+          hasMore={hasMore}
+          loading={loading}
+          loadingMore={loadingMore}
+          onLoadMore={loadMore}
+          loadingMoreLabel="Cargando más operaciones..."
+        >
           <Table
             columns={columns}
             data={operaciones}
             getRowKey={(op) => op.id}
-            emptyMessage="No se encontraron operaciones con los filtros aplicados."
+            emptyMessage={loading ? 'Cargando operaciones...' : 'No se encontraron operaciones con los filtros aplicados.'}
           />
-        )}
+        </ScrollPage>
       </Card>
     </div>
   );

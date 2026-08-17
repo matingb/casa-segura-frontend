@@ -25,4 +25,22 @@ export const operacionesClient = {
     }
     return [];
   },
+
+  obtenerPaginado: async (params: {
+    limit: number;
+    offset: number;
+  }): Promise<{ data: Operacion[]; hasMore: boolean }> => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', String(params.limit));
+    searchParams.set('offset', String(params.offset));
+
+    const res = await apiFetch(`/api/operaciones?${searchParams}`);
+    if (!res.ok) throw new Error('Error al cargar operaciones');
+
+    const json = await res.json();
+    return {
+      data: Array.isArray(json.data) ? json.data.map(mapApiOperacionToOperacion) : [],
+      hasMore: json.page?.hasMore ?? false,
+    };
+  },
 };

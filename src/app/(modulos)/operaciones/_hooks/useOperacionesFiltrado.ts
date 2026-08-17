@@ -1,14 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Operacion } from '../../../../lib/types/Operacion';
 import { operacionesClient } from '../../../../lib/api/operaciones.client';
-
-export interface FiltrosOperacion {
-  busqueda: string;
-  sucursalId: string;
-  tipoId: string;
-}
+import { usePaginatedList } from '../../../../lib/hooks/usePaginatedList';
 
 export interface SucursalOption {
   value: string;
@@ -22,9 +17,10 @@ export interface TipoOption {
 
 interface UseOperacionesFiltradoResult {
   operaciones: Operacion[];
-  isLoading: boolean;
-  busqueda: string;
-  setBusqueda: (v: string) => void;
+  loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+  loadMore: () => void;
   sucursalId: string;
   setSucursalId: (v: string) => void;
   tipoId: string;
@@ -34,34 +30,16 @@ interface UseOperacionesFiltradoResult {
   totalMonto: number;
 }
 
-function coincideConBusqueda(op: Operacion, q: string): boolean {
-  return [op.tipoNombre, op.usuarioNombre, op.sucursalNombre, op.descripcion]
-    .join(' ')
-    .toLowerCase()
-    .includes(q);
-}
-
 export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
-  const [busqueda, setBusqueda] = useState('');
   const [sucursalId, setSucursalId] = useState('');
   const [tipoId, setTipoId] = useState('');
-  const [operacionesTotal, setOperacionesTotal] = useState<Operacion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsLoading(true);
-    operacionesClient
-      .obtenerTodas()
-      .then(setOperacionesTotal)
-      .catch((err) => {
-        console.error('[useOperacionesFiltrado] Error loading operaciones:', err);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
-
+  const { items, loading, loadingMore, hasMore, loadMore } = usePaginatedList<Operacion>({
+    fetcher: operacionesClient.obtenerPaginado,
+  });
   const sucursalOptions: SucursalOption[] = useMemo(() => {
     const unique = new Map<string, string>();
-    operacionesTotal.forEach((op) => {
+    items.forEach((op) => {
       if (op.sucursalNombre && !unique.has(op.sucursalNombre)) {
         unique.set(op.sucursalNombre, op.sucursalNombre);
       }
@@ -70,11 +48,11 @@ export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
       { value: '', label: 'Todas las sucursales' },
       ...Array.from(unique.entries()).map(([value, label]) => ({ value, label })),
     ];
-  }, [operacionesTotal]);
+  }, [items]);
 
   const tipoOptions: TipoOption[] = useMemo(() => {
     const unique = new Map<string, string>();
-    operacionesTotal.forEach((op) => {
+    items.forEach((op) => {
       if (op.tipoId && !unique.has(op.tipoId)) {
         unique.set(op.tipoId, op.tipoNombre || op.tipoId);
       }
@@ -83,17 +61,15 @@ export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
       { value: '', label: 'Todos los tipos' },
       ...Array.from(unique.entries()).map(([value, label]) => ({ value, label })),
     ];
-  }, [operacionesTotal]);
+  }, [items]);
 
   const operacionesFiltradas = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    return operacionesTotal.filter((op) => {
-      const pasaBusqueda = !q || coincideConBusqueda(op, q);
+    return items.filter((op) => {
       const pasaSucursal = !sucursalId || op.sucursalNombre === sucursalId;
       const pasaTipo = !tipoId || op.tipoId === tipoId;
-      return pasaBusqueda && pasaSucursal && pasaTipo;
+      return pasaSucursal && pasaTipo;
     });
-  }, [busqueda, sucursalId, tipoId, operacionesTotal]);
+  }, [sucursalId, tipoId, items]);
 
   const totalMonto = useMemo(
     () => operacionesFiltradas.reduce((acc, op) => acc + op.monto, 0),
@@ -102,9 +78,10 @@ export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
 
   return {
     operaciones: operacionesFiltradas,
-    isLoading,
-    busqueda,
-    setBusqueda,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     sucursalId,
     setSucursalId,
     tipoId,

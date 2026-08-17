@@ -49,4 +49,26 @@ export const stockClient = {
     }
     return null;
   },
+
+  obtenerPaginado: async (params: {
+    limit: number;
+    offset: number;
+    search?: string;
+    sucursalId?: string;
+  }): Promise<{ data: StockItem[]; hasMore: boolean }> => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', String(params.limit));
+    searchParams.set('offset', String(params.offset));
+    if (params.search) searchParams.set('search', params.search);
+    if (params.sucursalId) searchParams.set('sucursalId', params.sucursalId);
+
+    const res = await apiFetch(`/api/producto-sucursal?${searchParams}`);
+    if (!res.ok) throw new Error('Error al cargar stock');
+
+    const json = await res.json();
+    return {
+      data: Array.isArray(json.data) ? json.data.map(mapApiProductoSucursalToStockItem) : [],
+      hasMore: json.page?.hasMore ?? false,
+    };
+  },
 };

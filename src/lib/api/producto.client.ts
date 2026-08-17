@@ -32,5 +32,25 @@ export const productoClient = {
       return json.data.map(mapApiProductoToProducto);
     }
     return [];
-  }
+  },
+
+  obtenerPaginado: async (params: {
+    limit: number;
+    offset: number;
+    search?: string;
+  }): Promise<{ data: Producto[]; hasMore: boolean }> => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', String(params.limit));
+    searchParams.set('offset', String(params.offset));
+    if (params.search) searchParams.set('search', params.search);
+
+    const res = await apiFetch(`/api/productos?${searchParams}`);
+    if (!res.ok) throw new Error('Error al cargar productos');
+
+    const json = await res.json();
+    return {
+      data: Array.isArray(json.data) ? json.data.map(mapApiProductoToProducto) : [],
+      hasMore: json.page?.hasMore ?? false,
+    };
+  },
 };

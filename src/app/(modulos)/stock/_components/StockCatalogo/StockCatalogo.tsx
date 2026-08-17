@@ -7,6 +7,7 @@ import Badge from '../../../../../components/ui/Badge/Badge';
 import Input from '../../../../../components/ui/Input/Input';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
+import ScrollPage from '../../../../../components/ui/ScrollPage/ScrollPage';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { getSubtipoNombre } from '../../../../../lib/mocks/clasificacionProducto';
 import { useStockFiltrado } from '../../_hooks/useStockFiltrado';
@@ -15,13 +16,16 @@ import styles from './StockCatalogo.module.css';
 export default function StockCatalogo() {
   const router = useRouter();
   const {
-    busqueda,
-    setBusqueda,
+    search,
+    setSearch,
     sucursalId,
     setSucursalId,
     sucursalOptions,
     stock,
-    isLoading,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
   } = useStockFiltrado();
 
   const columns: TableColumn<StockItem>[] = [
@@ -99,8 +103,8 @@ export default function StockCatalogo() {
         <div className={styles.searchBar}>
           <Input
             placeholder="Buscar por código, nombre, marca, modelo..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className={styles.dropdownWrapper}>
@@ -114,16 +118,20 @@ export default function StockCatalogo() {
         </div>
       </div>
 
-      {isLoading ? (
-        <p className={styles.loadingText}>Cargando stock...</p>
-      ) : (
+      <ScrollPage
+        hasMore={hasMore}
+        loading={loading}
+        loadingMore={loadingMore}
+        onLoadMore={loadMore}
+        loadingMoreLabel="Cargando más stock..."
+      >
         <Table
           columns={columns}
           data={stock}
           getRowKey={(item) => item.id}
-          emptyMessage="No se encontraron items de stock."
+          emptyMessage={loading ? 'Cargando stock...' : 'No se encontraron items de stock.'}
         />
-      )}
+      </ScrollPage>
     </Card>
   );
 }
