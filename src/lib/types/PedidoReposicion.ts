@@ -14,3 +14,9 @@ export interface PedidoReposicion {
   usuarioNombre: string;
   proveedorNombre: string;
 }
+
+export interface PedidoReposicionCrearInput {
+  productoSucursalId: string;
+  proveedorId: string;
+  cantidad: number;
+}

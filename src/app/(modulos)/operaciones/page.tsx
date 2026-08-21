@@ -9,7 +9,6 @@ export const metadata = {
 export default function OperacionesPage() {
   return (
     <div className={styles.page}>
-      <h1 className={styles.pageTitle}>Operaciones</h1>
       <OperacionesCatalogo />
     </div>
   );

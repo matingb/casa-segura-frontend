@@ -1,0 +1,133 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Toggle % / Monto ─────────────────────────────────────── */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.toggleLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.toggleOption,
+.toggleOptionActive {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-input-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.toggleOption:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+.toggleOptionActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* ── Filas ────────────────────────────────────────────────── */
+.row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.calculado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: 0.5rem;
+}
+
+.calculadoValor {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.calculadoHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Resumen ──────────────────────────────────────────────── */
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.resumenLinea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.resumenTotal {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--color-border);
+}
+
+.error {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

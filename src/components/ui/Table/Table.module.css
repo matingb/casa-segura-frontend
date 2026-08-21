@@ -1,7 +1,3 @@
-.tableWrapper {
-  overflow-x: auto;
-}
-
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -14,24 +10,99 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
 
+.stickyHead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg-elevated);
+}
+
+/*
+ * Necesitan la misma especificidad que `.table thead th` (que fija
+ * text-align: left), si no el header queda alineado a la izquierda mientras
+ * los valores de la celda sí se alinean a la derecha.
+ */
+.table thead th.alignRight,
+.table tbody td.alignRight,
+.alignRight {
+  text-align: right;
+}
+
+.table thead th.alignCenter,
+.table tbody td.alignCenter,
+.alignCenter {
+  text-align: center;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.alignCenter .sortButton {
+  justify-content: center;
+}
+
+.sortButton:hover {
+  color: var(--color-primary);
+}
+
+.sortButtonActive {
+  color: var(--color-primary);
+}
+
+.sortPriority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-bg-elevated, #fff);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .table tbody td {
-  padding: 0.9rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
 }
 
-.table tbody tr:hover {
+.table tbody tr:nth-child(even) {
   background: var(--color-bg);
+}
+
+.table tbody tr:hover {
+  background: var(--color-primary-soft, var(--color-bg));
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.clickableRow {
+  cursor: pointer;
 }
 
 .emptyText {

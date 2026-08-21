@@ -1,48 +1,79 @@
-import { useEffect, useMemo, useState } from 'react';
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CuentaFinanciera } from '../../../../lib/types/CuentaFinanciera';
 import { cuentaFinancieraClient } from '../../../../lib/api/cuenta-financiera.client';
+import type { SortCriterion } from '../../../../components/ui/Table/Table';
 
 interface UseCuentasFinancierasResult {
   cuentas: CuentaFinanciera[];
   isLoading: boolean;
-  busqueda: string;
-  setBusqueda: (valor: string) => void;
   totalSaldoActual: number;
+  sort: SortCriterion[];
+  onSortChange: (columnKey: string) => void;
+  filters: Record<string, string>;
+  onFilterChange: (columnKey: string, value: string) => void;
 }
 
 export function useCuentasFinancieras(): UseCuentasFinancierasResult {
-  const [busqueda, setBusqueda] = useState('');
-  const [todasLasCuentas, setTodasLasCuentas] = useState<CuentaFinanciera[]>([]);
+  const [cuentas, setCuentas] = useState<CuentaFinanciera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    cuentaFinancieraClient
-      .obtenerTodas()
-      .then(setTodasLasCuentas)
-      .catch((err) => {
+  const [sort, setSort] = useState<SortCriterion[]>([]);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+
+  const fetchCuentas = useCallback(
+    async (currentSort: SortCriterion[], currentFilters: Record<string, string>) => {
+      setIsLoading(true);
+      try {
+        const result = await cuentaFinancieraClient.obtenerTodasFiltradas({
+          sort: currentSort,
+          filtros: currentFilters,
+        });
+        setCuentas(result);
+      } catch (err) {
         console.error('[useCuentasFinancieras] Error cargando cuentas:', err);
-      })
-      .finally(() => setIsLoading(false));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    void fetchCuentas(sort, filters);
+  }, [sort, filters, fetchCuentas]);
+
+  const handleSortChange = useCallback((columnKey: string) => {
+    setSort((prev) => {
+      const idx = prev.findIndex((c) => c.sortBy === columnKey);
+
+      if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
+      if (prev[idx].sortDir === 'asc') {
+        const next = [...prev];
+        next[idx] = { sortBy: columnKey, sortDir: 'desc' };
+        return next;
+      }
+      return prev.filter((c) => c.sortBy !== columnKey);
+    });
   }, []);
 
-  const cuentasFiltradas = useMemo(() => {
-    const term = busqueda.trim().toLowerCase();
-    if (!term) return todasLasCuentas;
-    return todasLasCuentas.filter((c) =>
-      c.nombre.toLowerCase().includes(term)
-    );
-  }, [busqueda, todasLasCuentas]);
+  const handleFilterChange = useCallback((columnKey: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [columnKey]: value }));
+  }, []);
 
   const totalSaldoActual = useMemo(
-    () => cuentasFiltradas.reduce((sum, c) => sum + c.saldoActual, 0),
-    [cuentasFiltradas]
+    () => cuentas.reduce((sum, c) => sum + c.saldoActual, 0),
+    [cuentas]
   );
 
   return {
-    cuentas: cuentasFiltradas,
+    cuentas,
     isLoading,
-    busqueda,
-    setBusqueda,
     totalSaldoActual,
+    sort,
+    onSortChange: handleSortChange,
+    filters,
+    onFilterChange: handleFilterChange,
   };
 }

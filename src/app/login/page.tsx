@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '../../lib/api';
@@ -43,8 +43,13 @@ export default function LoginPage() {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   if (user) {
-    router.push('/');
     return null;
   }
 

@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
 }
 
 .label {
@@ -12,17 +13,59 @@
   color: var(--color-text-muted);
 }
 
-.preview {
+.dropzone {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  border: 2px dashed var(--color-border-strong);
   background: var(--color-bg);
   overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  outline: none;
+}
+
+.dropzone.dragOver {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.dropzone.hasImage {
+  border-style: solid;
+  border-color: var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--color-text-muted);
+}
+
+.emptyText {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.4;
 }
 
 .previewImage {
@@ -37,8 +80,23 @@
   opacity: 0.4;
 }
 
-.emptyIcon {
-  color: var(--color-text-muted);
+.hoverOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.55);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.dropzone:hover .hoverOverlay,
+.dropzone:focus-visible .hoverOverlay {
+  opacity: 1;
 }
 
 .hiddenInput {

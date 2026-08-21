@@ -145,6 +145,11 @@
   color: var(--color-text);
 }
 
+.cuentaRecargo {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 /* ── Product Table Cells ────────────────────────────────── */
 .productoCell {
   display: flex;

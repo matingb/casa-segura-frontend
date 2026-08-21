@@ -2,17 +2,13 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useStockFiltrado } from './useStockFiltrado';
 import { stockClient } from '../../../../lib/api/stock.client';
-import { useSucursales } from '../../../../context/SucursalContext';
 import { StockItem } from '../../../../lib/types/Stock';
 
 vi.mock('../../../../lib/api/stock.client', () => ({
   stockClient: {
-    obtenerPaginado: vi.fn(),
+    obtenerPaginadoConTotal: vi.fn(),
+    obtenerValoresUnicos: vi.fn(),
   },
-}));
-
-vi.mock('../../../../context/SucursalContext', () => ({
-  useSucursales: vi.fn(),
 }));
 
 describe('Filtro de Stock (useStockFiltrado)', () => {
@@ -28,6 +24,7 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
       modelo: 'DWD520',
       imagenUrl: '',
       subtipoId: 'herr',
+      precioBase: 0,
       activo: true,
       costoReposicion: 1000,
       precioVentaArs: 1500,
@@ -49,6 +46,7 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
       modelo: 'FatMax',
       imagenUrl: '',
       subtipoId: 'herr',
+      precioBase: 0,
       activo: true,
       costoReposicion: 500,
       precioVentaArs: 800,
@@ -61,33 +59,19 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
     },
   ];
 
-  const mockSucursales = [
-    { id: 's1', nombre: 'Sucursal Centro', esCentral: true, valorDolar: 1200 },
-    { id: 's2', nombre: 'Sucursal Norte', esCentral: false, valorDolar: 1200 },
-  ];
-
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.clearAllMocks();
-    (stockClient.obtenerPaginado as any).mockResolvedValue({
+    (stockClient.obtenerPaginadoConTotal as any).mockResolvedValue({
       data: mockStock,
-      hasMore: false,
+      page: 1,
+      totalPages: 1,
+      total: 2,
     });
-    vi.mocked(useSucursales).mockReturnValue({
-      sucursales: mockSucursales as any,
-      sucursalOptions: [
-        { value: '', label: 'Todas las sucursales' },
-        { value: 's1', label: 'Sucursal Centro' },
-        { value: 's2', label: 'Sucursal Norte' },
-      ],
-      isLoading: false,
-      error: null,
-      recargarSucursales: vi.fn(),
-    });
+    (stockClient.obtenerValoresUnicos as any).mockResolvedValue([]);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('debería mostrar el stock completo en la carga inicial', async () => {
@@ -101,71 +85,149 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
     expect(result.current.stock).toEqual(mockStock);
   });
 
-  it('setSearch dispara obtenerPaginado con el parámetro de búsqueda después del debounce', async () => {
-    const mockFiltrado = { data: [mockStock[0]], hasMore: false };
-    (stockClient.obtenerPaginado as any)
-      .mockResolvedValueOnce({ data: mockStock, hasMore: false })
-      .mockResolvedValueOnce(mockFiltrado);
+  it('debería cambiar de página con setPage', async () => {
+    const mockPagina2 = { data: [mockStock[1]], page: 2, totalPages: 2, total: 3 };
+    (stockClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockStock, page: 1, totalPages: 2, total: 3 })
+      .mockResolvedValueOnce(mockPagina2);
 
     const { result } = renderHook(() => useStockFiltrado());
     await act(async () => {
       await Promise.resolve();
     });
 
-    act(() => {
-      result.current.setSearch('PROD-001');
-    });
-
-    expect(stockClient.obtenerPaginado).toHaveBeenCalledTimes(1);
+    expect(result.current.totalPages).toBe(2);
 
     await act(async () => {
-      vi.advanceTimersByTime(300);
+      result.current.setPage(2);
       await Promise.resolve();
     });
 
-    expect(stockClient.obtenerPaginado).toHaveBeenCalledTimes(2);
-    expect(stockClient.obtenerPaginado).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'PROD-001' })
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2 })
+    );
+    expect(result.current.stock).toHaveLength(1);
+  });
+
+  it('debería ordenar por columna: click asc, click desc, click sin orden (ciclo de 3 estados)', async () => {
+    const { result } = renderHook(() => useStockFiltrado());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([{ sortBy: 'nombre', sortDir: 'asc' }]);
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: [{ sortBy: 'nombre', sortDir: 'asc' }], page: 1 })
+    );
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([{ sortBy: 'nombre', sortDir: 'desc' }]);
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: [{ sortBy: 'nombre', sortDir: 'desc' }] })
+    );
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([]);
+  });
+
+  it('debería permitir ordenar por múltiples columnas clickeando otra columna mientras hay un sort activo', async () => {
+    const { result } = renderHook(() => useStockFiltrado());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('sucursal');
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([
+      { sortBy: 'sucursal', sortDir: 'asc' },
+      { sortBy: 'nombre', sortDir: 'asc' },
+    ]);
+  });
+
+  it('debería filtrar por columna enviando el filtro al backend y volver a página 1', async () => {
+    const mockFiltrado = { data: [mockStock[0]], page: 1, totalPages: 1, total: 1 };
+    (stockClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockStock, page: 1, totalPages: 1, total: 2 })
+      .mockResolvedValueOnce(mockFiltrado);
+
+    const { result } = renderHook(() => useStockFiltrado());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onFilterChange('marca', 'DeWalt');
+      await Promise.resolve();
+    });
+
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filtros: { marca: 'DeWalt' }, page: 1 })
     );
     expect(result.current.stock).toHaveLength(1);
     expect(result.current.stock[0].nombre).toBe('Taladro Percutor');
   });
 
-  it('el filtro de sucursal dispara obtenerPaginado con sucursalId en el backend', async () => {
-    const mockStockS1 = { data: [mockStock[0]], hasMore: false };
-    (stockClient.obtenerPaginado as any)
-      .mockResolvedValueOnce({ data: mockStock, hasMore: false })
-      .mockResolvedValueOnce(mockStockS1);
+  it('debería filtrar por sucursal como columna, reemplazando el selector anterior', async () => {
+    const mockFiltrado = { data: [mockStock[0]], page: 1, totalPages: 1, total: 1 };
+    (stockClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockStock, page: 1, totalPages: 1, total: 2 })
+      .mockResolvedValueOnce(mockFiltrado);
 
     const { result } = renderHook(() => useStockFiltrado());
+
     await act(async () => {
       await Promise.resolve();
     });
 
-    expect(result.current.stock).toHaveLength(2);
-
     await act(async () => {
-      result.current.setSucursalId('s1');
+      result.current.onFilterChange('sucursal', 'Sucursal Centro');
       await Promise.resolve();
     });
 
-    expect(stockClient.obtenerPaginado).toHaveBeenCalledTimes(2);
-    expect(stockClient.obtenerPaginado).toHaveBeenLastCalledWith(
-      expect.objectContaining({ sucursalId: 's1' })
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filtros: { sucursal: 'Sucursal Centro' }, page: 1 })
     );
     expect(result.current.stock).toHaveLength(1);
-    expect(result.current.stock[0].sucursalId).toBe('s1');
   });
 
-  it('expone las opciones de sucursal cargadas desde el cliente de sucursales', async () => {
+  it('debería cargar los valores únicos para los combobox de filtro', async () => {
+    (stockClient.obtenerValoresUnicos as any).mockImplementation((campo: string) =>
+      Promise.resolve(campo === 'marca' ? ['DeWalt', 'Stanley'] : [])
+    );
+
     const { result } = renderHook(() => useStockFiltrado());
+
     await act(async () => {
       await Promise.resolve();
     });
 
-    const labels = result.current.sucursalOptions.map((o) => o.label);
-    expect(labels).toContain('Todas las sucursales');
-    expect(labels).toContain('Sucursal Centro');
-    expect(labels).toContain('Sucursal Norte');
+    expect(result.current.filterOptions.marca).toEqual([
+      { value: 'DeWalt', label: 'DeWalt' },
+      { value: 'Stanley', label: 'Stanley' },
+    ]);
   });
 });

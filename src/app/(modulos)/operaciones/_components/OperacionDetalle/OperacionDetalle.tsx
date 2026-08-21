@@ -206,19 +206,21 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
         </Card>
       )}
 
-      {/* Desglose de elementos / productos involucrados */}
-      <Card title="Desglose de elementos involucrados">
-        <Table
-          columns={itemColumns}
-          data={operacion.items}
-          getRowKey={(it) => it.id}
-          emptyMessage="No hay elementos o productos desglosados en esta operación."
-        />
-      </Card>
+      {/* Desglose de productos: los movimientos financieros no tienen ítems. */}
+      {operacion.items.length > 0 && (
+        <Card title="Desglose de elementos involucrados">
+          <Table
+            columns={itemColumns}
+            data={operacion.items}
+            getRowKey={(it) => it.id}
+            emptyMessage="No hay elementos o productos desglosados en esta operación."
+          />
+        </Card>
+      )}
 
       {/* Cuentas bancarias / financieras involucradas */}
-      <Card title="Cuentas bancarias y financieras involucradas">
-        {operacion.cuentas.length > 0 ? (
+      {operacion.cuentas.length > 0 && (
+        <Card title="Cuentas bancarias y financieras involucradas">
           <div className={styles.cuentasGrid}>
             {operacion.cuentas.map((c) => (
               <div key={c.id} className={styles.cuentaCard}>
@@ -227,18 +229,16 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
                   <span className={styles.porcentajeBadge}>{formatPorcentaje(c.porcentaje)}</span>
                 </div>
                 <span className={styles.cuentaMonto}>{formatMonto(c.monto)}</span>
+                {c.porcentajeExtra ? (
+                  <span className={styles.cuentaRecargo}>
+                    incluye {formatPorcentaje(c.porcentajeExtra)} de recargo
+                  </span>
+                ) : null}
               </div>
             ))}
           </div>
-        ) : (
-          <Table
-            columns={cuentaColumns}
-            data={operacion.cuentas}
-            getRowKey={(c) => c.id}
-            emptyMessage="No hay cuentas financieras registradas para esta operación."
-          />
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

@@ -9,7 +9,6 @@ export const metadata = {
 export default function CuentasFinancierasPage() {
   return (
     <div className={styles.page}>
-      <h1 className={styles.pageTitle}>Cuentas financieras</h1>
       <CuentasCatalogo />
     </div>
   );

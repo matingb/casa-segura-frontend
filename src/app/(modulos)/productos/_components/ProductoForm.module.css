@@ -4,6 +4,14 @@
   gap: 1.5rem;
 }
 
+.pageDetail {
+  gap: 0.5rem;
+}
+
+.pageDetail > :last-child {
+  margin-top: 0.5rem;
+}
+
 .pageTitle {
   font-size: 1.5rem;
   font-weight: 700;
@@ -13,29 +21,108 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.1rem;
 }
 
-.topSection {
+.section {
   display: flex;
-  gap: 2rem;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .topFields {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding-left: 2rem;
-  border-left: 1px solid var(--color-border);
+  gap: 1.1rem;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.gridWide {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.sectionDetail {
+  gap: 0.6rem;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem 1.25rem;
+}
+
+.detailGridWide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.backLink:hover {
+  color: var(--color-primary);
+}
+
+.pageTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.readOnlyChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.imageCard {
+  display: flex;
+  justify-content: center;
+  width: 70%;
+  margin: 0 auto;
+}
+
+.detailImage {
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
 }
 
 .descriptionField {
@@ -51,16 +138,20 @@
 }
 
 .descriptionField textarea {
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-input-border);
   background: var(--color-bg-elevated);
   color: var(--color-text);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-family: inherit;
   outline: none;
   resize: vertical;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.descriptionField textarea:hover:not(:disabled) {
+  border-color: var(--color-input-border-hover);
 }
 
 .descriptionField textarea:focus {
@@ -68,25 +159,73 @@
   box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
+.requiredMark {
+  color: var(--color-primary);
+  margin-left: 0.15rem;
+}
+
+.qrRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.qrRow > *:first-child {
+  flex: 1;
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.qrPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding-top: 0.5rem;
+  padding-top: 0.9rem;
+  margin-top: 0.25rem;
   border-top: 1px solid var(--color-border);
 }
 
-@media (max-width: 640px) {
-  .topSection {
-    flex-direction: column;
-    align-items: center;
+.actionsDetail {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .topFields {
+  .gridWide,
+  .detailGridWide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .detailGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .imageCard {
     width: 100%;
-    padding-left: 0;
-    padding-top: 1.5rem;
-    border-left: none;
-    border-top: 1px solid var(--color-border);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid,
+  .gridWide,
+  .detailGrid,
+  .detailGridWide {
+    grid-template-columns: 1fr;
   }
 }

@@ -6,7 +6,8 @@ import { Producto } from '../../../../lib/types/Producto';
 
 vi.mock('../../../../lib/api/producto.client', () => ({
   productoClient: {
-    obtenerPaginado: vi.fn(),
+    obtenerPaginadoConTotal: vi.fn(),
+    obtenerValoresUnicos: vi.fn(),
   },
 }));
 
@@ -29,6 +30,8 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       imagenUrl: '',
       descripcion: '',
       activo: true,
+      precioBase: 0,
+      codigoQr: '',
     },
     {
       id: '2',
@@ -47,20 +50,24 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       imagenUrl: '',
       descripcion: '',
       activo: true,
+      precioBase: 0,
+      codigoQr: '',
     },
   ];
 
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.clearAllMocks();
-    (productoClient.obtenerPaginado as any).mockResolvedValue({
+    (productoClient.obtenerPaginadoConTotal as any).mockResolvedValue({
       data: mockProductos,
-      hasMore: false,
+      page: 1,
+      totalPages: 1,
+      total: 2,
     });
+    (productoClient.obtenerValoresUnicos as any).mockResolvedValue([]);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('debería mostrar el catálogo completo de productos en la carga inicial', async () => {
@@ -74,11 +81,80 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
     expect(result.current.items).toEqual(mockProductos);
   });
 
-  it('debería realizar búsqueda server-side cuando se cambia search con debounce', async () => {
-    const mockFiltrado = [{ ...mockProductos[0] }];
-    (productoClient.obtenerPaginado as any)
-      .mockResolvedValueOnce({ data: mockProductos, hasMore: false })
-      .mockResolvedValueOnce({ data: mockFiltrado, hasMore: false });
+  it('debería ordenar por columna: click asc, click desc, click sin orden (ciclo de 3 estados)', async () => {
+    const { result } = renderHook(() => useProductosFiltrados());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([{ sortBy: 'nombre', sortDir: 'asc' }]);
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: [{ sortBy: 'nombre', sortDir: 'asc' }], page: 1 })
+    );
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([{ sortBy: 'nombre', sortDir: 'desc' }]);
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: [{ sortBy: 'nombre', sortDir: 'desc' }] })
+    );
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([]);
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: [] })
+    );
+  });
+
+  it('debería permitir ordenar por múltiples columnas clickeando otra columna mientras hay un sort activo', async () => {
+    const { result } = renderHook(() => useProductosFiltrados());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('marca');
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSortChange('nombre');
+      await Promise.resolve();
+    });
+
+    expect(result.current.sort).toEqual([
+      { sortBy: 'marca', sortDir: 'asc' },
+      { sortBy: 'nombre', sortDir: 'asc' },
+    ]);
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sort: [
+          { sortBy: 'marca', sortDir: 'asc' },
+          { sortBy: 'nombre', sortDir: 'asc' },
+        ],
+      })
+    );
+  });
+
+  it('debería filtrar por columna enviando el filtro al backend y volver a página 1', async () => {
+    const mockFiltrado = { data: [mockProductos[0]], page: 1, totalPages: 1, total: 1 };
+    (productoClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockProductos, page: 1, totalPages: 1, total: 2 })
+      .mockResolvedValueOnce(mockFiltrado);
 
     const { result } = renderHook(() => useProductosFiltrados());
 
@@ -86,30 +162,20 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       await Promise.resolve();
     });
 
-    act(() => {
-      result.current.setSearch('Taladro');
-    });
-
-    // Antes de vencer el debounce
-    expect(productoClient.obtenerPaginado).toHaveBeenCalledTimes(1);
-
-    // Avanzar temporizador del debounce (300ms)
     await act(async () => {
-      vi.advanceTimersByTime(300);
+      result.current.onFilterChange('marca', 'DeWalt');
       await Promise.resolve();
     });
 
-    expect(productoClient.obtenerPaginado).toHaveBeenCalledTimes(2);
-    expect(productoClient.obtenerPaginado).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'Taladro' })
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filtros: { marca: 'DeWalt' }, page: 1 })
     );
     expect(result.current.items).toHaveLength(1);
     expect(result.current.items[0].nombre).toBe('Taladro Percutor');
   });
 
-  it('debería permitir cargar más elementos con loadMore', async () => {
+  it('debería cambiar de página con setPage', async () => {
     const masProductos: Producto[] = [
-      ...mockProductos,
       {
         id: '3',
         codigo: 'PROD-003',
@@ -127,12 +193,14 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
         imagenUrl: '',
         descripcion: '',
         activo: true,
+        precioBase: 0,
+        codigoQr: '',
       },
     ];
 
-    (productoClient.obtenerPaginado as any)
-      .mockResolvedValueOnce({ data: mockProductos, hasMore: true })
-      .mockResolvedValueOnce({ data: masProductos, hasMore: false });
+    (productoClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockProductos, page: 1, totalPages: 2, total: 3 })
+      .mockResolvedValueOnce({ data: masProductos, page: 2, totalPages: 2, total: 3 });
 
     const { result } = renderHook(() => useProductosFiltrados());
 
@@ -141,14 +209,34 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
     });
 
     expect(result.current.items).toHaveLength(2);
-    expect(result.current.hasMore).toBe(true);
+    expect(result.current.totalPages).toBe(2);
 
     await act(async () => {
-      result.current.loadMore();
+      result.current.setPage(2);
       await Promise.resolve();
     });
 
-    expect(result.current.items).toHaveLength(3);
-    expect(result.current.hasMore).toBe(false);
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].nombre).toBe('Sierra Circular');
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2 })
+    );
+  });
+
+  it('debería cargar los valores únicos para los combobox de filtro', async () => {
+    (productoClient.obtenerValoresUnicos as any).mockImplementation((campo: string) =>
+      Promise.resolve(campo === 'marca' ? ['DeWalt', 'Stanley'] : [])
+    );
+
+    const { result } = renderHook(() => useProductosFiltrados());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.filterOptions.marca).toEqual([
+      { value: 'DeWalt', label: 'DeWalt' },
+      { value: 'Stanley', label: 'Stanley' },
+    ]);
   });
 });

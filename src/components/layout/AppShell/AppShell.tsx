@@ -3,6 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
+import UserMenu from '../UserMenu/UserMenu';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -54,6 +55,7 @@ export default function AppShell({ children }: AppShellProps) {
             <span className={styles.menuIconBar} />
             <span className={styles.menuIconBar} />
           </button>
+          <UserMenu />
         </header>
         <main className={styles.main}>{children}</main>
       </div>

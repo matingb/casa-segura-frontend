@@ -1,7 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import Button from '../Button/Button';
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react';
 import styles from './ImageUploader.module.css';
 
 interface ImageUploaderProps {
@@ -22,6 +21,7 @@ export default function ImageUploader({
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(initialImageUrl);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const objectUrlRef = useRef<string | null>(null);
@@ -31,10 +31,7 @@ export default function ImageUploader({
     };
   }, []);
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     // Mostrar preview local inmediatamente
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     const localUrl = URL.createObjectURL(file);
@@ -83,10 +80,29 @@ export default function ImageUploader({
       setUploadState('error');
       console.error('[ImageUploader] Error al subir imagen:', err);
     }
+  };
 
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await uploadFile(file);
     // Limpiar el input para permitir re-subir el mismo archivo
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isUploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) await uploadFile(file);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!isUploading) setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => setIsDragOver(false);
 
   const isUploading = uploadState === 'uploading';
 
@@ -94,7 +110,15 @@ export default function ImageUploader({
     <div className={styles.uploader}>
       {label && <span className={styles.label}>{label}</span>}
 
-      <div className={styles.preview}>
+      <div
+        className={`${styles.dropzone} ${isDragOver ? styles.dragOver : ''} ${previewUrl ? styles.hasImage : ''}`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+      >
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -103,27 +127,29 @@ export default function ImageUploader({
             className={`${styles.previewImage} ${isUploading ? styles.uploading : ''}`}
           />
         ) : (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className={styles.emptyIcon}>
-            <path
-              d="M4 16.5V6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v10.5M4 16.5A1.75 1.75 0 0 0 5.75 18h12.5A1.75 1.75 0 0 0 20 16.5M4 16.5l4.72-4.72a1.5 1.5 0 0 1 2.12 0L13 13.94m7-2.94-2.72-2.72a1.5 1.5 0 0 0-2.12 0L13 13.94m0 0 1.5 1.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <div className={styles.emptyState}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className={styles.emptyIcon}>
+              <path
+                d="M4 16.5V6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v10.5M4 16.5A1.75 1.75 0 0 0 5.75 18h12.5A1.75 1.75 0 0 0 20 16.5M4 16.5l4.72-4.72a1.5 1.5 0 0 1 2.12 0L13 13.94m7-2.94-2.72-2.72a1.5 1.5 0 0 0-2.12 0L13 13.94m0 0 1.5 1.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className={styles.emptyText}>Arrastrá una imagen o hacé clic para subir</span>
+          </div>
         )}
 
-        {/* Overlay de carga */}
+        {previewUrl && !isUploading && (
+          <div className={styles.hoverOverlay}>
+            <span>Cambiar imagen</span>
+          </div>
+        )}
+
         {isUploading && (
           <div className={styles.uploadingOverlay}>
-            <svg
-              className={styles.spinner}
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
+            <svg className={styles.spinner} width="24" height="24" viewBox="0 0 24 24" fill="none">
               <circle
                 cx="12"
                 cy="12"
@@ -149,14 +175,6 @@ export default function ImageUploader({
         className={styles.hiddenInput}
         disabled={isUploading}
       />
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-      >
-        {isUploading ? 'Subiendo...' : previewUrl ? 'Cambiar imagen' : 'Subir imagen'}
-      </Button>
     </div>
   );
 }

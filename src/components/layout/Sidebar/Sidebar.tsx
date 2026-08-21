@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import LogoutButton from '../../LogoutButton';
 import styles from './Sidebar.module.css';
 
 interface NavItem {
@@ -45,9 +44,6 @@ export default function Sidebar({ isOpen, onNavigate }: SidebarProps) {
           );
         })}
       </nav>
-      <div className={styles.footer}>
-        <LogoutButton />
-      </div>
     </aside>
   );
 }

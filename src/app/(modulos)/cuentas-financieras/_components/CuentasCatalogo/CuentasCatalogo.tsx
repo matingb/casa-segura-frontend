@@ -1,20 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Pencil, Eye } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
-import Input from '../../../../../components/ui/Input/Input';
+import IconButton from '../../../../../components/ui/IconButton/IconButton';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
+import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 import { useCuentasFinancieras } from '../../_hooks/useCuentasFinancieras';
 import { formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './CuentasCatalogo.module.css';
 
+const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
+  { key: 'nombre', label: 'Nombre', type: 'text' },
+];
+
 
 export default function CuentasCatalogo() {
   const router = useRouter();
-  const { cuentas, isLoading, busqueda, setBusqueda, totalSaldoActual } =
-    useCuentasFinancieras();
+  const {
+    cuentas,
+    isLoading,
+    totalSaldoActual,
+    sort,
+    onSortChange,
+    filters,
+    onFilterChange,
+  } = useCuentasFinancieras();
 
   const columns: TableColumn<CuentaFinanciera>[] = [
     {
@@ -24,11 +37,15 @@ export default function CuentasCatalogo() {
         <button
           type="button"
           className={styles.nombreLink}
-          onClick={() => router.push(`/cuentas-financieras/${c.id}`)}
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/cuentas-financieras/${c.id}`);
+          }}
         >
           {c.nombre}
         </button>
       ),
+      sortable: true,
     },
     {
       key: 'saldoInicial',
@@ -36,6 +53,9 @@ export default function CuentasCatalogo() {
       render: (c) => (
         <span className={styles.montoCell}>{formatMonto(c.saldoInicial)}</span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'saldoActual',
@@ -49,6 +69,9 @@ export default function CuentasCatalogo() {
           {formatMonto(c.saldoActual)}
         </span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'porcentajeExtra',
@@ -58,26 +81,35 @@ export default function CuentasCatalogo() {
           {formatPorcentaje(c.porcentajeExtra)}
         </span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'acciones',
       header: '',
       render: (c) => (
         <div className={styles.rowActions}>
-          <Button
-            variant="secondary"
-            onClick={() => router.push(`/cuentas-financieras/${c.id}`)}
-          >
-            Ver detalle
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => router.push(`/cuentas-financieras/${c.id}/editar`)}
-          >
-            Editar
-          </Button>
+          <IconButton
+            icon={<Eye size={16} />}
+            label="Ver detalle"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/cuentas-financieras/${c.id}`);
+            }}
+          />
+          <IconButton
+            icon={<Pencil size={16} />}
+            label="Editar"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/cuentas-financieras/${c.id}/editar`);
+            }}
+          />
         </div>
       ),
+      align: 'right',
+      width: '1%',
     },
   ];
 
@@ -114,10 +146,10 @@ export default function CuentasCatalogo() {
         }
       >
         <div className={styles.toolbar}>
-          <Input
-            placeholder="Buscar por nombre..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+          <FilterBar
+            fields={FILTER_FIELDS}
+            filters={filters}
+            onFilterChange={onFilterChange}
           />
         </div>
 
@@ -132,6 +164,10 @@ export default function CuentasCatalogo() {
             data={cuentas}
             getRowKey={(c) => c.id}
             emptyMessage="No se encontraron cuentas financieras."
+            sort={sort}
+            onSortChange={onSortChange}
+            onRowClick={(c) => router.push(`/cuentas-financieras/${c.id}`)}
+            stickyHeader
           />
         )}
       </Card>

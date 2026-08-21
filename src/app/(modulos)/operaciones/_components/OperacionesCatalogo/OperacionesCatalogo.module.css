@@ -40,27 +40,8 @@
 
 /* ── Toolbar ──────────────────────────────────────────────── */
 .toolbar {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
+  margin-top: -0.75rem;
   margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.searchBar {
-  flex: 1;
-  min-width: 220px;
-  max-width: 400px;
-}
-
-.filters {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.filters > * {
-  min-width: 180px;
 }
 
 /* ── Table cells ──────────────────────────────────────────── */
@@ -88,6 +69,13 @@
   font-weight: 700;
   font-size: 0.95rem;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .montoPositivo {

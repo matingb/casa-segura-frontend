@@ -1,15 +1,19 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Eye } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
+import IconButton from '../../../../../components/ui/IconButton/IconButton';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
-import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
-import ScrollPage from '../../../../../components/ui/ScrollPage/ScrollPage';
+import FilterBar, { FilterField } from '../../../../../components/ui/FilterBar/FilterBar';
+import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { Operacion } from '../../../../../lib/types/Operacion';
 import { useOperacionesFiltrado } from '../../_hooks/useOperacionesFiltrado';
 import { formatFecha, formatMonto } from '../../../../../lib/utils/formatters';
+import NuevaOperacionModal from '../NuevaOperacionModal/NuevaOperacionModal';
 import styles from './OperacionesCatalogo.module.css';
 
 function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 'neutral' {
@@ -22,26 +26,35 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
 
 export default function OperacionesCatalogo() {
   const router = useRouter();
+  const [showNuevaOperacion, setShowNuevaOperacion] = useState(false);
   const {
     operaciones,
     loading,
-    loadingMore,
-    hasMore,
-    loadMore,
-    sucursalId,
-    setSucursalId,
-    tipoId,
-    setTipoId,
-    sucursalOptions,
+    page,
+    totalPages,
+    setPage,
     tipoOptions,
     totalMonto,
+    sort,
+    onSortChange,
+    filters,
+    onFilterChange,
+    filterOptions,
+    filtersLoading,
   } = useOperacionesFiltrado();
+
+  const filterFields: FilterField[] = [
+    { key: 'tipo', label: 'Tipo', options: tipoOptions },
+    { key: 'sucursal', label: 'Sucursal' },
+    { key: 'usuario', label: 'Usuario', type: 'text' },
+  ];
 
   const columns: TableColumn<Operacion>[] = [
     {
       key: 'fecha',
       header: 'Fecha',
       render: (op) => <span className={styles.fechaCell}>{formatFecha(op.fecha)}</span>,
+      sortable: true,
     },
     {
       key: 'tipo',
@@ -49,25 +62,19 @@ export default function OperacionesCatalogo() {
       render: (op) => (
         <Badge variant={getTipoVariant(op.tipoNombre)}>{op.tipoNombre || '—'}</Badge>
       ),
+      sortable: true,
     },
     {
       key: 'sucursal',
       header: 'Sucursal',
       render: (op) => op.sucursalNombre || '—',
+      sortable: true,
     },
     {
       key: 'usuario',
       header: 'Usuario',
       render: (op) => <span className={styles.usuarioCell}>{op.usuarioNombre || '—'}</span>,
-    },
-    {
-      key: 'descripcion',
-      header: 'Descripción',
-      render: (op) => (
-        <span className={styles.descripcionCell} title={op.descripcion}>
-          {op.descripcion || '—'}
-        </span>
-      ),
+      sortable: true,
     },
     {
       key: 'monto',
@@ -77,18 +84,27 @@ export default function OperacionesCatalogo() {
           {formatMonto(op.monto)}
         </span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'acciones',
       header: '',
       render: (op) => (
-        <Button
-          variant="secondary"
-          onClick={() => router.push(`/operaciones/${op.id}`)}
-        >
-          Ver detalle
-        </Button>
+        <div className={styles.rowActions}>
+          <IconButton
+            icon={<Eye size={16} />}
+            label="Ver detalle"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/operaciones/${op.id}`);
+            }}
+          />
+        </div>
       ),
+      align: 'right',
+      width: '1%',
     },
   ];
 
@@ -96,41 +112,41 @@ export default function OperacionesCatalogo() {
   return (
     <div className={styles.wrapper}>
 
-      <Card title="Historial de operaciones">
+      <Card
+        title="Historial de operaciones"
+        actions={
+          <Button variant="primary" onClick={() => setShowNuevaOperacion(true)}>
+            + Nueva operación
+          </Button>
+        }
+      >
         <div className={styles.toolbar}>
-          <div className={styles.filters}>
-            <Dropdown
-              id="filtro-sucursal"
-              label="Sucursal"
-              options={sucursalOptions}
-              value={sucursalId}
-              onChange={setSucursalId}
-            />
-            <Dropdown
-              id="filtro-tipo"
-              label="Tipo"
-              options={tipoOptions}
-              value={tipoId}
-              onChange={setTipoId}
-            />
-          </div>
+          <FilterBar
+            fields={filterFields}
+            filters={filters}
+            onFilterChange={onFilterChange}
+            filterOptions={filterOptions}
+            loading={filtersLoading}
+          />
         </div>
 
-        <ScrollPage
-          hasMore={hasMore}
-          loading={loading}
-          loadingMore={loadingMore}
-          onLoadMore={loadMore}
-          loadingMoreLabel="Cargando más operaciones..."
-        >
-          <Table
-            columns={columns}
-            data={operaciones}
-            getRowKey={(op) => op.id}
-            emptyMessage={loading ? 'Cargando operaciones...' : 'No se encontraron operaciones con los filtros aplicados.'}
-          />
-        </ScrollPage>
+        <Table
+          columns={columns}
+          data={operaciones}
+          getRowKey={(op) => op.id}
+          emptyMessage={loading ? 'Cargando operaciones...' : 'No se encontraron operaciones con los filtros aplicados.'}
+          sort={sort}
+          onSortChange={onSortChange}
+          onRowClick={(op) => router.push(`/operaciones/${op.id}`)}
+          stickyHeader
+        />
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
       </Card>
+
+      {showNuevaOperacion && (
+        <NuevaOperacionModal onClose={() => setShowNuevaOperacion(false)} />
+      )}
     </div>
   );
 }

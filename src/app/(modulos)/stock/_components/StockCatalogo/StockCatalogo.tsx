@@ -1,31 +1,50 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Pencil, Eye } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
+import IconButton from '../../../../../components/ui/IconButton/IconButton';
 import Badge from '../../../../../components/ui/Badge/Badge';
-import Input from '../../../../../components/ui/Input/Input';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
-import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
-import ScrollPage from '../../../../../components/ui/ScrollPage/ScrollPage';
+import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
+import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
-import { getSubtipoNombre } from '../../../../../lib/mocks/clasificacionProducto';
+import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { useStockFiltrado } from '../../_hooks/useStockFiltrado';
 import styles from './StockCatalogo.module.css';
 
+const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
+  { key: 'codigo', label: 'Código', type: 'text' },
+  { key: 'nombre', label: 'Nombre', type: 'text' },
+  { key: 'marca', label: 'Marca' },
+  { key: 'modelo', label: 'Modelo' },
+  { key: 'subtipo', label: 'Subtipo' },
+  { key: 'sucursal', label: 'Sucursal' },
+  { key: 'estado', label: 'Estado' },
+];
+
+function getDisponibleVariant(neto: number, minimo: number): 'warning' | 'danger' | null {
+  if (neto <= 0) return 'danger';
+  if (neto <= minimo) return 'warning';
+  return null;
+}
+
 export default function StockCatalogo() {
   const router = useRouter();
+  const { getSubtipoNombre } = useClasificacion();
   const {
-    search,
-    setSearch,
-    sucursalId,
-    setSucursalId,
-    sucursalOptions,
     stock,
     loading,
-    loadingMore,
-    hasMore,
-    loadMore,
+    page,
+    totalPages,
+    setPage,
+    sort,
+    onSortChange,
+    filters,
+    onFilterChange,
+    filterOptions,
+    filtersLoading,
   } = useStockFiltrado();
 
   const columns: TableColumn<StockItem>[] = [
@@ -39,34 +58,52 @@ export default function StockCatalogo() {
           <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
         ),
     },
-    { key: 'codigo', header: 'Código', render: (item) => item.codigo },
-    { key: 'nombre', header: 'Nombre', render: (item) => item.nombre },
-    { key: 'marca', header: 'Marca', render: (item) => item.marca },
-    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo },
-    { key: 'subtipo', header: 'Subtipo', render: (item) => getSubtipoNombre(item.subtipoId) },
-    { key: 'sucursal', header: 'Sucursal', render: (item) => item.sucursalNombre },
+    { key: 'codigo', header: 'Código', render: (item) => item.codigo, sortable: true },
     {
-      key: 'disponible',
-      header: 'Disponible',
+      key: 'nombre',
+      header: 'Nombre',
       render: (item) => (
-        <span className={`${styles.stockBadge} ${item.cantidadDisponible <= item.stockMinimo ? styles.stockBadgeLow : styles.stockBadgeOk}`}>
-          {item.cantidadDisponible}
+        <span className={styles.nombreCell} title={item.nombre}>
+          {item.nombre}
         </span>
       ),
+      sortable: true,
+    },
+    { key: 'marca', header: 'Marca', render: (item) => item.marca, sortable: true },
+    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
+    { key: 'subtipo', header: 'Subtipo', render: (item) => getSubtipoNombre(item.subtipoId), sortable: true },
+    { key: 'sucursal', header: 'Sucursal', render: (item) => item.sucursalNombre, sortable: true },
+    {
+      key: 'cantidadDisponible',
+      header: 'Disponible',
+      render: (item) => {
+        const neto = item.cantidadDisponible - item.cantidadReservada;
+        const variant = getDisponibleVariant(neto, item.stockMinimo);
+        return variant ? (
+          <Badge variant={variant}>{item.cantidadDisponible}</Badge>
+        ) : (
+          <span className={styles.plainNumber}>{item.cantidadDisponible}</span>
+        );
+      },
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
-      key: 'reservado',
+      key: 'cantidadReservada',
       header: 'Reservado',
-      render: (item) => (
-        <span className={styles.stockBadge}>{item.cantidadReservada}</span>
-      ),
+      render: (item) => <span className={styles.plainNumber}>{item.cantidadReservada}</span>,
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'stockMinimo',
       header: 'Mín.',
-      render: (item) => (
-        <span className={styles.stockBadgeMuted}>{item.stockMinimo}</span>
-      ),
+      render: (item) => <span className={styles.plainNumber}>{item.stockMinimo}</span>,
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'estado',
@@ -76,17 +113,33 @@ export default function StockCatalogo() {
           {item.activo ? 'Activo' : 'Inactivo'}
         </Badge>
       ),
+      sortable: true,
     },
     {
       key: 'acciones',
       header: '',
       render: (item) => (
         <div className={styles.rowActions}>
-          <Button variant="secondary" onClick={() => router.push(`/stock/${item.id}/editar`)}>
-            Editar
-          </Button>
+          <IconButton
+            icon={<Eye size={16} />}
+            label="Ver detalle"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/stock/${item.id}`);
+            }}
+          />
+          <IconButton
+            icon={<Pencil size={16} />}
+            label="Editar"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/stock/${item.id}/editar`);
+            }}
+          />
         </div>
       ),
+      align: 'right',
+      width: '1%',
     },
   ];
 
@@ -100,38 +153,27 @@ export default function StockCatalogo() {
       }
     >
       <div className={styles.toolbar}>
-        <div className={styles.searchBar}>
-          <Input
-            placeholder="Buscar por código, nombre, marca, modelo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className={styles.dropdownWrapper}>
-          <Dropdown
-            id="filtro-sucursal"
-            label="Sucursal"
-            options={sucursalOptions}
-            value={sucursalId}
-            onChange={setSucursalId}
-          />
-        </div>
+        <FilterBar
+          fields={FILTER_FIELDS}
+          filters={filters}
+          onFilterChange={onFilterChange}
+          filterOptions={filterOptions}
+          loading={filtersLoading}
+        />
       </div>
 
-      <ScrollPage
-        hasMore={hasMore}
-        loading={loading}
-        loadingMore={loadingMore}
-        onLoadMore={loadMore}
-        loadingMoreLabel="Cargando más stock..."
-      >
-        <Table
-          columns={columns}
-          data={stock}
-          getRowKey={(item) => item.id}
-          emptyMessage={loading ? 'Cargando stock...' : 'No se encontraron items de stock.'}
-        />
-      </ScrollPage>
+      <Table
+        columns={columns}
+        data={stock}
+        getRowKey={(item) => item.id}
+        emptyMessage={loading ? 'Cargando stock...' : 'No se encontraron items de stock.'}
+        sort={sort}
+        onSortChange={onSortChange}
+        onRowClick={(item) => router.push(`/stock/${item.id}`)}
+        stickyHeader
+      />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
     </Card>
   );
 }

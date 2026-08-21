@@ -40,7 +40,7 @@
 
 /* ── Toolbar ────────────────────────────────────────────── */
 .toolbar {
-  max-width: 420px;
+  margin-top: -0.75rem;
   margin-bottom: 1.25rem;
 }
 
@@ -72,6 +72,7 @@
   font-weight: 700;
   font-size: 0.95rem;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .montoPositivo {
@@ -86,6 +87,7 @@
   font-size: 0.875rem;
   color: var(--color-text-muted);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .rowActions {

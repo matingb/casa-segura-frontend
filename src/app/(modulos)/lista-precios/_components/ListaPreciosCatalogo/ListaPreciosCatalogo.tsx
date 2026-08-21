@@ -1,106 +1,54 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
-import { FileDown } from 'lucide-react';
+import { useState } from 'react';
+import { FileSpreadsheet } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
-import Dropdown from '../../../../../components/ui/Dropdown/Dropdown';
+import FilterBar, { FilterField } from '../../../../../components/ui/FilterBar/FilterBar';
+import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { useListaPrecios } from '../../_hooks/useListaPrecios';
+import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
+import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
+import ExportExcelModal from '../ExportExcelModal/ExportExcelModal';
 import styles from './ListaPreciosCatalogo.module.css';
 
+const FILTER_FIELDS: FilterField[] = [
+  { key: 'sucursal', label: 'Sucursal', required: true },
+  { key: 'codigo', label: 'Código', type: 'text' },
+  { key: 'nombre', label: 'Nombre', type: 'text' },
+  { key: 'marca', label: 'Marca' },
+  { key: 'modelo', label: 'Modelo' },
+  { key: 'subtipo', label: 'Subtipo' },
+];
 
 export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
-    setSucursalId,
-    sucursalOptions,
     items,
+    pageItems,
+    page,
+    totalPages,
+    setPage,
     isLoading,
     sucursalNombre,
+    sort,
+    onSortChange,
+    filters,
+    onFilterChange,
+    filterOptions,
   } = useListaPrecios();
+  const { getSubtipoNombre } = useClasificacion();
 
-  const printAreaRef = useRef<HTMLDivElement>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  const handleExportPDF = useCallback(() => {
-    if (!sucursalId) return;
-
-    // Construir tabla de impresión dinámica
-    const fecha = new Date().toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-
-    const filas = items
-      .map(
-        (item) => `
-        <tr>
-          <td>${item.codigo}</td>
-          <td>${item.nombre}</td>
-          <td>${item.marca}</td>
-          <td>${item.modelo}</td>
-          <td style="text-align:right">${formatARS(item.precioVentaArs)}</td>
-          <td style="text-align:right">${formatUSD(item.precioVentaUsd)}</td>
-          <td style="text-align:center">${item.iva}%</td>
-        </tr>`
-      )
-      .join('');
-
-    const printContent = `
-      <!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="UTF-8" />
-          <title>Lista de precios – ${sucursalNombre}</title>
-          <style>
-            * { box-sizing: border-box; }
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 24px; color: #111; }
-            h2 { margin: 0 0 4px; font-size: 18px; }
-            p.meta { margin: 0 0 16px; font-size: 12px; color: #555; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th { background: #1a1a2e; color: #fff; padding: 7px 10px; text-align: left; }
-            td { border-bottom: 1px solid #e5e7eb; padding: 6px 10px; }
-            tr:nth-child(even) td { background: #f9fafb; }
-            .right { text-align: right; }
-            .center { text-align: center; }
-            @page { margin: 16mm; }
-          </style>
-        </head>
-        <body>
-          <h2>Lista de Precios – ${sucursalNombre}</h2>
-          <p class="meta">Fecha de emisión: ${fecha} &nbsp;|&nbsp; Productos habilitados: ${items.length}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th class="right">Precio ARS</th>
-                <th class="right">Precio USD</th>
-                <th class="center">IVA</th>
-              </tr>
-            </thead>
-            <tbody>${filas}</tbody>
-          </table>
-        </body>
-      </html>`;
-
-    const win = window.open('', '_blank', 'width=900,height=650');
-    if (!win) return;
-    win.document.write(printContent);
-    win.document.close();
-    win.focus();
-    // Pequeño delay para que el browser renderice antes de imprimir
-    setTimeout(() => {
-      win.print();
-      win.close();
-    }, 300);
-  }, [items, sucursalId, sucursalNombre]);
+  const handleConfirmExport = (selectedKeys: string[]) => {
+    exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre);
+    setShowExportModal(false);
+  };
 
   const columns: TableColumn<StockItem>[] = [
     {
@@ -117,16 +65,25 @@ export default function ListaPreciosCatalogo() {
           <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
         ),
     },
-    { key: 'codigo', header: 'Código', render: (item) => item.codigo },
-    { key: 'nombre', header: 'Nombre', render: (item) => item.nombre },
-    { key: 'marca', header: 'Marca', render: (item) => item.marca },
-    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo },
+    { key: 'codigo', header: 'Código', render: (item) => item.codigo, sortable: true },
+    { key: 'nombre', header: 'Nombre', render: (item) => item.nombre, sortable: true },
+    { key: 'marca', header: 'Marca', render: (item) => item.marca, sortable: true },
+    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
+    {
+      key: 'subtipo',
+      header: 'Subtipo',
+      render: (item) => getSubtipoNombre(item.subtipoId),
+      sortable: true,
+    },
     {
       key: 'precioArs',
       header: 'Precio ARS',
       render: (item) => (
         <span className={styles.priceArs}>{formatARS(item.precioVentaArs)}</span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'precioUsd',
@@ -134,6 +91,9 @@ export default function ListaPreciosCatalogo() {
       render: (item) => (
         <span className={styles.priceUsd}>{formatUSD(item.precioVentaUsd)}</span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'iva',
@@ -141,6 +101,9 @@ export default function ListaPreciosCatalogo() {
       render: (item) => (
         <span className={styles.ivaTag}>{item.iva}%</span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
     },
     {
       key: 'estado',
@@ -155,29 +118,27 @@ export default function ListaPreciosCatalogo() {
     <Card
       title="Lista de Precios"
       actions={
-        <div className={styles.actionsRow}>
-          <div className={styles.dropdownWrapper}>
-            <Dropdown
-              id="selector-sucursal"
-              label="Sucursal"
-              options={sucursalOptions}
-              value={sucursalId}
-              onChange={setSucursalId}
-            />
-          </div>
-          <Button
-            variant="primary"
-            className={styles.exportBtn}
-            onClick={handleExportPDF}
-            disabled={!canExport}
-            title={!sucursalId ? 'Seleccioná una sucursal primero' : !items.length ? 'No hay productos habilitados' : 'Exportar lista a PDF'}
-          >
-            <FileDown size={16} />
-            Exportar PDF
-          </Button>
-        </div>
+        <Button
+          variant="primary"
+          className={styles.exportBtn}
+          onClick={() => setShowExportModal(true)}
+          disabled={!canExport}
+          title={!sucursalId ? 'Seleccioná una sucursal primero' : !items.length ? 'No hay productos habilitados' : 'Exportar lista a Excel'}
+        >
+          <FileSpreadsheet size={16} />
+          Exportar Excel
+        </Button>
       }
     >
+      <div className={styles.toolbar}>
+        <FilterBar
+          fields={FILTER_FIELDS}
+          filters={filters}
+          onFilterChange={onFilterChange}
+          filterOptions={filterOptions}
+        />
+      </div>
+
       {isLoading ? (
         <p className={styles.loadingText}>Cargando lista de precios…</p>
       ) : !sucursalId ? (
@@ -198,13 +159,19 @@ export default function ListaPreciosCatalogo() {
         <>
           <Table
             columns={columns}
-            data={items}
+            data={pageItems}
             getRowKey={(item) => item.id}
             emptyMessage="No se encontraron productos."
+            sort={sort}
+            onSortChange={onSortChange}
+            stickyHeader
           />
-          {/* Área oculta de referencia, no se usa en esta implementación */}
-          <div ref={printAreaRef} />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>
+      )}
+
+      {showExportModal && (
+        <ExportExcelModal onClose={() => setShowExportModal(false)} onConfirm={handleConfirmExport} />
       )}
     </Card>
   );

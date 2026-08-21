@@ -7,20 +7,25 @@ import Button from '../../../../../components/ui/Button/Button';
 import Input from '../../../../../components/ui/Input/Input';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 import { cuentaFinancieraClient } from '../../../../../lib/api/cuenta-financiera.client';
+import { useCuentaFinancieraDetalle } from '../../_hooks/useCuentaFinancieraDetalle';
 import { formatMonto } from '../../../../../lib/utils/formatters';
 import styles from './CuentaFinancieraForm.module.css';
 
 interface CuentaFinancieraFormProps {
   title: string;
   cuenta?: CuentaFinanciera;
+  cuentaId?: string;
 }
 
 export default function CuentaFinancieraForm({
   title,
-  cuenta,
+  cuenta: cuentaProp,
+  cuentaId,
 }: CuentaFinancieraFormProps) {
   const router = useRouter();
-  const isEditing = Boolean(cuenta?.id);
+  const { cuenta: cuentaCargada, isLoading: isLoadingDetalle, error: errorDetalle } = useCuentaFinancieraDetalle(cuentaId ?? '');
+  const cuenta = cuentaId ? cuentaCargada ?? undefined : cuentaProp;
+  const isEditing = Boolean(cuentaId) || Boolean(cuentaProp?.id);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +68,37 @@ export default function CuentaFinancieraForm({
     }
   };
 
+  if (cuentaId && isLoadingDetalle) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.pageTitle}>{title}</h1>
+        <Card>
+          <p>Cargando cuenta financiera...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (cuentaId && (errorDetalle || !cuenta)) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.pageTitle}>{title}</h1>
+        <Card>
+          <p>{errorDetalle ?? 'Cuenta financiera no encontrada'}</p>
+          <Button variant="secondary" onClick={() => router.push('/cuentas-financieras')}>
+            Volver al listado
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       <h1 className={styles.pageTitle}>{title}</h1>
 
       <Card>
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form} key={cuenta?.id ?? 'nueva'}>
           <div className={styles.grid}>
             <div className={styles.fieldFull}>
               <Input

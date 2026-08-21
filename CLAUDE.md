@@ -18,30 +18,33 @@ La documentación de entidades está en `/docs/CasaSegura_ModeloDatos.docx`.
 - **Supabase** se usará SOLO como base de datos (Postgres). No se usa su SDK.
 - El backend/API se consume vía `src/lib/api.ts`.
 
-## TAREA ACTUAL: maquetar pantallas SIN lógica funcional
+## TAREA ACTUAL: integración real con el backend
 
-Estoy maquetando las pantallas del ERP. Necesito la UI construida y navegable,
-pero **sin lógica funcional todavía**. Reglas estrictas:
+La etapa de maquetado con mocks terminó. Los módulos ya maquetados (Productos,
+Stock, Operaciones, Cuentas Financieras, Lista de Precios) se están
+conectando al backend real en paralelo, módulo por módulo. Reglas:
 
 ### SÍ hacer
-- Construir las pantallas con componentes React + CSS Modules.
-- Usar **datos mockeados** importados desde `src/lib/mocks/` (un archivo por
-  entidad, ej. `mocks/productos.ts`, `mocks/operaciones.ts`).
-- Tipar los mocks con interfaces TypeScript que reflejen el modelo de datos
-  (estas interfaces sirven como contrato para la implementación real).
-- Botones y acciones presentes visualmente, pero sin efecto real
-  (pueden hacer `console.log` o abrir modales estáticos).
-- Mantener el estilo visual consistente entre todas las pantallas.
+- Reemplazar los datos mockeados por llamadas reales a la API a través de
+  `src/lib/api.ts` (o los clients específicos en `src/lib/api/*.client.ts`,
+  siguiendo el patrón ya usado por `sucursal.client.ts` y `stock.client.ts`).
+- Usar `apiFetch` (`src/lib/apiFetch.ts`) para requests desde cliente, que
+  ya maneja `credentials: 'include'` y redirección a `/login` en 401.
+- Implementar validaciones de formularios y lógica de negocio reales a
+  medida que se conecta cada pantalla.
+- Ir retirando los archivos de `src/lib/mocks/` que queden sin uso una vez
+  que el módulo correspondiente esté completamente integrado.
+- Mantener el estilo visual y los componentes base ya construidos.
 
 ### NO hacer
-- NO conectar a Supabase ni a ninguna base de datos.
-- NO escribir llamadas `fetch` reales ni consumir `src/lib/api.ts`.
-- NO implementar validaciones de formularios ni lógica de negocio.
 - NO usar Tailwind, Material UI, ni ninguna librería de estilos.
   **Solo CSS Modules.**
 - NO tocar la lógica de autenticación existente
-  (`src/context/AuthContext.tsx`, `src/middleware.ts`, `src/app/login`).
-  Las pantallas nuevas asumen que el usuario YA está autenticado.
+  (`src/context/AuthContext.tsx`, `src/middleware.ts`, `src/app/login`)
+  salvo que se indique explícitamente.
+- NO conectar módulos que todavía no fueron maquetados (ej. Pedidos de
+  Reposición) — esos siguen el flujo original: primero maqueta con mocks,
+  después se integra.
 
 ## Convenciones de código
 
@@ -66,10 +69,5 @@ pero **sin lógica funcional todavía**. Reglas estrictas:
 ## Flujo de trabajo que espero
 
 Trabajá **de a un módulo por vez**. Antes de avanzar al siguiente módulo,
-mostrame lo hecho y esperá mi confirmación. No generes todas las pantallas
-de una sola vez.
-
-**Primer paso**: armá (1) el layout general con el sidebar y (2) los
-componentes UI base reutilizables, y (3) una sola pantalla de ejemplo
-(listado de productos) como referencia de estilo. Pará ahí y mostrámelo
-antes de seguir.
+mostrame lo hecho (o probá el flujo end-to-end contra el backend real) y
+esperá mi confirmación. No integres todos los módulos de una sola vez.

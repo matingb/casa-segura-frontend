@@ -1,85 +1,139 @@
-import { useCallback, useMemo, useState } from 'react';
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Operacion } from '../../../../lib/types/Operacion';
 import { operacionesClient } from '../../../../lib/api/operaciones.client';
-import { useSucursales, SucursalOption } from '../../../../context/SucursalContext';
-import { usePaginatedList } from '../../../../lib/hooks/usePaginatedList';
-
-export type { SucursalOption };
+import { tipoOperacionClient } from '../../../../lib/api/tipo-operacion.client';
+import type { SortCriterion } from '../../../../components/ui/Table/Table';
 
 export interface TipoOption {
   value: string;
   label: string;
 }
 
+const PAGE_SIZE = 10;
+
+const SELECT_FILTER_FIELDS = ['sucursal'] as const;
+
 interface UseOperacionesFiltradoResult {
   operaciones: Operacion[];
   loading: boolean;
-  loadingMore: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
-  sucursalId: string;
-  setSucursalId: (v: string) => void;
-  tipoId: string;
-  setTipoId: (v: string) => void;
-  sucursalOptions: SucursalOption[];
+  page: number;
+  totalPages: number;
+  setPage: (page: number) => void;
   tipoOptions: TipoOption[];
   totalMonto: number;
+  sort: SortCriterion[];
+  onSortChange: (columnKey: string) => void;
+  filters: Record<string, string>;
+  onFilterChange: (columnKey: string, value: string) => void;
+  filterOptions: Record<string, { value: string; label: string }[]>;
+  filtersLoading: boolean;
 }
 
 export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
-  const [sucursalId, setSucursalId] = useState('');
-  const [tipoId, setTipoId] = useState('');
-  const { sucursalOptions } = useSucursales();
+  const [items, setItems] = useState<Operacion[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  const fetcher = useCallback(
-    (params: { limit: number; offset: number }) =>
-      operacionesClient.obtenerPaginado({
-        ...params,
-        sucursalId: sucursalId || undefined,
-      }),
-    [sucursalId]
-  );
+  const [sort, setSort] = useState<SortCriterion[]>([]);
 
-  const { items, loading, loadingMore, hasMore, loadMore } = usePaginatedList<Operacion>({
-    fetcher,
-    extraParams: { sucursalId },
-  });
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+  const [filtersLoading, setFiltersLoading] = useState(true);
 
-  const tipoOptions: TipoOption[] = useMemo(() => {
-    const unique = new Map<string, string>();
-    items.forEach((op) => {
-      if (op.tipoId && !unique.has(op.tipoId)) {
-        unique.set(op.tipoId, op.tipoNombre || op.tipoId);
+  const fetchPage = useCallback(
+    async (currentPage: number, currentSort: SortCriterion[], currentFilters: Record<string, string>) => {
+      setLoading(true);
+      try {
+        const { tipo, ...columnFiltros } = currentFilters;
+        const result = await operacionesClient.obtenerPaginadoConTotal({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          tipoId: tipo || undefined,
+          sort: currentSort,
+          filtros: columnFiltros,
+        });
+        setItems(result.data);
+        setTotalPages(result.totalPages);
+      } catch (err) {
+        console.error('[useOperacionesFiltrado] Error fetching:', err);
+      } finally {
+        setLoading(false);
       }
-    });
-    return [
-      { value: '', label: 'Todos los tipos' },
-      ...Array.from(unique.entries()).map(([value, label]) => ({ value, label })),
-    ];
-  }, [items]);
-
-  const operacionesFiltradas = useMemo(() => {
-    if (!tipoId) return items;
-    return items.filter((op) => op.tipoId === tipoId);
-  }, [tipoId, items]);
-
-  const totalMonto = useMemo(
-    () => operacionesFiltradas.reduce((acc, op) => acc + op.monto, 0),
-    [operacionesFiltradas]
+    },
+    []
   );
+
+  useEffect(() => {
+    void fetchPage(page, sort, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, sort, filters, fetchPage]);
+
+  useEffect(() => {
+    setFiltersLoading(true);
+    Promise.all(SELECT_FILTER_FIELDS.map((campo) => operacionesClient.obtenerValoresUnicos(campo)))
+      .then((results) => {
+        const options: Record<string, { value: string; label: string }[]> = {};
+        SELECT_FILTER_FIELDS.forEach((campo, i) => {
+          options[campo] = results[i].map((v) => ({ value: v, label: v }));
+        });
+        setFilterOptions(options);
+      })
+      .catch((err) => console.error('[useOperacionesFiltrado] Error cargando valores únicos:', err))
+      .finally(() => setFiltersLoading(false));
+  }, []);
+
+  const handleSortChange = useCallback((columnKey: string) => {
+    setSort((prev) => {
+      const idx = prev.findIndex((c) => c.sortBy === columnKey);
+
+      if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
+      if (prev[idx].sortDir === 'asc') {
+        const next = [...prev];
+        next[idx] = { sortBy: columnKey, sortDir: 'desc' };
+        return next;
+      }
+      return prev.filter((c) => c.sortBy !== columnKey);
+    });
+    setPage(1);
+  }, []);
+
+  const handleFilterChange = useCallback((columnKey: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [columnKey]: value }));
+    setPage(1);
+  }, []);
+
+  const [tiposOperacion, setTiposOperacion] = useState<{ id: string; nombre: string }[]>([]);
+
+  useEffect(() => {
+    tipoOperacionClient
+      .obtenerTodos()
+      .then(setTiposOperacion)
+      .catch((err) => console.error('[useOperacionesFiltrado] Error cargando tipos:', err));
+  }, []);
+
+  const tipoOptions: TipoOption[] = useMemo(
+    () => tiposOperacion.map((t) => ({ value: t.id, label: t.nombre })),
+    [tiposOperacion]
+  );
+
+  const totalMonto = useMemo(() => items.reduce((acc, op) => acc + op.monto, 0), [items]);
 
   return {
-    operaciones: operacionesFiltradas,
+    operaciones: items,
     loading,
-    loadingMore,
-    hasMore,
-    loadMore,
-    sucursalId,
-    setSucursalId,
-    tipoId,
-    setTipoId,
-    sucursalOptions,
+    page,
+    totalPages,
+    setPage,
     tipoOptions,
     totalMonto,
+    sort,
+    onSortChange: handleSortChange,
+    filters,
+    onFilterChange: handleFilterChange,
+    filterOptions,
+    filtersLoading,
   };
 }

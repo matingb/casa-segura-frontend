@@ -15,4 +15,6 @@ export interface Producto {
   imagenUrl: string;
   descripcion: string;
   activo: boolean;
+  precioBase: number;
+  codigoQr: string;
 }

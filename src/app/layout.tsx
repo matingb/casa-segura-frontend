@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CasaSegura',
+  title: 'Casa Segura',
   description: 'Gestión de productos y seguridad del hogar',
 };
 

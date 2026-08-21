@@ -1,5 +1,5 @@
-.searchBar {
-  max-width: 360px;
+.toolbar {
+  margin-top: -0.75rem;
   margin-bottom: 1.25rem;
 }
 
@@ -31,4 +31,13 @@
   font-size: 0.6rem;
   text-align: center;
   line-height: 1.1;
+}
+
+.nombreCell {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }

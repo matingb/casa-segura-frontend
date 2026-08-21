@@ -44,6 +44,38 @@ export const cuentaFinancieraClient = {
     return [];
   },
 
+  obtenerTodasFiltradas: async (params?: {
+    sort?: { sortBy: string; sortDir: 'asc' | 'desc' }[];
+    filtros?: Record<string, string>;
+  }): Promise<CuentaFinanciera[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.sort && params.sort.length > 0) {
+      searchParams.set('sortBy', params.sort.map((c) => c.sortBy).join(','));
+      searchParams.set('sortDir', params.sort.map((c) => c.sortDir).join(','));
+    }
+    if (params?.filtros) {
+      for (const [key, value] of Object.entries(params.filtros)) {
+        if (value) searchParams.set(`filtro_${key}`, value);
+      }
+    }
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+
+    const res = await apiFetch(`/api/cuentas-financieras${queryString}`);
+    if (!res.ok) throw new Error('Error al cargar cuentas financieras');
+    const json = await res.json();
+    if (json.status === 'success' && Array.isArray(json.data)) {
+      return json.data.map(mapApiToCuentaFinanciera);
+    }
+    return [];
+  },
+
+  obtenerValoresUnicos: async (campo: string): Promise<string[]> => {
+    const res = await apiFetch(`/api/cuentas-financieras/valores-unicos?campo=${encodeURIComponent(campo)}`);
+    if (!res.ok) throw new Error('Error al cargar valores únicos');
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  },
+
   obtenerPorId: async (id: string): Promise<CuentaFinanciera | null> => {
     const res = await apiFetch(`/api/cuentas-financieras/${id}`);
     if (!res.ok) return null;

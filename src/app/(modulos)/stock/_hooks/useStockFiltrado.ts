@@ -1,53 +1,111 @@
-import { useCallback, useState } from 'react';
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
 import { StockItem } from '../../../../lib/types/Stock';
 import { stockClient } from '../../../../lib/api/stock.client';
-import { useSucursales, SucursalOption } from '../../../../context/SucursalContext';
-import { usePaginatedList } from '../../../../lib/hooks/usePaginatedList';
+import type { SortCriterion } from '../../../../components/ui/Table/Table';
 
-export type { SucursalOption };
+const PAGE_SIZE = 10;
+
+const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const;
 
 interface UseStockFiltradoResult {
-  search: string;
-  setSearch: (valor: string) => void;
-  sucursalId: string;
-  setSucursalId: (id: string) => void;
-  sucursalOptions: SucursalOption[];
   stock: StockItem[];
   loading: boolean;
-  loadingMore: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
+  page: number;
+  totalPages: number;
+  setPage: (page: number) => void;
+  sort: SortCriterion[];
+  onSortChange: (columnKey: string) => void;
+  filters: Record<string, string>;
+  onFilterChange: (columnKey: string, value: string) => void;
+  filterOptions: Record<string, { value: string; label: string }[]>;
+  filtersLoading: boolean;
 }
 
 export function useStockFiltrado(): UseStockFiltradoResult {
-  const [sucursalId, setSucursalId] = useState('');
-  const { sucursalOptions } = useSucursales();
+  const [items, setItems] = useState<StockItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  const fetcher = useCallback(
-    (params: { limit: number; offset: number; search?: string }) =>
-      stockClient.obtenerPaginado({
-        ...params,
-        sucursalId: sucursalId || undefined,
-      }),
-    [sucursalId]
+  const [sort, setSort] = useState<SortCriterion[]>([]);
+
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+  const [filtersLoading, setFiltersLoading] = useState(true);
+
+  const fetchPage = useCallback(
+    async (currentPage: number, currentSort: SortCriterion[], currentFilters: Record<string, string>) => {
+      setLoading(true);
+      try {
+        const result = await stockClient.obtenerPaginadoConTotal({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          sort: currentSort,
+          filtros: currentFilters,
+        });
+        setItems(result.data);
+        setTotalPages(result.totalPages);
+      } catch (err) {
+        console.error('[useStockFiltrado] Error fetching:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
   );
 
-  const { items, search, setSearch, loading, loadingMore, hasMore, loadMore } = usePaginatedList<StockItem>({
-    fetcher,
-    extraParams: { sucursalId },
-  });
+  useEffect(() => {
+    void fetchPage(page, sort, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, sort, filters, fetchPage]);
+
+  useEffect(() => {
+    setFiltersLoading(true);
+    Promise.all(SELECT_FILTER_FIELDS.map((campo) => stockClient.obtenerValoresUnicos(campo)))
+      .then((results) => {
+        const options: Record<string, { value: string; label: string }[]> = {};
+        SELECT_FILTER_FIELDS.forEach((campo, i) => {
+          options[campo] = results[i].map((v) => ({ value: v, label: v }));
+        });
+        setFilterOptions(options);
+      })
+      .catch((err) => console.error('[useStockFiltrado] Error cargando valores únicos:', err))
+      .finally(() => setFiltersLoading(false));
+  }, []);
+
+  const handleSortChange = useCallback((columnKey: string) => {
+    setSort((prev) => {
+      const idx = prev.findIndex((c) => c.sortBy === columnKey);
+
+      if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
+      if (prev[idx].sortDir === 'asc') {
+        const next = [...prev];
+        next[idx] = { sortBy: columnKey, sortDir: 'desc' };
+        return next;
+      }
+      return prev.filter((c) => c.sortBy !== columnKey);
+    });
+    setPage(1);
+  }, []);
+
+  const handleFilterChange = useCallback((columnKey: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [columnKey]: value }));
+    setPage(1);
+  }, []);
 
   return {
-    search,
-    setSearch,
-    sucursalId,
-    setSucursalId,
-    sucursalOptions,
     stock: items,
     loading,
-    loadingMore,
-    hasMore,
-    loadMore,
+    page,
+    totalPages,
+    setPage,
+    sort,
+    onSortChange: handleSortChange,
+    filters,
+    onFilterChange: handleFilterChange,
+    filterOptions,
+    filtersLoading,
   };
 }
-
