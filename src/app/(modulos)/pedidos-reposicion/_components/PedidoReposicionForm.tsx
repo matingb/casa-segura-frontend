@@ -6,6 +6,7 @@ import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
+import Combobox from '../../../../components/ui/Combobox/Combobox';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { stockClient } from '../../../../lib/api/stock.client';
 import { proveedorClient, Proveedor } from '../../../../lib/api/proveedor.client';
@@ -35,9 +36,11 @@ export default function PedidoReposicionForm() {
   useEffect(() => {
     if (!sucursalId) {
       setProductos([]);
+      setProductoSucursalId('');
       return;
     }
     setLoadingProductos(true);
+    setProductoSucursalId('');
     stockClient
       .obtenerPaginado({ limit: 200, offset: 0, sucursalId })
       .then((res) => setProductos(res.data))
@@ -66,6 +69,11 @@ export default function PedidoReposicionForm() {
     }
   };
 
+  const productoOptions = productos.map((p) => ({
+    value: p.id,
+    label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre} (disp: ${p.cantidadDisponible})`,
+  }));
+
   return (
     <div className={styles.page}>
       <h1 className={styles.pageTitle}>Nuevo pedido de reposición</h1>
@@ -82,20 +90,21 @@ export default function PedidoReposicionForm() {
               ))}
             </Select>
 
-            <Select
+            <Combobox
               label="Producto"
+              options={productoOptions}
               value={productoSucursalId}
-              onChange={(e) => setProductoSucursalId(e.target.value)}
+              onChange={setProductoSucursalId}
+              placeholder={
+                !sucursalId
+                  ? 'Seleccioná una sucursal primero'
+                  : loadingProductos
+                  ? 'Cargando productos...'
+                  : 'Buscar producto...'
+              }
               disabled={!sucursalId || loadingProductos}
-              required
-            >
-              <option value="">{loadingProductos ? 'Cargando...' : 'Seleccionar producto'}</option>
-              {productos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.codigo ? `[${p.codigo}] ` : ''}{p.nombre} (disp: {p.cantidadDisponible})
-                </option>
-              ))}
-            </Select>
+              loading={loadingProductos}
+            />
 
             <Select label="Proveedor" value={proveedorId} onChange={(e) => setProveedorId(e.target.value)} required>
               <option value="">Seleccionar proveedor</option>

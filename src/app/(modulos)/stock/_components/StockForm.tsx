@@ -6,6 +6,7 @@ import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
+import Combobox from '../../../../components/ui/Combobox/Combobox';
 import Badge from '../../../../components/ui/Badge/Badge';
 import DetailField from '../../../../components/ui/DetailField/DetailField';
 import { StockItem } from '../../../../lib/types/Stock';
@@ -255,20 +256,21 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               <p className={styles.loadingText}>Cargando opciones...</p>
             ) : (
               <div className={styles.grid}>
-                <Select
-                  label="Producto"
-                  name="productoId"
-                  required
-                  value={productoSeleccionadoId}
-                  onChange={(e) => setProductoSeleccionadoId(e.target.value)}
-                >
-                  <option value="">Seleccionar producto</option>
-                  {productos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.codigo ? `[${p.codigo}] ` : ''}{p.nombre}
-                    </option>
-                  ))}
-                </Select>
+                <div>
+                  <input type="hidden" name="productoId" value={productoSeleccionadoId} />
+                  <Combobox
+                    label="Producto"
+                    options={productos.map((p) => ({
+                      value: p.id,
+                      label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre}`,
+                    }))}
+                    value={productoSeleccionadoId}
+                    onChange={setProductoSeleccionadoId}
+                    placeholder="Buscar producto..."
+                    disabled={loadingOptions}
+                    loading={loadingOptions}
+                  />
+                </div>
                 <Select label="Sucursal" name="sucursalId" required>
                   <option value="">Seleccionar sucursal</option>
                   {sucursales.map((s) => (

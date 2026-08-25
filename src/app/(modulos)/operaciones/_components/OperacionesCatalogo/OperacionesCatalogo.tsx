@@ -34,7 +34,6 @@ export default function OperacionesCatalogo() {
     totalPages,
     setPage,
     tipoOptions,
-    totalMonto,
     sort,
     onSortChange,
     filters,
