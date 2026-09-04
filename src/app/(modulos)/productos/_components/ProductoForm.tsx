@@ -11,7 +11,7 @@ import Combobox from '../../../../components/ui/Combobox/Combobox';
 import ImageUploader from '../../../../components/ui/ImageUploader/ImageUploader';
 import Badge from '../../../../components/ui/Badge/Badge';
 import DetailField from '../../../../components/ui/DetailField/DetailField';
-import { Producto } from '../../../../lib/types/Producto';
+import { Producto, UnidadDimension, UnidadPeso } from '../../../../lib/types/Producto';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useProductoDetalle } from '../_hooks/useProductoDetalle';
@@ -54,6 +54,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const [imagenUrl, setImagenUrl] = useState<string | undefined>(undefined);
   const [codigoQr, setCodigoQr] = useState('');
 
+  // Unidades
+  const [unidadAlto, setUnidadAlto] = useState<UnidadDimension>('cm');
+  const [unidadAncho, setUnidadAncho] = useState<UnidadDimension>('cm');
+  const [unidadProfundidad, setUnidadProfundidad] = useState<UnidadDimension>('cm');
+  const [unidadPeso, setUnidadPeso] = useState<UnidadPeso>('kg');
+
   const isEditing = Boolean(producto?.id);
   const formRef = useRef<HTMLFormElement>(null);
   const codigoInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +73,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     entries.push(['imagenUrl', imagenUrl ?? '']);
     entries.push(['subtipoId', subtipoId]);
     entries.push(['codigoQr', codigoQr]);
+    entries.push(['unidadAlto', unidadAlto]);
+    entries.push(['unidadAncho', unidadAncho]);
+    entries.push(['unidadProfundidad', unidadProfundidad]);
+    entries.push(['unidadPeso', unidadPeso]);
     entries.sort(([a], [b]) => a.localeCompare(b));
     return JSON.stringify(entries);
   };
@@ -86,6 +96,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       setSubtipoId(producto.subtipoId ?? '');
       setImagenUrl(producto.imagenUrl);
       setCodigoQr(producto.codigoQr ?? '');
+      setUnidadAlto(producto.unidadAlto ?? 'cm');
+      setUnidadAncho(producto.unidadAncho ?? 'cm');
+      setUnidadProfundidad(producto.unidadProfundidad ?? 'cm');
+      setUnidadPeso(producto.unidadPesoUnitario ?? 'kg');
     }
   }, [producto, getTipoIdDeSubtipo]);
 
@@ -102,30 +116,34 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       checkForChanges();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagenUrl, subtipoId, codigoQr]);
+  }, [imagenUrl, subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
     const body = {
-      codigo:                formData.get('codigo'),
+      codigo:                 formData.get('codigo'),
       codigo_barra_proveedor: formData.get('codigoBarraProveedor'),
-      nombre:                formData.get('nombre'),
-      marca:                 formData.get('marca'),
-      modelo:                formData.get('modelo'),
-      color:                 formData.get('color'),
-      presentacion:          formData.get('presentacion'),
-      subtipo_id:            subtipoId || null,
-      alto:                  formData.get('alto') ? Number(formData.get('alto')) : null,
-      ancho:                 formData.get('ancho') ? Number(formData.get('ancho')) : null,
-      profundidad:           formData.get('profundidad') ? Number(formData.get('profundidad')) : null,
-      peso_unitario:         formData.get('pesoUnitario') ? Number(formData.get('pesoUnitario')) : null,
-      descripcion:           formData.get('descripcion'),
-      activo:                formData.get('activo') === 'true',
-      imagen_url:            imagenUrl ?? null,
-      precio_base:           formData.get('precioBase') ? Number(formData.get('precioBase')) : null,
-      codigo_qr:             codigoQr || null,
+      nombre:                 formData.get('nombre'),
+      marca:                  formData.get('marca'),
+      modelo:                 formData.get('modelo'),
+      color:                  formData.get('color'),
+      presentacion:           formData.get('presentacion'),
+      subtipo_id:             subtipoId || null,
+      alto:                   formData.get('alto') ? Number(formData.get('alto')) : null,
+      unidad_alto:            unidadAlto,
+      ancho:                  formData.get('ancho') ? Number(formData.get('ancho')) : null,
+      unidad_ancho:           unidadAncho,
+      profundidad:            formData.get('profundidad') ? Number(formData.get('profundidad')) : null,
+      unidad_profundidad:     unidadProfundidad,
+      peso_unitario:          formData.get('pesoUnitario') ? Number(formData.get('pesoUnitario')) : null,
+      unidad_peso_unitario:   unidadPeso,
+      descripcion:            formData.get('descripcion'),
+      activo:                 formData.get('activo') === 'true',
+      imagen_url:             imagenUrl ?? null,
+      precio_base:            formData.get('precioBase') ? Number(formData.get('precioBase')) : null,
+      codigo_qr:              codigoQr || null,
     };
 
     try {
@@ -210,10 +228,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             <div className={`${styles.section} ${styles.sectionDetail}`}>
               <h2 className={styles.sectionTitle}>Dimensiones y peso</h2>
               <div className={`${styles.detailGrid} ${styles.detailGridWide}`}>
-                <DetailField label="Alto (cm)">{producto.alto || '—'}</DetailField>
-                <DetailField label="Ancho (cm)">{producto.ancho || '—'}</DetailField>
-                <DetailField label="Profundidad (cm)">{producto.profundidad || '—'}</DetailField>
-                <DetailField label="Peso unitario (kg)">{producto.pesoUnitario || '—'}</DetailField>
+                <DetailField label="Alto">{producto.alto ? `${producto.alto} ${producto.unidadAlto}` : '—'}</DetailField>
+                <DetailField label="Ancho">{producto.ancho ? `${producto.ancho} ${producto.unidadAncho}` : '—'}</DetailField>
+                <DetailField label="Profundidad">{producto.profundidad ? `${producto.profundidad} ${producto.unidadProfundidad}` : '—'}</DetailField>
+                <DetailField label="Peso unitario">{producto.pesoUnitario ? `${producto.pesoUnitario} ${producto.unidadPesoUnitario}` : '—'}</DetailField>
               </div>
             </div>
 
@@ -382,54 +400,101 @@ export default function ProductoForm({ title, producto: productoProp, productoId
 
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Dimensiones y peso</h2>
-            <div className={`${styles.grid} ${styles.gridWide}`}>
-              <Input
-                label="Alto (cm)"
-                name="alto"
-                type="number"
-                step="0.1"
-                defaultValue={producto?.alto}
-                placeholder="Ej: 9.5"
-                tabIndex={11}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
-              <Input
-                label="Ancho (cm)"
-                name="ancho"
-                type="number"
-                step="0.1"
-                defaultValue={producto?.ancho}
-                placeholder="Ej: 9.5"
-                tabIndex={12}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
-              <Input
-                label="Profundidad (cm)"
-                name="profundidad"
-                type="number"
-                step="0.1"
-                defaultValue={producto?.profundidad}
-                placeholder="Ej: 7.2"
-                tabIndex={13}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
-              <Input
-                label="Peso unitario (kg)"
-                name="pesoUnitario"
-                type="number"
-                step="0.01"
-                defaultValue={producto?.pesoUnitario}
-                placeholder="Ej: 0.45"
-                tabIndex={14}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
+            <div className={styles.gridDimensiones}>
+              <div className={styles.inputWithUnit}>
+                <Input
+                  label="Alto"
+                  name="alto"
+                  type="number"
+                  step="0.1"
+                  defaultValue={producto?.alto}
+                  placeholder="Ej: 9.5"
+                  tabIndex={11}
+                  onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+                />
+                <Select
+                  label="Unidad"
+                  value={unidadAlto}
+                  onChange={(e) => setUnidadAlto(e.target.value as UnidadDimension)}
+                  tabIndex={12}
+                >
+                  <option value="mm">mm</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </Select>
+              </div>
+              <div className={styles.inputWithUnit}>
+                <Input
+                  label="Ancho"
+                  name="ancho"
+                  type="number"
+                  step="0.1"
+                  defaultValue={producto?.ancho}
+                  placeholder="Ej: 9.5"
+                  tabIndex={13}
+                  onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+                />
+                <Select
+                  label="Unidad"
+                  value={unidadAncho}
+                  onChange={(e) => setUnidadAncho(e.target.value as UnidadDimension)}
+                  tabIndex={14}
+                >
+                  <option value="mm">mm</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </Select>
+              </div>
+              <div className={styles.inputWithUnit}>
+                <Input
+                  label="Profundidad"
+                  name="profundidad"
+                  type="number"
+                  step="0.1"
+                  defaultValue={producto?.profundidad}
+                  placeholder="Ej: 7.2"
+                  tabIndex={15}
+                  onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+                />
+                <Select
+                  label="Unidad"
+                  value={unidadProfundidad}
+                  onChange={(e) => setUnidadProfundidad(e.target.value as UnidadDimension)}
+                  tabIndex={16}
+                >
+                  <option value="mm">mm</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </Select>
+              </div>
+              <div className={styles.inputWithUnit}>
+                <Input
+                  label="Peso unitario"
+                  name="pesoUnitario"
+                  type="number"
+                  step="0.01"
+                  defaultValue={producto?.pesoUnitario}
+                  placeholder="Ej: 0.45"
+                  tabIndex={17}
+                  onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+                />
+                <Select
+                  label="Unidad"
+                  value={unidadPeso}
+                  onChange={(e) => setUnidadPeso(e.target.value as UnidadPeso)}
+                  tabIndex={18}
+                >
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                </Select>
+              </div>
             </div>
           </div>
 
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Estado y descripción</h2>
             <div className={styles.grid}>
-              <Select label="Estado" name="activo" defaultValue={producto ? String(producto.activo) : 'true'} tabIndex={15}>
+              <Select label="Estado" name="activo" defaultValue={producto ? String(producto.activo) : 'true'} tabIndex={19}>
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
               </Select>
@@ -442,7 +507,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 defaultValue={producto?.descripcion}
                 placeholder="Descripción del producto"
                 rows={3}
-                tabIndex={16}
+                tabIndex={20}
               />
             </div>
           </div>
@@ -479,10 +544,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
           </div>
 
           <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => router.push('/productos')} tabIndex={19}>
+            <Button type="button" variant="secondary" onClick={() => router.push('/productos')} tabIndex={22}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isEditing && !hasChanges} tabIndex={18}>
+            <Button type="submit" variant="primary" disabled={isEditing && !hasChanges} tabIndex={21}>
               Guardar
             </Button>
           </div>

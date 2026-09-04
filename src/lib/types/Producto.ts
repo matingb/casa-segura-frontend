@@ -1,3 +1,6 @@
+export type UnidadDimension = 'mm' | 'cm' | 'm';
+export type UnidadPeso = 'g' | 'kg';
+
 export interface Producto {
   id: string;
   subtipoId: string;
@@ -9,9 +12,13 @@ export interface Producto {
   color: string;
   presentacion: string;
   alto: number;
+  unidadAlto: UnidadDimension;
   ancho: number;
+  unidadAncho: UnidadDimension;
   profundidad: number;
+  unidadProfundidad: UnidadDimension;
   pesoUnitario: number;
+  unidadPesoUnitario: UnidadPeso;
   imagenUrl: string;
   descripcion: string;
   activo: boolean;

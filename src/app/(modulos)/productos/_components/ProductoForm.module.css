@@ -56,6 +56,25 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+.gridDimensiones {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.inputWithUnit {
+  display: grid;
+  grid-template-columns: 1fr 5rem;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.inputWithUnit select {
+  padding: 0 1.6rem 0 0.6rem;
+  background-position: right 0.5rem center;
+  font-weight: 500;
+}
+
 .sectionDetail {
   gap: 0.6rem;
 }
@@ -202,6 +221,12 @@
   padding-top: 0.25rem;
 }
 
+@media (max-width: 1024px) {
+  .gridDimensiones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -224,6 +249,7 @@
 @media (max-width: 640px) {
   .grid,
   .gridWide,
+  .gridDimensiones,
   .detailGrid,
   .detailGridWide {
     grid-template-columns: 1fr;
