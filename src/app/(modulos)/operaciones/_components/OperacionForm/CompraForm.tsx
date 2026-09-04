@@ -98,6 +98,7 @@ export default function CompraForm() {
             onModoRepartoChange={setModoReparto}
             base={totalArs}
             onValidezChange={handleRepartoValidoChange}
+            etiquetaMonto="Monto a pagar ($)"
           />
 
           <div className={styles.actions}>

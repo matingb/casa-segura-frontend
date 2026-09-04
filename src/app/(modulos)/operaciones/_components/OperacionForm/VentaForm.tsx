@@ -101,6 +101,7 @@ export default function VentaForm() {
             onModoRepartoChange={setModoReparto}
             base={baseReparto}
             onValidezChange={handleRepartoValidoChange}
+            etiquetaMonto="Monto a cobrar ($)"
           />
 
           {margenInvalido && (

@@ -27,6 +27,8 @@ interface CuentasEditorProps {
   derivarTotalDeCuentas?: boolean;
   /** Informa al formulario si el reparto no cierra. */
   onValidezChange?: (valido: boolean) => void;
+  /** Etiqueta del importe segun el sentido de la operacion. */
+  etiquetaMonto?: string;
 }
 
 interface FilaCalculada {
@@ -44,6 +46,7 @@ export default function CuentasEditor({
   base = 0,
   derivarTotalDeCuentas = false,
   onValidezChange,
+  etiquetaMonto = 'Monto ($)',
 }: CuentasEditorProps) {
   const [cuentasDisponibles, setCuentasDisponibles] = useState<CuentaFinanciera[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +212,7 @@ export default function CuentasEditor({
               />
             ) : (
               <Input
-                label="Monto a cobrar ($)"
+                label={etiquetaMonto}
                 type="number"
                 step="0.01"
                 min="0"
