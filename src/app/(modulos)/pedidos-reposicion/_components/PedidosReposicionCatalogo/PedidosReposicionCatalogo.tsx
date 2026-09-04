@@ -8,12 +8,14 @@ import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { PedidoReposicion } from '../../../../../lib/types/PedidoReposicion';
-import { usePedidosReposicionFiltrado } from '../../_hooks/usePedidosReposicionFiltrado';
+import { pedidoReposicionClient } from '../../../../../lib/api/pedido-reposicion.client';
+import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import { formatFecha } from '../../../../../lib/utils/formatters';
 import styles from './PedidosReposicionCatalogo.module.css';
 
+const SELECT_FILTER_FIELDS = ['sucursal', 'proveedor', 'estado'] as const;
+
 const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
-  { key: 'producto', label: 'Producto', type: 'text' },
   { key: 'sucursal', label: 'Sucursal' },
   { key: 'proveedor', label: 'Proveedor' },
   { key: 'estado', label: 'Estado' },
@@ -31,18 +33,22 @@ function getEstadoVariant(estado: string): 'success' | 'warning' | 'danger' | 'n
 export default function PedidosReposicionCatalogo() {
   const router = useRouter();
   const {
-    pedidos,
+    items: pedidos,
     loading,
     page,
     totalPages,
     setPage,
+    search,
+    onSearchChange,
     sort,
     onSortChange,
     filters,
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = usePedidosReposicionFiltrado();
+  } = useCatalogoPaginado(pedidoReposicionClient, SELECT_FILTER_FIELDS, {
+    searchField: 'producto',
+  });
 
   const columns: TableColumn<PedidoReposicion>[] = [
     { key: 'fecha', header: 'Fecha', render: (p) => formatFecha(p.fecha), sortable: true },
@@ -79,6 +85,9 @@ export default function PedidosReposicionCatalogo() {
     >
       <div className={styles.toolbar}>
         <FilterBar
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Buscar por producto..."
           fields={FILTER_FIELDS}
           filters={filters}
           onFilterChange={onFilterChange}

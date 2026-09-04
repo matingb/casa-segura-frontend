@@ -36,6 +36,8 @@ export default function OperacionesCatalogo() {
     tipoOptions,
     sort,
     onSortChange,
+    search,
+    onSearchChange,
     filters,
     onFilterChange,
     filterOptions,
@@ -45,7 +47,6 @@ export default function OperacionesCatalogo() {
   const filterFields: FilterField[] = [
     { key: 'tipo', label: 'Tipo', options: tipoOptions },
     { key: 'sucursal', label: 'Sucursal' },
-    { key: 'usuario', label: 'Usuario', type: 'text' },
   ];
 
   const columns: TableColumn<Operacion>[] = [
@@ -121,6 +122,9 @@ export default function OperacionesCatalogo() {
       >
         <div className={styles.toolbar}>
           <FilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            searchPlaceholder="Buscar por usuario..."
             fields={filterFields}
             filters={filters}
             onFilterChange={onFilterChange}

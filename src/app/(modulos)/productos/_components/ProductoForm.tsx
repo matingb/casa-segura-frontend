@@ -15,7 +15,7 @@ import { Producto, UnidadDimension, UnidadPeso } from '../../../../lib/types/Pro
 import { productoClient } from '../../../../lib/api/producto.client';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useProductoDetalle } from '../_hooks/useProductoDetalle';
-import { formatARS } from '../../../../lib/utils/formatters';
+import { formatARS, formatMedida, parseNum } from '../../../../lib/utils/formatters';
 import styles from './ProductoForm.module.css';
 
 interface ProductoFormProps {
@@ -131,18 +131,18 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       color:                  formData.get('color'),
       presentacion:           formData.get('presentacion'),
       subtipo_id:             subtipoId || null,
-      alto:                   formData.get('alto') ? Number(formData.get('alto')) : null,
+      alto:                   parseNum(formData.get('alto')),
       unidad_alto:            unidadAlto,
-      ancho:                  formData.get('ancho') ? Number(formData.get('ancho')) : null,
+      ancho:                  parseNum(formData.get('ancho')),
       unidad_ancho:           unidadAncho,
-      profundidad:            formData.get('profundidad') ? Number(formData.get('profundidad')) : null,
+      profundidad:            parseNum(formData.get('profundidad')),
       unidad_profundidad:     unidadProfundidad,
-      peso_unitario:          formData.get('pesoUnitario') ? Number(formData.get('pesoUnitario')) : null,
+      peso_unitario:          parseNum(formData.get('pesoUnitario')),
       unidad_peso_unitario:   unidadPeso,
       descripcion:            formData.get('descripcion'),
       activo:                 formData.get('activo') === 'true',
       imagen_url:             imagenUrl ?? null,
-      precio_base:            formData.get('precioBase') ? Number(formData.get('precioBase')) : null,
+      precio_base:            parseNum(formData.get('precioBase'), 2),
       codigo_qr:              codigoQr || null,
     };
 
@@ -228,10 +228,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             <div className={`${styles.section} ${styles.sectionDetail}`}>
               <h2 className={styles.sectionTitle}>Dimensiones y peso</h2>
               <div className={`${styles.detailGrid} ${styles.detailGridWide}`}>
-                <DetailField label="Alto">{producto.alto ? `${producto.alto} ${producto.unidadAlto}` : '—'}</DetailField>
-                <DetailField label="Ancho">{producto.ancho ? `${producto.ancho} ${producto.unidadAncho}` : '—'}</DetailField>
-                <DetailField label="Profundidad">{producto.profundidad ? `${producto.profundidad} ${producto.unidadProfundidad}` : '—'}</DetailField>
-                <DetailField label="Peso unitario">{producto.pesoUnitario ? `${producto.pesoUnitario} ${producto.unidadPesoUnitario}` : '—'}</DetailField>
+                <DetailField label="Alto">{formatMedida(producto.alto, producto.unidadAlto)}</DetailField>
+                <DetailField label="Ancho">{formatMedida(producto.ancho, producto.unidadAncho)}</DetailField>
+                <DetailField label="Profundidad">{formatMedida(producto.profundidad, producto.unidadProfundidad)}</DetailField>
+                <DetailField label="Peso unitario">{formatMedida(producto.pesoUnitario, producto.unidadPesoUnitario)}</DetailField>
               </div>
             </div>
 
@@ -406,9 +406,9 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   label="Alto"
                   name="alto"
                   type="number"
-                  step="0.1"
-                  defaultValue={producto?.alto}
-                  placeholder="Ej: 9.5"
+                  step="0.01"
+                  defaultValue={producto?.alto ? Number(producto.alto).toFixed(2) : undefined}
+                  placeholder="Ej: 9.50"
                   tabIndex={11}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
                 />
@@ -428,9 +428,9 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   label="Ancho"
                   name="ancho"
                   type="number"
-                  step="0.1"
-                  defaultValue={producto?.ancho}
-                  placeholder="Ej: 9.5"
+                  step="0.01"
+                  defaultValue={producto?.ancho ? Number(producto.ancho).toFixed(2) : undefined}
+                  placeholder="Ej: 9.50"
                   tabIndex={13}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
                 />
@@ -450,9 +450,9 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   label="Profundidad"
                   name="profundidad"
                   type="number"
-                  step="0.1"
-                  defaultValue={producto?.profundidad}
-                  placeholder="Ej: 7.2"
+                  step="0.01"
+                  defaultValue={producto?.profundidad ? Number(producto.profundidad).toFixed(2) : undefined}
+                  placeholder="Ej: 7.20"
                   tabIndex={15}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
                 />
@@ -473,7 +473,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   name="pesoUnitario"
                   type="number"
                   step="0.01"
-                  defaultValue={producto?.pesoUnitario}
+                  defaultValue={producto?.pesoUnitario ? Number(producto.pesoUnitario).toFixed(2) : undefined}
                   placeholder="Ej: 0.45"
                   tabIndex={17}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}

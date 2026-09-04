@@ -11,13 +11,14 @@ import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { Producto } from '../../../../../lib/types/Producto';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
-import { useProductosFiltrados } from '../../_hooks/useProductosFiltrados';
+import { productoClient } from '../../../../../lib/api/producto.client';
+import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import { formatARS } from '../../../../../lib/utils/formatters';
 import styles from './ProductosCatalogo.module.css';
 
+const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'estado'] as const;
+
 const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
-  { key: 'codigo', label: 'Código', type: 'text' },
-  { key: 'nombre', label: 'Nombre', type: 'text' },
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
   { key: 'subtipo', label: 'Subtipo' },
@@ -33,13 +34,15 @@ export default function ProductosCatalogo() {
     page,
     totalPages,
     setPage,
+    search,
+    onSearchChange,
     sort,
     onSortChange,
     filters,
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useProductosFiltrados();
+  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS);
 
   const columns: TableColumn<Producto>[] = [
     {
@@ -123,6 +126,9 @@ export default function ProductosCatalogo() {
     >
       <div className={styles.toolbar}>
         <FilterBar
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Buscar por código o nombre..."
           fields={FILTER_FIELDS}
           filters={filters}
           onFilterChange={onFilterChange}

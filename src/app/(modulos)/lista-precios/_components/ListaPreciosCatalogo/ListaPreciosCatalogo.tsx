@@ -18,8 +18,6 @@ import styles from './ListaPreciosCatalogo.module.css';
 
 const FILTER_FIELDS: FilterField[] = [
   { key: 'sucursal', label: 'Sucursal', required: true },
-  { key: 'codigo', label: 'Código', type: 'text' },
-  { key: 'nombre', label: 'Nombre', type: 'text' },
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
   { key: 'subtipo', label: 'Subtipo' },
@@ -37,6 +35,8 @@ export default function ListaPreciosCatalogo() {
     sucursalNombre,
     sort,
     onSortChange,
+    search,
+    onSearchChange,
     filters,
     onFilterChange,
     filterOptions,
@@ -132,6 +132,9 @@ export default function ListaPreciosCatalogo() {
     >
       <div className={styles.toolbar}>
         <FilterBar
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Buscar por código o nombre..."
           fields={FILTER_FIELDS}
           filters={filters}
           onFilterChange={onFilterChange}

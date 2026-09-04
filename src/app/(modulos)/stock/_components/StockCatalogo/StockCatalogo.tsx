@@ -11,12 +11,13 @@ import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
-import { useStockFiltrado } from '../../_hooks/useStockFiltrado';
+import { stockClient } from '../../../../../lib/api/stock.client';
+import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import styles from './StockCatalogo.module.css';
 
+const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const;
+
 const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
-  { key: 'codigo', label: 'Código', type: 'text' },
-  { key: 'nombre', label: 'Nombre', type: 'text' },
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
   { key: 'subtipo', label: 'Subtipo' },
@@ -34,18 +35,20 @@ export default function StockCatalogo() {
   const router = useRouter();
   const { getSubtipoNombre } = useClasificacion();
   const {
-    stock,
+    items: stock,
     loading,
     page,
     totalPages,
     setPage,
+    search,
+    onSearchChange,
     sort,
     onSortChange,
     filters,
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useStockFiltrado();
+  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS);
 
   const columns: TableColumn<StockItem>[] = [
     {
@@ -154,6 +157,9 @@ export default function StockCatalogo() {
     >
       <div className={styles.toolbar}>
         <FilterBar
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Buscar por código o nombre..."
           fields={FILTER_FIELDS}
           filters={filters}
           onFilterChange={onFilterChange}

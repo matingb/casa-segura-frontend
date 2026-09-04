@@ -239,4 +239,29 @@ describe('useOperacionesFiltrado', () => {
       { value: 'Sucursal Norte', label: 'Sucursal Norte' },
     ]);
   });
+
+  it('debería filtrar por texto de búsqueda (usuario) usando onSearchChange y reiniciar a página 1', async () => {
+    const mockFiltrado = { data: [mockOperaciones[0]], page: 1, totalPages: 1, total: 1 };
+    (operacionesClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockOperaciones, page: 1, totalPages: 1, total: 2 })
+      .mockResolvedValueOnce(mockFiltrado);
+
+    const { result } = renderHook(() => useOperacionesFiltrado());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSearchChange('Juan Perez');
+      await Promise.resolve();
+    });
+
+    expect(operacionesClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filtros: { usuario: 'Juan Perez' }, page: 1 })
+    );
+    expect(result.current.search).toBe('Juan Perez');
+    expect(result.current.operaciones).toHaveLength(1);
+    expect(result.current.operaciones[0].usuarioNombre).toBe('Juan Perez');
+  });
 });

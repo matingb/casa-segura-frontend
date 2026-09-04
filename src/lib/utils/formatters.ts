@@ -33,3 +33,13 @@ export function formatUSD(value: number): string {
 export function formatPorcentaje(valor: number): string {
   return `${valor.toFixed(2)}%`;
 }
+
+export function formatMedida(value: number | undefined | null, unidad: string): string {
+  return value != null && Number(value) !== 0 ? `${Number(value).toFixed(2)} ${unidad}` : '—';
+}
+
+export function parseNum(raw: FormDataEntryValue | null, decimals = 2): number | null {
+  if (!raw || raw === '') return null;
+  const factor = Math.pow(10, decimals);
+  return Math.round(Number(raw) * factor) / factor;
+}

@@ -12,10 +12,7 @@ import { useCuentasFinancieras } from '../../_hooks/useCuentasFinancieras';
 import { formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './CuentasCatalogo.module.css';
 
-const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
-  { key: 'nombre', label: 'Nombre', type: 'text' },
-];
-
+const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [];
 
 export default function CuentasCatalogo() {
   const router = useRouter();
@@ -23,6 +20,8 @@ export default function CuentasCatalogo() {
     cuentas,
     isLoading,
     totalSaldoActual,
+    search,
+    onSearchChange,
     sort,
     onSortChange,
     filters,
@@ -147,6 +146,9 @@ export default function CuentasCatalogo() {
       >
         <div className={styles.toolbar}>
           <FilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            searchPlaceholder="Buscar por nombre..."
             fields={FILTER_FIELDS}
             filters={filters}
             onFilterChange={onFilterChange}

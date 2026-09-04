@@ -21,6 +21,17 @@ export interface SortCriterion {
   sortDir: SortDir;
 }
 
+export function toggleSortCriterion(prev: SortCriterion[], columnKey: string): SortCriterion[] {
+  const idx = prev.findIndex((c) => c.sortBy === columnKey);
+  if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
+  if (prev[idx].sortDir === 'asc') {
+    const next = [...prev];
+    next[idx] = { sortBy: columnKey, sortDir: 'desc' };
+    return next;
+  }
+  return prev.filter((c) => c.sortBy !== columnKey);
+}
+
 interface TableProps<T> {
   columns: TableColumn<T>[];
   data: T[];

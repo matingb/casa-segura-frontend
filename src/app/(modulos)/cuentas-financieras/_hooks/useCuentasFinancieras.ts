@@ -1,14 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CuentaFinanciera } from '../../../../lib/types/CuentaFinanciera';
 import { cuentaFinancieraClient } from '../../../../lib/api/cuenta-financiera.client';
+import { useTableQuery } from '../../../../lib/hooks/useTableQuery';
 import type { SortCriterion } from '../../../../components/ui/Table/Table';
 
 interface UseCuentasFinancierasResult {
   cuentas: CuentaFinanciera[];
   isLoading: boolean;
   totalSaldoActual: number;
+  search: string;
+  onSearchChange: (value: string) => void;
   sort: SortCriterion[];
   onSortChange: (columnKey: string) => void;
   filters: Record<string, string>;
@@ -19,48 +22,32 @@ export function useCuentasFinancieras(): UseCuentasFinancierasResult {
   const [cuentas, setCuentas] = useState<CuentaFinanciera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [sort, setSort] = useState<SortCriterion[]>([]);
-  const [filters, setFilters] = useState<Record<string, string>>({});
-
-  const fetchCuentas = useCallback(
-    async (currentSort: SortCriterion[], currentFilters: Record<string, string>) => {
-      setIsLoading(true);
-      try {
-        const result = await cuentaFinancieraClient.obtenerTodasFiltradas({
-          sort: currentSort,
-          filtros: currentFilters,
-        });
-        setCuentas(result);
-      } catch (err) {
-        console.error('[useCuentasFinancieras] Error cargando cuentas:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
+  const { sort, onSortChange, search, onSearchChange, filters, onFilterChange } = useTableQuery();
 
   useEffect(() => {
-    void fetchCuentas(sort, filters);
-  }, [sort, filters, fetchCuentas]);
+    let active = true;
+    setIsLoading(true);
 
-  const handleSortChange = useCallback((columnKey: string) => {
-    setSort((prev) => {
-      const idx = prev.findIndex((c) => c.sortBy === columnKey);
+    void cuentaFinancieraClient
+      .obtenerTodasFiltradas({
+        sort,
+        filtros: {
+          ...filters,
+          ...(search ? { nombre: search } : {}),
+        },
+      })
+      .then((result) => {
+        if (active) setCuentas(result);
+      })
+      .catch((err) => console.error('[useCuentasFinancieras] Error cargando cuentas:', err))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
-      if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
-      if (prev[idx].sortDir === 'asc') {
-        const next = [...prev];
-        next[idx] = { sortBy: columnKey, sortDir: 'desc' };
-        return next;
-      }
-      return prev.filter((c) => c.sortBy !== columnKey);
-    });
-  }, []);
-
-  const handleFilterChange = useCallback((columnKey: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [columnKey]: value }));
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [sort, filters, search]);
 
   const totalSaldoActual = useMemo(
     () => cuentas.reduce((sum, c) => sum + c.saldoActual, 0),
@@ -71,9 +58,11 @@ export function useCuentasFinancieras(): UseCuentasFinancierasResult {
     cuentas,
     isLoading,
     totalSaldoActual,
+    search,
+    onSearchChange,
     sort,
-    onSortChange: handleSortChange,
+    onSortChange,
     filters,
-    onFilterChange: handleFilterChange,
+    onFilterChange,
   };
 }

@@ -1,8 +1,13 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useStockFiltrado } from './useStockFiltrado';
+import { useCatalogoPaginado } from '../../../../lib/hooks/useTableQuery';
 import { stockClient } from '../../../../lib/api/stock.client';
 import { StockItem } from '../../../../lib/types/Stock';
+
+const useStockFiltrado = () => {
+  const t = useCatalogoPaginado(stockClient, ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const);
+  return { ...t, stock: t.items };
+};
 
 vi.mock('../../../../lib/api/stock.client', () => ({
   stockClient: {
@@ -229,5 +234,29 @@ describe('Filtro de Stock (useStockFiltrado)', () => {
       { value: 'DeWalt', label: 'DeWalt' },
       { value: 'Stanley', label: 'Stanley' },
     ]);
+  });
+
+  it('debería filtrar por texto de búsqueda genérica (código o nombre) y reiniciar a página 1', async () => {
+    const mockFiltrado = { data: [mockStock[0]], page: 1, totalPages: 1, total: 1 };
+    (stockClient.obtenerPaginadoConTotal as any)
+      .mockResolvedValueOnce({ data: mockStock, page: 1, totalPages: 1, total: 2 })
+      .mockResolvedValueOnce(mockFiltrado);
+
+    const { result } = renderHook(() => useStockFiltrado());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.onSearchChange('Taladro');
+      await Promise.resolve();
+    });
+
+    expect(stockClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'Taladro', page: 1 })
+    );
+    expect(result.current.search).toBe('Taladro');
+    expect(result.current.stock).toHaveLength(1);
   });
 });

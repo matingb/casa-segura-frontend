@@ -9,23 +9,84 @@ export interface FilterField {
   key: string;
   label: string;
   type?: 'text' | 'select';
-  /** Opciones fijas para un select (ej. un catálogo aparte). Si no se pasa, se usan las de `filterOptions[key]`. */
   options?: ComboboxOption[];
-  /** Placeholder del select cuando no hay valor elegido. Default: "Todos". */
   placeholder?: string;
-  /**
-   * Campo obligatorio: siempre tiene un valor elegido. No genera chip removible
-   * ni se borra con "Limpiar filtros" (ej. la sucursal en Lista de Precios).
-   */
   required?: boolean;
 }
 
 interface FilterBarProps {
+  search?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
   fields: FilterField[];
   filters: Record<string, string>;
   onFilterChange: (columnKey: string, value: string) => void;
   filterOptions?: Record<string, ComboboxOption[]>;
   loading?: boolean;
+}
+
+function useDebouncedDraft(value: string, onChange: (val: string) => void, delay = 300) {
+  const [draft, setDraft] = useState(value);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleChange = (next: string) => {
+    setDraft(next);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange(next), delay);
+  };
+
+  const handleClear = () => {
+    setDraft('');
+    if (timerRef.current) clearTimeout(timerRef.current);
+    onChange('');
+  };
+
+  return { draft, handleChange, handleClear };
+}
+
+function MainSearchInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const { draft, handleChange, handleClear } = useDebouncedDraft(value, onChange);
+
+  return (
+    <div className={styles.searchWrapper}>
+      <Search size={15} className={styles.searchIcon} />
+      <input
+        type="text"
+        className={styles.searchInput}
+        placeholder={placeholder ?? 'Buscar por código o nombre...'}
+        value={draft}
+        onChange={(e) => handleChange(e.target.value)}
+      />
+      {draft && (
+        <button
+          type="button"
+          className={styles.clearSearchButton}
+          onClick={handleClear}
+          aria-label="Borrar búsqueda"
+        >
+          <X size={13} />
+        </button>
+      )}
+    </div>
+  );
 }
 
 function TextFilterInput({
@@ -39,12 +100,7 @@ function TextFilterInput({
   value: string;
   onFilterChange: (columnKey: string, value: string) => void;
 }) {
-  const [draft, setDraft] = useState(value);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
+  const { draft, handleChange } = useDebouncedDraft(value, (val) => onFilterChange(fieldKey, val));
 
   return (
     <div className={styles.textFilterGroup}>
@@ -56,22 +112,26 @@ function TextFilterInput({
           className={styles.textInput}
           placeholder={`Buscar ${label.toLowerCase()}...`}
           value={draft}
-          onChange={(e) => {
-            const next = e.target.value;
-            setDraft(next);
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-            debounceRef.current = setTimeout(() => onFilterChange(fieldKey, next), 300);
-          }}
+          onChange={(e) => handleChange(e.target.value)}
         />
       </div>
     </div>
   );
 }
 
-export default function FilterBar({ fields, filters, onFilterChange, filterOptions, loading }: FilterBarProps) {
+export default function FilterBar({
+  search = '',
+  onSearchChange,
+  searchPlaceholder,
+  fields,
+  filters,
+  onFilterChange,
+  filterOptions,
+  loading,
+}: FilterBarProps) {
   const [open, setOpen] = useState(false);
 
-  if (fields.length === 0) return null;
+  if (fields.length === 0 && !onSearchChange) return null;
 
   const activeChips = fields
     .map((field) => {
@@ -87,20 +147,33 @@ export default function FilterBar({ fields, filters, onFilterChange, filterOptio
 
   const clearAll = () => {
     activeChips.forEach((entry) => onFilterChange(entry.field.key, ''));
+    if (onSearchChange && search) {
+      onSearchChange('');
+    }
   };
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
-        <button
-          type="button"
-          className={`${styles.toggleButton} ${open ? styles.toggleButtonActive : ''}`}
-          onClick={() => setOpen((o) => !o)}
-        >
-          <SlidersHorizontal size={15} />
-          Filtros
-          {activeChips.length > 0 && <span className={styles.countBadge}>{activeChips.length}</span>}
-        </button>
+        {onSearchChange && (
+          <MainSearchInput
+            value={search}
+            onChange={onSearchChange}
+            placeholder={searchPlaceholder}
+          />
+        )}
+
+        {fields.length > 0 && (
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${open ? styles.toggleButtonActive : ''}`}
+            onClick={() => setOpen((o) => !o)}
+          >
+            <SlidersHorizontal size={15} />
+            Filtros
+            {activeChips.length > 0 && <span className={styles.countBadge}>{activeChips.length}</span>}
+          </button>
+        )}
 
         {activeChips.length > 0 && (
           <div className={styles.chips}>
@@ -123,7 +196,7 @@ export default function FilterBar({ fields, filters, onFilterChange, filterOptio
         )}
       </div>
 
-      {open && (
+      {open && fields.length > 0 && (
         <div className={styles.panel}>
           {fields.map((field) =>
             field.type === 'text' ? (

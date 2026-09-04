@@ -1,139 +1,47 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Operacion } from '../../../../lib/types/Operacion';
+import { useEffect, useMemo, useState } from 'react';
 import { operacionesClient } from '../../../../lib/api/operaciones.client';
 import { tipoOperacionClient } from '../../../../lib/api/tipo-operacion.client';
-import type { SortCriterion } from '../../../../components/ui/Table/Table';
+import { useCatalogoPaginado } from '../../../../lib/hooks/useTableQuery';
 
 export interface TipoOption {
   value: string;
   label: string;
 }
 
-const PAGE_SIZE = 10;
-
 const SELECT_FILTER_FIELDS = ['sucursal'] as const;
 
-interface UseOperacionesFiltradoResult {
-  operaciones: Operacion[];
-  loading: boolean;
-  page: number;
-  totalPages: number;
-  setPage: (page: number) => void;
-  tipoOptions: TipoOption[];
-  totalMonto: number;
-  sort: SortCriterion[];
-  onSortChange: (columnKey: string) => void;
-  filters: Record<string, string>;
-  onFilterChange: (columnKey: string, value: string) => void;
-  filterOptions: Record<string, { value: string; label: string }[]>;
-  filtersLoading: boolean;
-}
-
-export function useOperacionesFiltrado(): UseOperacionesFiltradoResult {
-  const [items, setItems] = useState<Operacion[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-
-  const [sort, setSort] = useState<SortCriterion[]>([]);
-
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
-  const [filtersLoading, setFiltersLoading] = useState(true);
-
-  const fetchPage = useCallback(
-    async (currentPage: number, currentSort: SortCriterion[], currentFilters: Record<string, string>) => {
-      setLoading(true);
-      try {
-        const { tipo, ...columnFiltros } = currentFilters;
-        const result = await operacionesClient.obtenerPaginadoConTotal({
-          page: currentPage,
-          limit: PAGE_SIZE,
-          tipoId: tipo || undefined,
-          sort: currentSort,
-          filtros: columnFiltros,
-        });
-        setItems(result.data);
-        setTotalPages(result.totalPages);
-      } catch (err) {
-        console.error('[useOperacionesFiltrado] Error fetching:', err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    void fetchPage(page, sort, filters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort, filters, fetchPage]);
-
-  useEffect(() => {
-    setFiltersLoading(true);
-    Promise.all(SELECT_FILTER_FIELDS.map((campo) => operacionesClient.obtenerValoresUnicos(campo)))
-      .then((results) => {
-        const options: Record<string, { value: string; label: string }[]> = {};
-        SELECT_FILTER_FIELDS.forEach((campo, i) => {
-          options[campo] = results[i].map((v) => ({ value: v, label: v }));
-        });
-        setFilterOptions(options);
-      })
-      .catch((err) => console.error('[useOperacionesFiltrado] Error cargando valores únicos:', err))
-      .finally(() => setFiltersLoading(false));
-  }, []);
-
-  const handleSortChange = useCallback((columnKey: string) => {
-    setSort((prev) => {
-      const idx = prev.findIndex((c) => c.sortBy === columnKey);
-
-      if (idx === -1) return [...prev, { sortBy: columnKey, sortDir: 'asc' }];
-      if (prev[idx].sortDir === 'asc') {
-        const next = [...prev];
-        next[idx] = { sortBy: columnKey, sortDir: 'desc' };
-        return next;
-      }
-      return prev.filter((c) => c.sortBy !== columnKey);
-    });
-    setPage(1);
-  }, []);
-
-  const handleFilterChange = useCallback((columnKey: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [columnKey]: value }));
-    setPage(1);
-  }, []);
-
+export function useOperacionesFiltrado() {
   const [tiposOperacion, setTiposOperacion] = useState<{ id: string; nombre: string }[]>([]);
 
   useEffect(() => {
-    tipoOperacionClient
-      .obtenerTodos()
-      .then(setTiposOperacion)
-      .catch((err) => console.error('[useOperacionesFiltrado] Error cargando tipos:', err));
+    tipoOperacionClient.obtenerTodos().then(setTiposOperacion).catch(console.error);
   }, []);
+
+  const table = useCatalogoPaginado(operacionesClient, SELECT_FILTER_FIELDS, {
+    transformParams: ({ page, limit, sort, filtros, search }) => {
+      const { tipo, ...rest } = filtros;
+      return {
+        page,
+        limit,
+        tipoId: tipo || undefined,
+        sort,
+        filtros: { ...rest, ...(search ? { usuario: search } : {}) },
+      };
+    },
+  });
 
   const tipoOptions: TipoOption[] = useMemo(
     () => tiposOperacion.map((t) => ({ value: t.id, label: t.nombre })),
     [tiposOperacion]
   );
-
-  const totalMonto = useMemo(() => items.reduce((acc, op) => acc + op.monto, 0), [items]);
+  const totalMonto = useMemo(() => table.items.reduce((acc, op) => acc + op.monto, 0), [table.items]);
 
   return {
-    operaciones: items,
-    loading,
-    page,
-    totalPages,
-    setPage,
+    ...table,
+    operaciones: table.items,
     tipoOptions,
     totalMonto,
-    sort,
-    onSortChange: handleSortChange,
-    filters,
-    onFilterChange: handleFilterChange,
-    filterOptions,
-    filtersLoading,
   };
 }
