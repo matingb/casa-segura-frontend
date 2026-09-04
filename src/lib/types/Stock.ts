@@ -11,7 +11,8 @@ export interface StockItem {
   modelo: string;
   imagenUrl: string;
   subtipoId: string;
-  precioBase: number;
+  precioBase: number | null;
+  costoReposicionBase?: number | null;
 
   // Datos específicos del stock (mezclados)
   activo: boolean; // Mezcla entre habilitado y producto_activo

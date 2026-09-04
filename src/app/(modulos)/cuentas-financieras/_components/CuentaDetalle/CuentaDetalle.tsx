@@ -8,6 +8,7 @@ import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import { MovimientoCuenta } from '../../../../../lib/types/MovimientoCuenta';
 import { useCuentaDetalle } from '../../_hooks/useCuentaDetalle';
 import { formatFecha, formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
+import { esEgresoMovimiento, montoConSignoMovimiento } from '../../../../../lib/utils/movimientos';
 import styles from './CuentaDetalle.module.css';
 
 interface CuentaDetalleProps {
@@ -46,11 +47,14 @@ export default function CuentaDetalle({ cuentaId }: CuentaDetalleProps) {
     {
       key: 'monto',
       header: 'Monto',
-      render: (m) => (
-        <span className={styles.montoCell}>
-          {formatMonto(m.monto)}
-        </span>
-      ),
+      render: (m) => {
+        const esEgreso = esEgresoMovimiento(m.tipo);
+        return (
+          <span className={`${styles.montoCell} ${esEgreso ? styles.montoEgreso : styles.montoIngreso}`}>
+            {formatMonto(montoConSignoMovimiento(m.monto, m.tipo))}
+          </span>
+        );
+      },
     },
   ];
 

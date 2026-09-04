@@ -52,6 +52,13 @@
   width: 100%;
 }
 
+.version {
+  display: block;
+  color: var(--color-text-inverted-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 /* Mobile: drawer que se superpone al contenido, oculto por defecto */
 @media (max-width: 767px) {
   .sidebar {

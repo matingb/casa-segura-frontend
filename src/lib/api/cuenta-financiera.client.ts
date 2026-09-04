@@ -25,7 +25,7 @@ export function mapApiToMovimientoCuenta(raw: any): MovimientoCuenta {
     montoUsd:           raw.monto_usd !== undefined && raw.monto_usd !== null ? Number(raw.monto_usd) : undefined,
     porcentajeVenta:    raw.porcentaje_venta !== undefined && raw.porcentaje_venta !== null ? Number(raw.porcentaje_venta) : undefined,
     porcentajeExtra:    raw.porcentaje_extra !== undefined && raw.porcentaje_extra !== null ? Number(raw.porcentaje_extra) : undefined,
-    tipo:               raw.tipo_nombre ?? raw.tipo,
+    tipo:               raw.movimiento_tipo ?? raw.tipo_nombre ?? raw.tipo,
     usuarioNombre:      raw.usuario_nombre ?? '',
     sucursalNombre:     raw.sucursal_nombre ?? '',
     comprobante:         raw.comprobante ?? '',

@@ -10,6 +10,18 @@
   gap: 0.5rem;
 }
 
+.exportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .exportActions {
+    justify-content: flex-end;
+  }
+}
+
 /* ─── Tabla ────────────────────────────────────────────────────── */
 .thumbnail {
   width: 48px;

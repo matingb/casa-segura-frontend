@@ -133,6 +133,17 @@
   color: var(--color-text-muted);
 }
 
+.invalidInput {
+  border-color: var(--color-danger) !important;
+}
+
+.validationError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .imageCard {
   display: flex;
   justify-content: center;

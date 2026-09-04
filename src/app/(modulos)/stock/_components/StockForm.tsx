@@ -22,7 +22,8 @@ interface ProductoOption {
   id: string;
   nombre: string;
   codigo: string;
-  precioBase: number;
+  precioBase: number | null;
+  costoReposicionBase?: number | null;
 }
 
 interface StockFormProps {
@@ -43,6 +44,10 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const [productos, setProductos] = useState<ProductoOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(!isEditing);
   const [productoSeleccionadoId, setProductoSeleccionadoId] = useState('');
+  const [costoReposicion, setCostoReposicion] = useState('');
+  const [precioVentaArs, setPrecioVentaArs] = useState('');
+  const [margenMinimo, setMargenMinimo] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isEditing) return;
@@ -51,7 +56,13 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       try {
         const data = await productoClient.obtenerTodos();
         setProductos(
-          data.map((p) => ({ id: p.id, nombre: p.nombre, codigo: p.codigo, precioBase: p.precioBase }))
+          data.map((p) => ({
+            id: p.id,
+            nombre: p.nombre,
+            codigo: p.codigo,
+            precioBase: p.precioBase,
+            costoReposicionBase: p.costoReposicionBase,
+          }))
         );
       } catch (err) {
         console.error('[StockForm] Error cargando opciones:', err);
@@ -64,10 +75,46 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   }, [isEditing]);
 
   const productoSeleccionado = productos.find((p) => p.id === productoSeleccionadoId);
-  const precioBaseReferencia = isEditing ? stockItem?.precioBase : productoSeleccionado?.precioBase;
+
+  useEffect(() => {
+    if (isEditing) {
+      setCostoReposicion(stockItem?.costoReposicion != null ? String(stockItem.costoReposicion) : '');
+      setPrecioVentaArs(stockItem?.precioVentaArs != null ? String(stockItem.precioVentaArs) : '');
+      setMargenMinimo(stockItem?.margenMinimo != null ? String(stockItem.margenMinimo) : '');
+    } else {
+      setCostoReposicion(productoSeleccionado?.costoReposicionBase != null ? String(productoSeleccionado.costoReposicionBase) : '');
+      setPrecioVentaArs(productoSeleccionado?.precioBase != null ? String(productoSeleccionado.precioBase) : '');
+      setMargenMinimo('');
+    }
+    setSubmitError(null);
+  }, [
+    isEditing,
+    stockItem?.id,
+    stockItem?.costoReposicion,
+    stockItem?.precioVentaArs,
+    stockItem?.margenMinimo,
+    productoSeleccionado?.id,
+  ]);
+
+  const numeroDeCampo = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
+  const costo = numeroDeCampo(costoReposicion);
+  const precioVenta = numeroDeCampo(precioVentaArs);
+  const margen = numeroDeCampo(margenMinimo);
+  const hayValorInvalido = [costo, precioVenta, margen].some((valor) => valor !== null && (!Number.isFinite(valor) || valor < 0));
+  const precioMinimo = costo !== null && margen !== null && costo > 0 ? costo * (1 + margen / 100) : null;
+  const margenInvalido = hayValorInvalido || (
+    precioMinimo !== null &&
+    precioVenta !== null &&
+    precioVenta < precioMinimo
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (margenInvalido) {
+      setSubmitError('El precio de venta ARS debe respetar el margen minimo configurado.');
+      return;
+    }
+    setSubmitError(null);
     const formData = new FormData(e.currentTarget);
 
     const parseNum = (key: string) => {
@@ -108,6 +155,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       router.push('/stock');
     } catch (err) {
       console.error('Error al guardar stock:', err);
+      setSubmitError(err instanceof Error ? err.message : 'No se pudo guardar la configuracion de stock.');
     }
   };
 
@@ -183,7 +231,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               <h2 className={styles.sectionTitle}>Precios y costos</h2>
               <div className={styles.detailGrid}>
                 <DetailField label="Precio base (referencia)">
-                  {money(stockItem.precioBase)}
+                  {money(stockItem.precioBase ?? undefined)}
                 </DetailField>
                 <DetailField label="Costo de reposición">
                   {money(stockItem.costoReposicion)}
@@ -287,28 +335,42 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Precios y costos</h2>
             <div className={styles.grid}>
-              {(isEditing || productoSeleccionadoId) && (
+              {/*
                 <div className={styles.readonlyField}>
                   <span className={styles.readonlyLabel}>Precio base (referencia)</span>
                   <span className={styles.readonlyValue}>
                     {precioBaseReferencia ? formatARS(precioBaseReferencia) : '—'}
                   </span>
                 </div>
-              )}
+              */}
               <Input
                 label="Costo de reposición ($)"
                 name="costoReposicion"
                 type="number"
+                min="0"
                 step="0.01"
-                defaultValue={stockItem?.costoReposicion}
+                value={costoReposicion}
+                onChange={(event) => {
+                  setCostoReposicion(event.target.value);
+                  setSubmitError(null);
+                }}
+                aria-invalid={margenInvalido || undefined}
+                className={margenInvalido ? styles.invalidInput : undefined}
                 placeholder="Ej: 15000"
               />
               <Input
                 label="Precio venta ARS ($)"
                 name="precioVentaArs"
                 type="number"
+                min="0"
                 step="0.01"
-                defaultValue={stockItem?.precioVentaArs}
+                value={precioVentaArs}
+                onChange={(event) => {
+                  setPrecioVentaArs(event.target.value);
+                  setSubmitError(null);
+                }}
+                aria-invalid={margenInvalido || undefined}
+                className={margenInvalido ? styles.invalidInput : undefined}
                 placeholder="Ej: 25000"
               />
               <Input
@@ -331,11 +393,26 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 label="Margen mínimo (%)"
                 name="margenMinimo"
                 type="number"
+                min="0"
                 step="0.01"
-                defaultValue={stockItem?.margenMinimo}
+                value={margenMinimo}
+                onChange={(event) => {
+                  setMargenMinimo(event.target.value);
+                  setSubmitError(null);
+                }}
+                aria-invalid={margenInvalido || undefined}
+                className={margenInvalido ? styles.invalidInput : undefined}
                 placeholder="Ej: 30"
               />
             </div>
+            {margenInvalido && (
+              <p className={styles.validationError} role="alert">
+                {precioMinimo !== null
+                  ? `El precio de venta ARS debe ser de al menos $${precioMinimo.toFixed(2)} para respetar el margen minimo de ${margen ?? 0}%.`
+                  : 'Revisa los valores de costo, precio de venta y margen minimo.'}
+              </p>
+            )}
+            {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
           </div>
 
           {/* ── Control de stock ───────────────────────────────────────── */}
@@ -387,7 +464,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             <Button type="button" variant="secondary" onClick={() => router.push('/stock')}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
+            <Button type="submit" variant="primary" disabled={margenInvalido}>
               Guardar
             </Button>
           </div>

@@ -143,6 +143,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       activo:                 formData.get('activo') === 'true',
       imagen_url:             imagenUrl ?? null,
       precio_base:            parseNum(formData.get('precioBase'), 2),
+      costo_reposicion_base:  parseNum(formData.get('costoReposicionBase'), 2),
       codigo_qr:              codigoQr || null,
     };
 
@@ -209,7 +210,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 <DetailField label="Código">{text(producto.codigo)}</DetailField>
                 <DetailField label="Código de barra proveedor">{text(producto.codigoBarraProveedor)}</DetailField>
                 <DetailField label="Nombre">{text(producto.nombre)}</DetailField>
-                <DetailField label="Precio base">{money(producto.precioBase)}</DetailField>
+                <DetailField label="Precio base">
+                  {producto.precioBase != null ? money(producto.precioBase) : 'â€”'}
+                </DetailField>
+                <DetailField label="Costo de reposicion base">
+                  {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : 'â€”'}
+                </DetailField>
               </div>
             </div>
 
@@ -328,6 +334,17 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 step="0.01"
                 defaultValue={producto?.precioBase || undefined}
                 placeholder="Ej: 15000"
+                tabIndex={4}
+                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+              />
+              <Input
+                label="Costo de reposicion base ($)"
+                name="costoReposicionBase"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={producto?.costoReposicionBase ?? undefined}
+                placeholder="Ej: 10000"
                 tabIndex={4}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />

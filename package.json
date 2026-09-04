@@ -10,6 +10,8 @@
     "test": "vitest"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.33.0",
     "next": "16.2.12",
     "qrcode.react": "^4.2.0",

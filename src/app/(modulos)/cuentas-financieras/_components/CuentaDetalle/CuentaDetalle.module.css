@@ -145,6 +145,14 @@
   white-space: nowrap;
 }
 
+.montoIngreso {
+  color: var(--color-success);
+}
+
+.montoEgreso {
+  color: var(--color-danger);
+}
+
 /* ── Loading / Error states ─────────────────────────────── */
 .loadingWrapper {
   display: flex;

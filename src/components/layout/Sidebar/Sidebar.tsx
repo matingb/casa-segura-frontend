@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { appVersion } from '../../../lib/appVersion';
 import styles from './Sidebar.module.css';
 
 interface NavItem {
@@ -44,6 +45,9 @@ export default function Sidebar({ isOpen, onNavigate }: SidebarProps) {
           );
         })}
       </nav>
+      <div className={styles.footer}>
+        <span className={styles.version}>Versión {appVersion}</span>
+      </div>
     </aside>
   );
 }

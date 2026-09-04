@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '../../lib/api';
+import { appVersion } from '../../lib/appVersion';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -57,6 +58,7 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.glassCard}>
         <h1 className={styles.title}>Casa Segura</h1>
+        <p className={styles.version}>Versión {appVersion}</p>
 
         {error && <div className={styles.error}>{error}</div>}
 

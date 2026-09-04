@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileDown, FileSpreadsheet } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
@@ -13,6 +13,7 @@ import { useListaPrecios } from '../../_hooks/useListaPrecios';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
+import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportExcelModal from '../ExportExcelModal/ExportExcelModal';
 import styles from './ListaPreciosCatalogo.module.css';
 
@@ -48,6 +49,10 @@ export default function ListaPreciosCatalogo() {
   const handleConfirmExport = (selectedKeys: string[]) => {
     exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre);
     setShowExportModal(false);
+  };
+
+  const handleExportPdf = () => {
+    exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre);
   };
 
   const columns: TableColumn<StockItem>[] = [
@@ -118,6 +123,7 @@ export default function ListaPreciosCatalogo() {
     <Card
       title="Lista de Precios"
       actions={
+        <div className={styles.exportActions}>
         <Button
           variant="primary"
           className={styles.exportBtn}
@@ -128,6 +134,17 @@ export default function ListaPreciosCatalogo() {
           <FileSpreadsheet size={16} />
           Exportar Excel
         </Button>
+        <Button
+          variant="primary"
+          className={styles.exportBtn}
+          onClick={handleExportPdf}
+          disabled={!canExport}
+          title="Exportar lista a PDF"
+        >
+          <FileDown size={16} />
+          Exportar PDF
+        </Button>
+        </div>
       }
     >
       <div className={styles.toolbar}>

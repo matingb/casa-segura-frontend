@@ -23,7 +23,8 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
     imagenUrl: apiProd.imagen_url ?? '',
     descripcion: apiProd.descripcion ?? '',
     activo: apiProd.activo ?? false,
-    precioBase: apiProd.precio_base ? Number(apiProd.precio_base) : 0,
+    precioBase: apiProd.precio_base != null ? Number(apiProd.precio_base) : null,
+    costoReposicionBase: apiProd.costo_reposicion_base != null ? Number(apiProd.costo_reposicion_base) : null,
     codigoQr: apiProd.codigo_qr ?? '',
   };
 }

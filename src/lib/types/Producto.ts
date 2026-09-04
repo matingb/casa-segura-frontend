@@ -22,6 +22,7 @@ export interface Producto {
   imagenUrl: string;
   descripcion: string;
   activo: boolean;
-  precioBase: number;
+  precioBase: number | null;
+  costoReposicionBase?: number | null;
   codigoQr: string;
 }
