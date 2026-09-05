@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:1bc193c3a714aeace4974895570ccb699aae9ab941af9842df8f4a62623ac605",
+  "claims": [
+    {
+      "id": "claim_1ca04c5b7e424dd18dfbcd2310e02caa",
+      "statement": "`apiUrl` uses a relative path in browser execution, but prefixes paths with `NEXT_PUBLIC_API_URL` (falling back to `http://localhost:8080`) when it is evaluated outside the browser.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/api.ts#L1-L8",
+          "version": "repo-lines-v1:sha256:6cb410d1f49c7958266439a5458b7230ee5ef3b8b76ce15b9213735ec7cc3ff1:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmJjYjNkMmU4NGRiYmI5ZDk1Mzg4NGU0ODFlOGQ1ZDk4YzIwZDM3MjYwZGI4ODg2YzcxMGFkY2JjOGZkNjljOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIyZmFhNTM1YmQyZWEzZDUyZTc0MWVkNDU0NDM1YjdmZTQ5ZTgzNTg2ZTk0M2Q5OGQ4MmJiZmIyNGQxZjVjNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ebd78f781a114c2e965c84a455e00b2f",
+      "statement": "`apiFetch` defaults requests to included credentials and, for a 401 in the browser, replaces the location with `/login` before throwing an expired-session error.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/apiFetch.ts#L6-L20",
+          "version": "repo-lines-v1:sha256:c6f90d06cf50b29d590422b6cc05ef9057679749399ed472af6a72aaea8be7a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiM2FkM2Y2NjE2MzQ3YmU0MzJkNmRhZjAyZDBkY2ZjZmZkNjI3OGQ3YzllYzBkMjMyNDE4YzgxZTY4NjQwZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyYjA5NDEyYjBlMzhjYzNmODI3YWJhODZhODZlZmVkODFjYjFjY2YzZDYyNDliYjBkMDM1YTcxYzBmMzE1YzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_548cd6013cb64a92b3996fff076efa80",
+      "statement": "The product, branch-stock, account, and operation clients map backend snake_case response fields and nullable number values into frontend domain shapes before returning them to application code.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/api/cuenta-financiera.client.ts#L5-L33",
+          "version": "repo-lines-v1:sha256:b2ec39c32b652d062524c7ce37e28145886de985e9dc7c2cd51020499288f616:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiMmZhZTQyMDQ1NzMzZGJiNTEyNTM0MDQ3NjE4NTEzM2VkMGRhYTZkOThiY2M4NzgxZGM3ODQ3MmZlZGI5ODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4ZWIzOWMzMWU4ZDU1NmE3OGJhNDJjNWUwMWY5N2NmNWIwZTFiMWRjODc3YmYxMWViOGZiNzI0ZTQ5YTBhZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNWVlNjczNjkzZmI1ZmJkYTA4NDZkNjQyNWJiZWMxYWYwN2U0NGE2YzAwNDJhZTczN2Q0OTg3YTg5MjA5ZmYifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/operaciones.client.ts#L106-L174",
+          "version": "repo-lines-v1:sha256:d61dc9ced7d1a11aea96cb9ab424bdb3b24914f76a5a7a31ab13a811536ee4a8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkOTQ2NWUzNzM4OWE0ZWQ3Yjc3MzllZTEyM2EyMWUwYWUyNWYxZTg5MDQyZTgwMmEzMzQ5MGMzZDc2ZTIxZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZDE0NjE4MTZjM2M0MjcwNjNlM2Y4YWRjZjM0ODdiOWMzMzc4ZjdmNTU0MTc1YmIzNDMzYzliMmQyYTVhMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0ODkzYjVlNzAzODUwNTIxOTZmNTViMjVkMzA4OGU4MzQ1ZDdiZjQ4MjdkMDQ0OGVlYzRjOGI2OGZiNGE1MDQifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/producto.client.ts#L4-L30",
+          "version": "repo-lines-v1:sha256:b1d0fe29e5db6e3d0e57425c6edf0475189e00850f79230e779cce315f733ebc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3OTkyN2IwYjJlMzNkNzgyNTA3YTM0Y2IwZDA0Y2JhYTVhMjlkODZlZjU5YWE1MjcyNzQyYWRhOGZmZWRkMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzMWI1ZWVmOTJhZmM5OTJlZjdiODA2NzM5OTUyZWYxZTc4YjcyYTg4MzUzMmQwNWVhZGU2MDM3OGQ4Yjk1NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhMjRmMDBlYzQ5NjMzMjFlMzQ5YTQ5OWExNWJjNTNmYWU3YzExY2ExMGEwYzEzZTc0YzI4ODZkNzUwZTM0ZGUifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/stock.client.ts#L4-L30",
+          "version": "repo-lines-v1:sha256:685262537ddc98a4e0f43e47ab6b8af112ee737fb3e97a894db9a37ee567254d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2Y2I1YTY3YzRjZmRhYzU0ZDYzYjA2ZGRiYTdlYjVjMGFjMWVkYWFiMjllMjdmODY2YWIxMWY0NjgxM2QwMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxYWFiZWE4ZTZmMGQxODFjMzgxNDNlYzFhZGJkYTQ1YmEyOTZjYmQ5OTJjMDk4NGU2NzIzNzg1NzdlZTA2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkMjNmMTUyODY0YWRkZjlkYTY3MmUzYzc4MmZkNzE2NzE5YTkyZTAzNzUxZDIyNDI4OTE2ZWYzYWY5ZDA3YTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7248966d166b46d38da959f99868a736",
+      "statement": "The page-and-total list methods for products, stock, and operations serialize optional search/domain filters, sorting, and non-empty field filters, then return mapped data with page metadata defaults.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/api/operaciones.client.ts#L229-L262",
+          "version": "repo-lines-v1:sha256:46b7ce7a2faffe7365b6b8086c2668553ba57d3fee4149fbec53eafc895b2df8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZmNkMjY2ZDM3MGY3MmRiNjg3ODYwMDM3NjMxOTUxOWJlODYyYWFlYjM1NzgyMDcxNmUyNjlkZDk5NTUxNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwYzk0OTg1NTI2YzFjNTdlZjAwYzAwZDNmNGRjOTA2MTU2NzdhMGEzNmE4Yjc5NWRmZjlhZmZkNTBmZTlmNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhODZkZmZiM2Q3NTRlZjUyYWRkMWUyNDFhZWQyN2ZhMTVjY2IwYTFiYzM5ZWUzZDE5NjY4YjlkYTYxZDg3ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4OTkwYzZkNGI2N2FhN2NhOTA1ODhlMjkxM2U5NWRkY2JhOTI1NDYyZTcyNGU2YmM0N2RlZTI3NTgwOWNmNzkifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/producto.client.ts#L75-L106",
+          "version": "repo-lines-v1:sha256:a25b73eb9a7579ea828fabdfda9aa3403cad11ee2144b8141e65bee38addab05:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZmNkMjY2ZDM3MGY3MmRiNjg3ODYwMDM3NjMxOTUxOWJlODYyYWFlYjM1NzgyMDcxNmUyNjlkZDk5NTUxNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwYzk0OTg1NTI2YzFjNTdlZjAwYzAwZDNmNGRjOTA2MTU2NzdhMGEzNmE4Yjc5NWRmZjlhZmZkNTBmZTlmNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhODZkZmZiM2Q3NTRlZjUyYWRkMWUyNDFhZWQyN2ZhMTVjY2IwYTFiYzM5ZWUzZDE5NjY4YjlkYTYxZDg3ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4MWU5MmNmMDdjZTEyZmNlYjVjMGRhMWJiMTBmZTdjYmRkMzUwZjdlNGM0Y2E1ZTRmYjdhMGFkODEyNzQ4YmMifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/stock.client.ts#L77-L110",
+          "version": "repo-lines-v1:sha256:9e788dabc9feaa3621e7e4fb0ecdce9d570320f066fbc8e366b7c7eaa060e876:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZmNkMjY2ZDM3MGY3MmRiNjg3ODYwMDM3NjMxOTUxOWJlODYyYWFlYjM1NzgyMDcxNmUyNjlkZDk5NTUxNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwYzk0OTg1NTI2YzFjNTdlZjAwYzAwZDNmNGRjOTA2MTU2NzdhMGEzNmE4Yjc5NWRmZjlhZmZkNTBmZTlmNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhODZkZmZiM2Q3NTRlZjUyYWRkMWUyNDFhZWQyN2ZhMTVjY2IwYTFiYzM5ZWUzZDE5NjY4YjlkYTYxZDg3ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVkMzQyZWM1ZDhiZjc2ZmRiYWMxZTU3NmRhMGNjOWVjNmU0OWFjYzlmZmVjY2UwZDFkZDBiZWQ5MWE2MjNlMjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b84ef5511be457b8c5f352fa2ad4f1f",
+      "statement": "Operation creation maps a discriminated purchase, sale, transfer, or movement input into a shared snake_case payload plus a variant-specific nested object before posting it to `/api/operaciones`.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/api/operaciones.client.ts#L271-L283",
+          "version": "repo-lines-v1:sha256:423eaec8c3ca993d33492b79e4fb4dc0a3dee7e25c002f7b6c97cb064fa60f40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTcwYTk3MDAxNjY1ZmE2YjdlNjViNjcxM2JjZmE0Y2VlNzk2Y2FhNTU3NDRjN2NkYmIyOWQ0ZDRhNmI1NGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwYzk0OTg1NTI2YzFjNTdlZjAwYzAwZDNmNGRjOTA2MTU2NzdhMGEzNmE4Yjc5NWRmZjlhZmZkNTBmZTlmNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0YTYyNjQyN2NhNTA1ZTMyOGVlZGY4Y2EyNGQwZDljNGMxZmQ2NWRmYmFmZTVkODBhMTliYzI0ODc0YjRiYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhMmYyNWI5OTVlMjQ3NDk2MzNhOTJhMmI2ODJhYThkZTU0YTRhYzc0OWQ3ZjQ3NzZiZGEzNGVjN2U2OGUxNDUifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/operaciones.client.ts#L30-L90",
+          "version": "repo-lines-v1:sha256:b95f62a5e031482c2e8800836f028534b89693c364149c17a2d18e92cad103c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzZTcwYWE4NzczYTYwMjNlMTY4YWYwNjllYTkwOGYzODM0NWRkMjQ1MjVhMTcyZTU4Mjg3NGQ1YTQ3MmU3NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZDE0NjE4MTZjM2M0MjcwNjNlM2Y4YWRjZjM0ODdiOWMzMzc4ZjdmNTU0MTc1YmIzNDMzYzliMmQyYTVhMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNGQ4MDQ5ZmQ5ODQ4N2U2NjkzMDY3MDViYjBjNmEzOWM5ZGZiZDY3ZjFjMDdjYTZlMWQzMzMzODAyZDRjZWQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

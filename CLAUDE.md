@@ -71,3 +71,11 @@ conectando al backend real en paralelo, módulo por módulo. Reglas:
 Trabajá **de a un módulo por vez**. Antes de avanzar al siguiente módulo,
 mostrame lo hecho (o probá el flujo end-to-end contra el backend real) y
 esperá mi confirmación. No integres todos los módulos de una sola vez.
+
+<!-- OPENWIKI:START -->
+
+## OpenWiki
+
+See [AGENTS.md](AGENTS.md) for OpenWiki agent instructions.
+
+<!-- OPENWIKI:END -->

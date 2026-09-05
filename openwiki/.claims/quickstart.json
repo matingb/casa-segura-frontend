@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c71730dbda0bc3397719e742ae518a7b19a7b12c6a4cb39a094de69726e043e4",
+  "claims": [
+    {
+      "id": "claim_0a6e7d6f63814c0e963777e51d35db67",
+      "statement": "The repository provides `dev`, `build`, `start`, `lint`, and `test` scripts for Next.js development/build/serving, ESLint, and Vitest.",
+      "evidence": [
+        {
+          "resource": "repo://package.json#L1-L25",
+          "version": "repo-lines-v1:sha256:934c4532f7f93f6faa22dcec31173202a19c4f5a47923d441031a443781c953e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzZWFlN2U2YTRkM2M3MWJjYzk2MzI4YzUxOWZiYTI5NDFlZTQ4Njk2OGE2ZDYzMjJmYjA4Y2ViNDRlM2VmZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2MzZlYzIyNWVhYTRjZmYyNWVlNGFjNjZhNjUzZjE4MzYwMDU4YTQ0OTE1M2U5YTliZmQwYWI0YTFlZTNlOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzZmVhNTdlODk5ZTViNDJkMjlmYjZkNTlhNzhlNTg1YjE3YmQxNDUyNDc3OWFlMTRlNWQyMjUyYTczNDQ4MzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_74282c4190e942ffa5818ef2894d0d4c",
+      "statement": "The application root redirects to `/productos`.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/page.tsx#L1-L6",
+          "version": "repo-lines-v1:sha256:0890a3addd619d7a1be643ef70639cd331560c5aedb6e322a62423c28094ca03:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGY0ZDYzNzEyZmJiYjBhMTc5ZjQ2ODE0Y2I4OTIzNGEwZTNiOTc5MTFhNGY3ZWEyYWI1MTBjYjI1OTU1MjhiMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2ViNzAyNTc1OTNkYTA2ZjY4MmEzZGRkYTU0YTlkMjYwZDRmYzUxNGY2NDUyMzdmNWNhNzRiMDhmOGRhNjFhNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b820850df2b74f358c29b677ea0c4e17",
+      "statement": "Module routes receive `SucursalProvider` and `AppShell` through the `(modulos)` layout.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/layout.tsx#L1-L12",
+          "version": "repo-lines-v1:sha256:49566bde5db20e61f2320238ada10349181a18aeae2084f6b40e0e6ed216dfe0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4MDhkZmU4NmI4ODM1MGQ2YjRmNWUyYTQyYjNjODlmMjNjNzhmYWE0ZmQwM2E3NjNiZjhmYjRhMzUxNGMyYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYjcwMjU3NTkzZGEwNmY2ODJhM2RkZGE1NGE5ZDI2MGQ0ZmM1MTRmNjQ1MjM3ZjVjYTc0YjA4ZjhkYTYxYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_253ade081bee4e4c82242c238d5efdfc",
+      "statement": "The sidebar's user-facing navigation covers products, branch stock, operations, financial accounts, price lists, and replenishment orders.",
+      "evidence": [
+        {
+          "resource": "repo://src/components/layout/Sidebar/Sidebar.tsx#L8-L53",
+          "version": "repo-lines-v1:sha256:ae4f8b3748a5eb3d99a176d62059c1cc9e900dcf05dc2c2d097684836b318bee:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4NzUyMmQ3OTM1YzZiMzMwMzQxZmJiYzIxY2ViMjgyZDhiNTMyMzE0OWQ5NzM5ZjMwMmU0NjZmNGIyYjA5MzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2ZmNiZjdjYWM4ZWU2NmRhNzcyOWFjMzQ5YjFhYjExNjFlMmIxNzg1M2ZiMDE5NmUyZjY5OWY0OWQzMjM4YTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

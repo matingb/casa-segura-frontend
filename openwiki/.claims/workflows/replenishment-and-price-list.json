@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:82497ddd23f49448a8a00e51908eb6c4ab5b1e11d2c82d933793ae70637f7f74",
+  "claims": [
+    {
+      "id": "claim_3593c623bd9241618b566115d5a1a055",
+      "statement": "The replenishment form reloads a branch-scoped stock list when its branch changes, requires a selected product-sucursal ID, provider, and positive quantity, then returns to the catalog after creation.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/pedidos-reposicion/_components/PedidoReposicionForm.tsx#L17-L75",
+          "version": "repo-lines-v1:sha256:09767c305f49a506a7ac3a9d67736df378f6e0b0bc45bbb8abc5f25f06253bc6:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMDIxNTJmOGRjMDRhMTJkOWU5YzVhYWNjZjg0MTFlNTBmMDU0N2QzMjEzNTkzOTMwYTZhNWIxMjRlOWM4NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxNTYxNjRlZTQ0ODlmZThlMTNhMDIwYWZkOGZkOTY5ZWVlZTc4NjllY2M3ZTkyMzNhYTI1NjA5MGZlNGE3ODIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMjhkMWQwZmJiMmViYzNlMDQzNTU3MGZjNDgzYmM0N2FlMDQxMTE3Njc2YTUxNGJhYWFmZjBlMjk0MTZmYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwNTdiMjQ0M2I2ZTc2NWIwODU2ZDZjNDA4MmUyZmIzNDA5MmZmNDcxYmY2NTQ5Y2YwOGQ1NTkwZmZiZmQyMTIifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/pedidos-reposicion/_components/PedidoReposicionForm.tsx#L77-L139",
+          "version": "repo-lines-v1:sha256:d06d5df4b91c52a111f5eb464569fb18d7853e00f9f93ffaa920923e75f8f1e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiODkxZjAxYjg2OTcyNzdhZTAxMzRjNWQ3MzJjZmFhNzQ2MjdhN2JhMTUxNTQ1OGE5MzIyOWM3MTA5NjE2ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1MmQyYzNiNTM1NWFlNzVlM2MxZWM0NzFhZWQwODAzM2JmZTg0ODc4ZWVjNDdhZGNmOWUyOTcyMmY3YzNlNGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd483e9b6f614758825b39bac89fb3b8",
+      "statement": "The replenishment client maps requests to a product-sucursal ID and serializes creation as `producto_sucursal_id`, `proveedor_id`, and `cantidad`.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/api/pedido-reposicion.client.ts#L4-L20",
+          "version": "repo-lines-v1:sha256:2334cc711e7c31c65eb254308d60242281c4fc512c440d7b89c94f85eee4b8e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1MjIxODkwMWU4NWNmMWVjYTc5NTAwOWQwZmNjN2Q1NzJiNDM1YjFmYjJiYjI4Y2M1NTVhMmI1MTY0ZWEwYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlYmQyMzllNWZmZDljM2IxY2ZiZDQ1Yjc3MzA3Mzc1ZDM3ZjQ3OWQ5ZWFhMWVmZGU1MTI4YWJhMTAwMzJkYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MTcxOTJmYWZlYTA1MWFkNDdhNGI0NzEyZWE1YTI2MTdkYWEzZjUzNDI5Yjg5NTVmOTVjMTRiMmRmMGE4NTQifQ"
+        },
+        {
+          "resource": "repo://src/lib/api/pedido-reposicion.client.ts#L93-L109",
+          "version": "repo-lines-v1:sha256:4a481916199cf95008cd38b44b238513b51617ad91926e88176776e0e68c40df:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMjc4OTQ5YjIyZjI0MTgxOTQwODgyYzUxNWFkZGI1ZDE3OTM4NzhmYTFiOWNmY2FjYjhhMWJlNDgzNjJlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwYzk0OTg1NTI2YzFjNTdlZjAwYzAwZDNmNGRjOTA2MTU2NzdhMGEzNmE4Yjc5NWRmZjlhZmZkNTBmZTlmNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0YTYyNjQyN2NhNTA1ZTMyOGVlZGY4Y2EyNGQwZDljNGMxZmQ2NWRmYmFmZTVkODBhMTliYzI0ODc0YjRiYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmZTExYTcxMmI4YzczYzA5N2U4YTFmMGFjYmE5YzQyMjYxNWMzYjllZTc3ZjdhNzBiMTZhZGYxMTk3MTNlMGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_186aee08d5c1446b801ce9594ced025f",
+      "statement": "The replenishment catalog uses a paginated catalog hook with branch, supplier, and status select filters, product search, and UI-only status badge variants.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/pedidos-reposicion/_components/PedidosReposicionCatalogo/PedidosReposicionCatalogo.tsx#L16-L31",
+          "version": "repo-lines-v1:sha256:45e7ceefc701f6d3995f5ba64434aa35edcb2aa123c4ddc4c1849f74d732d1fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNmYyYmM0ODA1ZDI4NjU2NGFmZDZiY2FkNTc4NWRjNzQ2ZmNlNmU1MDYxMDIxNGY4MzAzZTk1MTI2OTM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZWY1ZTA5MTNiNzQ3NjNlOTBlOWNkY2E2ZjNiMGM2NDBiOGI2MzU3ZTJmYThkYjc4YTJiZmE1Yzc1MjVjNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiYzU0OThiNjJjNTE3ZjRmNTI4ZDkwMjI2NzliNzhlNGI0ZDJkMmFiMjI5ZjRiZjYyZjMwZmZkNGUzYThmNjMifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/pedidos-reposicion/_components/PedidosReposicionCatalogo/PedidosReposicionCatalogo.tsx#L33-L110",
+          "version": "repo-lines-v1:sha256:d763638ec6ec6de713ca8cfe22f6354d96141758c319407b114e4b730fb2c988:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTUyY2JjOTdjMTYxOGIxMzYyZjI3YWJiZjY1MDYwOGVmNGIxNmU0NjA3ZTAzYjMwODU4MGU1MmEzN2JlNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhM2EyMDUxNDc4ZjQwYTkwMDM4MmY0ZjU2MzM5NTlhMjgzZmQzMzJmMWQ1ZGEyYjBjZGY3MjZmZjYwMDk2ODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNjlkMzZmZjkzYjc4ZDc5NzJmODA5NTA4Zjk0ZDQ3ZTMzNDYzYjdlMjhiYzQxZGVjMTFlZDJmZjAxMDdhZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c21c590e6d2845109f5c7ae460f8c614",
+      "statement": "`useListaPrecios` loads stock once, defaults an unset branch filter to the first loaded branch, limits the source set to enabled rows in the selected branch, and filters/sorts/paginates that set client-side.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_hooks/useListaPrecios.ts#L22-L121",
+          "version": "repo-lines-v1:sha256:83e1a89473df0b92c968dd335328581bc4c2c1dcf2362dec806a2df2392efe9a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiOWM1OTQwYmRhZDI4ZDJhZDNlYTM2YTViNThmMjM4ZTUzZWEyNDJiN2ExNWY3ZDA5YjBiOTYzZGY5ZDE0OTJhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1M2ZiOTNlY2NmYWMxMTZmYzdkODhkNzk5NWRkZDkyYjk3YjJhMmQ0OWIzMWQzOTZlNmVhMmIxYWZhZThkODBkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMTBkYmFjNzNmN2JiNjNlZGUxNTNkNDBiYTExODZhOTA3ZmRhYjMyZDUxZGNlOTY0MzE4MTRjMTRjNWU5MGZlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MSwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlMjJmYWE1MzViZDJlYTNkNTJlNzQxZWQ0NTQ0MzViN2ZlNDllODM1ODZlOTQzZDk4ZDgyYmJmYjI0ZDFmNWM1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_52e961b998764911919ce672b16a51e0",
+      "statement": "The price-list component exports the complete filtered item set, requires a branch and at least one item before enabling exports, and passes selected Excel columns through a modal.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_components/ExportExcelModal/ExportExcelModal.tsx#L14-L70",
+          "version": "repo-lines-v1:sha256:35cdff7bac0dd4201de8c7598c23a33662dcc8b4dea2a915643cdae1fbe2417f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljM2I4OWUwMjI0ZTI4NmE5ZDRiN2VjODBhYTdhOWZiZTM1MmNkNzcxODIzMDZjOWZiNDQzMjRmYWIyZjc0NzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhM2EyMDUxNDc4ZjQwYTkwMDM4MmY0ZjU2MzM5NTlhMjgzZmQzMzJmMWQ1ZGEyYjBjZGY3MjZmZjYwMDk2ODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhYWQ5MGJkZDBiYzBlNjhlYmMwNjRkYTdjNmU3MmIwNTM4NzljMDQ0ZWM1YzMyNzM2Y2UxYTljZjVjMzdkNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_components/ListaPreciosCatalogo/ListaPreciosCatalogo.tsx#L120-L195",
+          "version": "repo-lines-v1:sha256:042b20bc411b3a35890129e71a39418c0d818211f90ee7a8881be28205516229:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1MGNmZDJlOWE2YTQ0ODdkNmJjMGJiMjMxYTc1YzRjYjdkMDk2ZTZjYjZlNDVlZjgxZmI2NDc0M2NlY2I4NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiMGQ0MGJiMDM2NTcyNzlhYzAwYjU0Y2I5ZGQwYmJiMDM4OGEwNTIzNzAyNjA4Y2M4NjMzMDViMmQwNWQyMjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmYTFiYzdjNzBiMzI3YjcxNTNhYzZhOWFjM2U1NDUyNmQwMWVjYWZkMDgwMzRiN2IyMjBkOWJjYTM5YTJhZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlMTJlMzBlMmExNGRlZmEwZTgwOTIxZTc0N2JkY2M3YTljY2MyZjIwYzM0NzdhYWJkMmIwNGFhZTM2YWMyNjAifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_components/ListaPreciosCatalogo/ListaPreciosCatalogo.tsx#L27-L56",
+          "version": "repo-lines-v1:sha256:df7edf1d936c0a672811bb59d7fcafa166bcd8dd5303f6661d7e8763bfb04d99:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxYTIzYTVkOWE5N2U1NGE1OWY1M2MzMTczMjU1ZDM2OTcyZDk2ZTc4MDgwZmQ0N2Q0Y2I1YjAwNWE5NGNkMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YTQ3ZjM4NTNiYjJlMmViNTJiODc0NjE0MGQzYjI5M2QwNmQxODkxYzBkYTFjOWU1OGI0NDNjM2U1N2Y4NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyNjFkMWE2MWMwYjY0ZDg4Y2ZjODY5NzhiYWQxNzA4YjMxNzU1ZDYyYWYwZWU3OWVjYTEyMzc1OTYyYTVkODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b860d1ac06e4e72bc300b1978a470bf",
+      "statement": "Excel export uses selected column definitions to create an XLSX workbook locally, while PDF export builds a jsPDF A4 table and saves it after adding total-page footers; the current export-column registry does not include a QR field.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_lib/exportColumns.ts#L1-L36",
+          "version": "repo-lines-v1:sha256:58f5b4928088e305fe25beaa15850e18a4611c4b56652d5a5ec8e7bb5b58ca67:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1YWU5YzBmYjBiNDgwYWI3Y2JhNDc3MmY2MzhjMzdkZWQ1NzNkMjdhNDYzZTYyYTJlMGQ5ODQ3NjE2YmU5ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4YzNiMzRjMDkxMzRmOTc3MGU5OGMzNTBmZjJiNjE2YmRjNjQ0MTgzOWQ2OGJiZjRhYmQyMjkzMTZlN2Y4NzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_lib/exportExcel.ts#L1-L29",
+          "version": "repo-lines-v1:sha256:8f502b6f8705ee9f34f323b0e7736b1438255654f71f15400e462677590802e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YzUwODE3OWU3ZjEzNDhlZDM5YWI4ZDc2MWFjMTcwODg2ZjAxM2RlYjU3NzMyZTk3ZTkzNjlmODg0ZWEzZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/lista-precios/_lib/exportPdf.ts#L16-L87",
+          "version": "repo-lines-v1:sha256:bf75c86242a86577e59fcdc9efcd695357a40c280d3160556b624c60dafcbc54:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNTI5YjVjMGFlNzYxYjkzOThkOWFlZGIzYjkxNTAyYTAwMjNhZTMwODJjMDEwN2MyNTEyMDIwNWU5M2E3MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4ZmEyNDY5MjY2NjdiNjcxOGNiYzE0YTVlNjJlOGU2NDc1NTNhM2VmODA0NzY2NmI2ZThlNmU4ZmM3Y2U1MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

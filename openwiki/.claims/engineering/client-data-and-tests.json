@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a607a7c405d447d08a3da6bab2096cc1752ae7d77c981294f4484d60e533e971",
+  "claims": [
+    {
+      "id": "claim_68db879c4dd74dbea54b7af0ff072a7b",
+      "statement": "`useTableQuery` resets page 1 when sort, filter, or search changes, and its reset method also clears sorting and search while allowing replacement filters.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/hooks/useTableQuery.ts#L22-L63",
+          "version": "repo-lines-v1:sha256:a46f13b9c8085dc94453a5ae354e3850602410c41853338ee9fb74e28840cf9e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxOWEyNWJiOGZhMzhiMmEzYzI3Mzg1YmMyOGNjYzdjYjExYTc5NTY0NTdhZGNiNWY3NTk2YjYxNzMxNTZjYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmNjNhZTJmYjI5MGQ4MTU5OWE2ZGM1YmRjNjFmYjZmYjA3NDNjMGU0MTcxYzYxOTI5MDAxMmU0NTM0N2I2YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlN2JkY2JhZmI1MTRhYWM1OGRjYTkwMDdiZWM5MzQ5MTViYzk4YzkwMWM0ZmViNGViZDAxYTk5Y2Q5YzE5MWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_46082069e90648b4891339fd7e882f47",
+      "statement": "`toggleSortCriterion` cycles a column from absent to ascending to descending to absent while preserving other sort criteria, and the table renders multi-column priority markers.",
+      "evidence": [
+        {
+          "resource": "repo://src/components/ui/Table/Table.tsx#L19-L33",
+          "version": "repo-lines-v1:sha256:ccc107477cbfe4bf1636ff9eba3d31249daa34fa7bb0448e605d735528dbda69:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MmMxNmVkYTg5MThkZDVlNjVkYTc4ZjY4YzhhMmFmYWMzNGVhZTk2ZjdkMzVhZWExMDlmMzczZDYzNTk2MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlOTdlZTc3ZGM4NmU2ZTIwYTgzM2VkMzlhMGEzMTM3Mjg3ODEwOTg3ZWI5NDhlODlhMjgwMjUyZmUwYWY3MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkM2I1YzkwZDc1ZWY2NDBiZWYxY2U5NzBlM2YzNDkwNTUyNTY4ZGEyNmU0YjgzODcyZGQ4MjFlMWU4YWY4MDUifQ"
+        },
+        {
+          "resource": "repo://src/components/ui/Table/Table.tsx#L70-L85",
+          "version": "repo-lines-v1:sha256:49884bb2d62d90c3d0ae55c433162cc271e7bffd1ad79c4ecd3cf3247f7ab565:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NGRiMWMyOGQyNjU3Y2I0YmEzMTI1OGU0ZDY1YjQwMDkzNDQ1ZjIyZDkzYmU5NmI1Y2E1ZDg2MTRjNjc0YmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExYzU2MDU4YzFkZjkxYzM5MzJjOGFlNmI2MWU0YWQ1MzZjOTljMjhlZDBmMTE3YTRmZjlkMTJkOWU4ZWE0YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhYWUwN2U4MDMxMzJmNTAyMWEwYzVkZTAxZjVjMjVkZGU4MjRiYmY1MmNhMjZhNzYwNmFmN2Q0M2YxNjcxMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiYjFhY2ZkZDZlMDFjNjJlNmY5MmM5Y2ZhNmNmNWJkN2I5ODI2MGNiY2ViNGVhZDQyZjgzYTE4MzJhOTEzNmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d00426ff2d454e5fb96431cd406a1d4e",
+      "statement": "`useCatalogoPaginado` concurrently loads unique filter values when available, builds paginated query parameters from shared state, supports a feature `transformParams` hook, and prevents cleaned-up effects from updating state.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/hooks/useTableQuery.ts#L84-L180",
+          "version": "repo-lines-v1:sha256:9f0c9b511f047f2960c29bb6855360ec3bb1cd9e3fff29fe5f882b35d62cfbda:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4Y2JkZDRkNmMyYWU1NzFkOGM5M2Y4ZDY4OTc3MmFmMTVkOTQ3ZDAzYWM1ZWZiOWI5OTIzMGIyNjk4MGFiNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlZmYyMjhmNzkzOWNjM2Q1OWQ3YmZhZTRhNDMzOTFjN2VmZDUwMWFjYTBkNGE0ZDU4MDY3NmZjMmUwNmMwODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_65d0cb5e22cf4e9abdff5bedc9411285",
+      "statement": "The operations filtering hook converts the UI `tipo` filter to `tipoId`, maps free-text search to a `usuario` filter, loads operation types, and derives `totalMonto` from currently loaded items.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_hooks/useOperacionesFiltrado.ts#L13-L46",
+          "version": "repo-lines-v1:sha256:bb097115669fd862c69eb687cb83ea2142843ce6facaa7a609ad666750375610:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZDcwMzhiYzE5NTBkNWRhNjVhZGY1Mjk2YjA0MGFjNDk4NTE3OWM0YTM0ODk0MzFlOTVlYjljZmVlYTNjNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYmFjM2JlOGU3OWYwNjA4NTA1YWVkM2E0NmJiMjhjNjUxMTRlNzU3ZWU3YjRmZGFlMzRkOGIwN2MxOGNkZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0bb4cfb2370245769b090a31935ff142",
+      "statement": "`useClasificacion` loads types and subtypes in parallel and exposes lookup helpers for names, subtype-to-type resolution, and type-filtered subtypes.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/hooks/useClasificacion.ts#L19-L71",
+          "version": "repo-lines-v1:sha256:98859d1f5bfca44efdf14bb89a59b8a21bd9990f590f978300e7e2b6f3b230ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1YmI5MDA0YzUyZDczNjc1YmIxNzIyMDFjZTA5YzIxMGMyZDEzYTZmMjFjMDNlODdkYTMyMTY0MWNkODk4NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0M2Q1ZjBkMzFkYTc1MGZmYjZlODMyYWU3ZmZmODg0NDhjNzY1MDFjODdiMjZhN2E5NDU1Yzg0MjdlNWI4Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48b0cd1d36894928bd5424179a2d7c0d",
+      "statement": "The Vitest configuration uses jsdom, the React plugin, and Testing Library's jest-dom setup; focused tests cover query-state transitions, mocked catalog requests, and account-movement sign behavior.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_hooks/useOperacionesFiltrado.test.ts#L66-L267",
+          "version": "repo-lines-v1:sha256:0951611c77799d4e697874be2536cc9914c6c84e842708fc2b2170e4982497e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYTAxNmI0MmYzMWIyYjIxYTI0YWFmNDcxODk2Yzk1ODkwNmMzMDU4ODg3MmQ2OWUwZTgxMDIxNjM2MWRlM2QwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhM2RkZWY3MjQ3ODZiNGFmNDVhYjdjYWQ4MWQzNzdhZTU0M2JiNzg0MTI5NjU2OGZiNTIyNjk5OGFlYzIxNjM0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4ZjQ4OTcyMGQ1ZDFjOGNlMTc1NzI1YTkyN2UxNmExMTQ1NWU2ODVjNmM3YTJjOWExN2I5OTFjYzJiMjg0YzVkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://src/lib/hooks/useTableQuery.test.ts#L5-L123",
+          "version": "repo-lines-v1:sha256:d2626524766d09046b964c1e498fe2215f4ea1647f9d462f34f6cf7f0f44fcb2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYjVjYjgzNTIxZDYyY2Q2M2E2ODgwYjkxZTM2ZDJkMDAzOGEyODgxYjY3OGI0MWQ2YmQ3MDFhNzgyODE2OTA1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhM2RkZWY3MjQ3ODZiNGFmNDVhYjdjYWQ4MWQzNzdhZTU0M2JiNzg0MTI5NjU2OGZiNTIyNjk5OGFlYzIxNjM0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1OTA1MTNkNGRiZjY2ZWNmODNhMjVkYzJkZjNjZTNkOGYwMGMwOTdlZWY1YWExNWNhZWYyNGQ0YWJlNjg0MmNhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://src/lib/utils/movimientos.test.ts#L1-L15",
+          "version": "repo-lines-v1:sha256:f1e0be615578e6eb27032dcc895cf2578181783b534145dbf7b7e78cafaf5de1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZDVmNzExNjg5ZWU3MjgxNWYxNDJiNDQ1NTczN2FmMGI2MjIxYjM0ODZlYmEwMWQ2NDMxNjA4MjhiYjQ1OTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZGRlZjcyNDc4NmI0YWY0NWFiN2NhZDgxZDM3N2FlNTQzYmI3ODQxMjk2NTY4ZmI1MjI2OTk4YWVjMjE2MzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://vitest.config.ts#L1-L17",
+          "version": "repo-lines-v1:sha256:2f2df3cdd086ad6562a957b8c67f6acc735395bb5f17fc12485955ec5cd18c94:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhOTVjY2RhYWUzODU2MzkyZWFhZTU3MjBlMmNiMTkwZWQyN2JjNzY2MWY1MWZiNDY4Yzg2ZGVlZTQ0YTdkODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZGRlZjcyNDc4NmI0YWY0NWFiN2NhZDgxZDM3N2FlNTQzYmI3ODQxMjk2NTY4ZmI1MjI2OTk4YWVjMjE2MzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://vitest.setup.ts#L1-L1",
+          "version": "repo-lines-v1:sha256:380ea4fdb738a46711fd17c6fb504ef0fd21bfdcf9af1e646ea777b3b8a6720c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgwZWE0ZmRiNzM4YTQ2NzExZmQxN2M2ZmI1MDRlZjBmZDIxYmZkY2Y5YWYxZTY0NmVhNzc3YjNiOGE2NzIwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgwZWE0ZmRiNzM4YTQ2NzExZmQxN2M2ZmI1MDRlZjBmZDIxYmZkY2Y5YWYxZTY0NmVhNzc3YjNiOGE2NzIwYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

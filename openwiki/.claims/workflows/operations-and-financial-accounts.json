@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e1b9ab97f4dd5d3be40d140c1481d917ef5d4d7e8ddf5e4ee239f948e6647a7a",
+  "claims": [
+    {
+      "id": "claim_6a476c6869d14a10883409b08ce55510",
+      "statement": "`OperacionCrearInput` is a union of purchase, sale, transfer, and financial-movement shapes; item lines use `productoSucursalId`, and account entries support percentage or amount allocation.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/types/OperacionCrear.ts#L1-L89",
+          "version": "repo-lines-v1:sha256:0f26028b5149277a5fa16fbb6ba5d53cc7d049e73944cd94255b62e13ea307b0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4YjM1NzgyZGQwMWZhMjlmNWFhNDkzOWZkMTE2M2RhNDMyODI3YThhZjg4YjU0MDI1Y2E1OTY1NWM1ODU4MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNGYwMzU2MTk4MDkyYTgxMDFmMTE3MGIwMDcxMDZhYzIzZDQ5OTNkNjM0ZjljOGE5Y2Q5NDk1MGJmNjNiZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba768d0d927a435c833d15008b7ab2e1",
+      "statement": "The new-operation modal routes to distinct forms for purchase, sale, transfer, and financial movement, and `useOperacionCrear` posts the typed input then navigates to the returned operation detail on success.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/NuevaOperacionModal/NuevaOperacionModal.tsx#L7-L38",
+          "version": "repo-lines-v1:sha256:d5034040a6abec13123b5c77aa3eaca48b5bba52d92ae1d3873593e4c68c30d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZmY5ZDhhYjY0YmE2YWUxNDllMDZjMTdjZDg1Y2FmNWZlODYwYmE4YzRjNDkyNTE1YzE5NjUyYzg0MDNmN2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZGZjN2I2Y2M0NjlhODAwM2VjM2Y4YjAwYWU0NmJlYjY1ZmQ5ODhiMmE4YjM5MmY1NDc4MWVkMDgxMTBlY2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_hooks/useOperacionCrear.ts#L8-L36",
+          "version": "repo-lines-v1:sha256:6b11b11cb3486389ae48ec9d5cf130fd5627468e0b04081aa5f603bccecd4fee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyN2QzZWNjMzI0MGRkNTRlZWI5YmE1MmFiZjZjZDZlNjFmYzQ0N2Y1NDg3MTE5MDhhYTRhNmNhZGIxMzI0N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxNTVjYjllZjg5YTYzNDE1NDExMTliNjlkMGQwOThlZTIxN2YzZjUzM2UyM2IxNjkwNDcwZDdkNzQ4ODJhMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdiMGFlMjc2Mzk2ZWUyY2EzMDcwOGM0YWNkYzc5ZWE2ZDExMTViODRhNjI2MmJhYzA0Y2U0MmY2ZjliMTY3OTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3bbe9881dcfb4170a732dfecd3f00518",
+      "statement": "`ItemsEditor` loads branch-scoped stock via `stockClient.obtenerPaginado` using the selected `sucursalId`, identifies selected rows by `productoSucursalId`, and detects a sale-price margin violation from stock cost and minimum margin.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/ItemsEditor.tsx#L12-L66",
+          "version": "repo-lines-v1:sha256:8e342303df90bc371763bcde518bfa12297a3a7d10cdc1835dad7ed253e03f8a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzZTQxNzQyOGU4ZTgyZWJhOTkzOTE4Y2RjNmQzZmM4MjFkYjY2YTY5MDBhMGQxZTVjM2ZiM2EyNmZiOWU4NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxOWZjNGI2ODc3NTcyOTE5OTY4MWU3ZDkzMzJmMmNhMGU3NmY2NjBkNzJkN2ZjZDliNzkxYzM5MGI3NDAwYTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4YmFmZmQzN2RmMjY1YWIyYjg3NjczZGE4NzUxNzc5NDA1OGZiZDNkNTYwZDIzOTk0N2UyMjYyNGNkMDIxMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAxYWJlNWZiZmNlYjkzMjFmYWVlMWEyZjc0OTI5YmMwMjBkYTNhZDllY2RiZmU3ZWIwZDMwYzVhODExNDRmNzYifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/ItemsEditor.tsx#L93-L149",
+          "version": "repo-lines-v1:sha256:7d1d6267c5b3322525cc72de962bc5346cac019d2c4fea57c65dc426010d4d92:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhMjljZjZkYThkMDJlZWI3ZGIyYjNmOWUzMmNmZmMyZDY1YWVkYWFkNWU5YTM0NWYyMjcwNmUxNzJkNjg1YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhM2EyMDUxNDc4ZjQwYTkwMDM4MmY0ZjU2MzM5NTlhMjgzZmQzMzJmMWQ1ZGEyYjBjZGY3MjZmZjYwMDk2ODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNDQ5MTEwZWQ1NzczMTRlN2RhYTU5MjE5NjczM2Y1NWRkNzdmNjUxNzhmMmNiZDU2MGRiNTk4ODMxZDFmN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ee79fb00b99549daada8ec85372c8a49",
+      "statement": "`CuentasEditor` calculates allocations differently for percentage and amount modes, includes configured account extras, and reports invalid rows, invalid percentage totals, uncovered bases, or non-positive derived movement totals.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/CuentasEditor.tsx#L121-L149",
+          "version": "repo-lines-v1:sha256:b81c494e7bfec157b582989f8090c2c25db4f6acc9c31e69dd1fc41baa15f647:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2MGM1MGRjZmRjN2YwM2IzMGM3N2FmZmNmMzg3M2NlZTU3YzEyNjMzMjcyM2Y5NzdkYjMxMGZmMGRlZDUwYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3MWEzYmRmYzQ4ZmY2YjQ2ZTc2NmViYmI4ODZhNjMxMjJkMjc2ODViM2QzYWY5MzZlN2IwNzVlNzZiOWZlZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzNmMTE4NTQ5NmY4M2I4NmVmYmM4NDhjYzVmYzFiMDgxYjg2YWI4ZGQ2YjRkMGFjOWM3YzU5MDE4MjRhOWMifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/CuentasEditor.tsx#L13-L119",
+          "version": "repo-lines-v1:sha256:385db952bfbf75ddbb5190b478da4df8367587c91acf9dbc76a3a5e7b4500286:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ODhmMzhiYjc3NzVmNjM3Njg5OGU5YWRmMTNhYjdhYzY0MzE1YTQxMzNiZDcwYmMwOTE5NTFkMDZhOGI0ODE2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1ZWMxMDdmMTc3OGU0YzE2NWZiZmYwYmY4YzE3ZTRlMWM3NDM4Mzc1Y2JhMTZmMmI2M2ZmYTZhNjY0MmRlOTVhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5OThiYjQxNTA5MzdjMWI2NDE1ZjIxYTYzNzUzZGVkMjE4ZTExNjA0OGZhMWYwNTJmNGY5NGM1OTE4NDFmNjZjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNmU1MWRiMzAzN2Q4MTU4ODJmMTZhZDljZDIwMzQ0YWU3OTFkNjg2YTNkODJlNDc4Nzk1NWY5YjMzYjk2Yzg3In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_bd52bff24e0d4f3fa850783380d134a3",
+      "statement": "A transfer requires distinct origin/destination branches and only requires account allocation when freight is positive, while a financial movement uses amount allocation and omits its amount from the client payload.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/MovimientoForm.tsx#L20-L44",
+          "version": "repo-lines-v1:sha256:b303203819a309063ef15167385f7f9534f595b1d0a61b2bda0b6ae95a652c65:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMzBmNzZhMzU2ZDQ1MDE5OWU5N2M5NGQ0YWZmMjUxMmUxNjI0M2MzY2QwMWUyNzViZjRjN2NhYTY4OTY4ODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiN2IzMWI5YmVjM2JmMmU0MTU1NTU4ZGYzMTlkNzUxNmZkZmMyM2FmMTBjZDRlMDE3YzZhNTQ1OTU3OWQ5OWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwNTdiMjQ0M2I2ZTc2NWIwODU2ZDZjNDA4MmUyZmIzNDA5MmZmNDcxYmY2NTQ5Y2YwOGQ1NTkwZmZiZmQyMTIifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/operaciones/_components/OperacionForm/TrasladoForm.tsx#L31-L58",
+          "version": "repo-lines-v1:sha256:d2b9575426c3374a603d32370e55ceb79c891e2d336f65c8fc9b7f3dfacdf0d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4MzI3ZTllZmZjMjU3ZjFhZjU0Njk1MTlhY2Y1MTMzZjE0Njg3MzVmMDQ0YTY2OGY5ZThiYzJjOGQ5MTRhZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2NjU0YjhjYmM5MTU2MTRlZWZhZmQ2OTE1M2Y1MzhhYjYzNTZhY2FiYjM5ZGEzNzA3OTU2NjljNzAyNDdmNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwNTdiMjQ0M2I2ZTc2NWIwODU2ZDZjNDA4MmUyZmIzNDA5MmZmNDcxYmY2NTQ5Y2YwOGQ1NTkwZmZiZmQyMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5422d8d31cec40a78f21f5ca3ebdb992",
+      "statement": "Account detail renders movement history, applies a display sign based on movement type, and links a movement with `operacionId` to its operation detail; the account form creates or updates name, initial balance, and extra percentage.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/cuentas-financieras/_components/CuentaDetalle/CuentaDetalle.tsx#L18-L59",
+          "version": "repo-lines-v1:sha256:ec4415e7d726ac8f3354f8f6879fedbe2c5b7e1dcfbd7ef10c0a54e1f4032a4f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiOTc0NTY4MDdiMGVhNzk0MjRjMjA2NDA0Nzc4ZTUyZGU3MmMwMGNkODczNmE0YWQzMWQ2YTBjYWZlMjU1NTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMDA1ZjgxZWI1NGZlYWNlZTY2NjFhMTYzNzI1NDdkZjk5ZDA4MjRhOTU5MDNhNTI1MjE4NDk4YTVlM2Q5ZWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmOTQxOWU1NDMzYjllMzM0NDVlMDYxMzc2NGU1NTlkOWE2ZDU4YjY3OGY3YzUzN2I4OTMzYjNiOTUzODAyNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjMTBjMjQ5MjUwODVkY2JiZGUyZmZhOTIzMDcyMDgwODk3ZmE4YTBlMzZmM2MwNTM4MWM2ZjYzMjc2MDU2NjkifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/cuentas-financieras/_components/CuentaFinancieraForm/CuentaFinancieraForm.tsx#L33-L69",
+          "version": "repo-lines-v1:sha256:60905ff810f2413c8afc26a5f58fcc96df56f159ff926916090be34509e59471:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzYWI3YzQxNDlkZjA4ZGVjMmVlN2ZmMTg4Y2YxMTA4YzFiNjdhM2QzNzBlMmRlM2M1MTNjZWE5ZTJiY2ZlYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1NGE2ZjMyNGQwNjlmYTY3OTU0MzRiOTNjMDg4OWZmYTcwNGRlYmU5MzE4NzVjYWQ4ZTBlNmQ3ZTNmZmUxZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MmQwYjY5YjQ5NjU2YWY5YmNkMjczMWFiZWZiYjYzNTRjNmQ1MTNmZTUwOGQ4ODUxMjYyYmZhNzFjMWU4MDYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

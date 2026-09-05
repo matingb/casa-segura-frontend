@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:42c5b261c419abf402fdbaf57bea4813f0c0a126f2c30dd2dd13d253209c59e5",
+  "claims": [
+    {
+      "id": "claim_6dae74f06c5a4a918e0dd2a5182b07bd",
+      "statement": "The root layout wraps all routes in `AuthProvider`, while the `(modulos)` layout adds `SucursalProvider` and `AppShell` around module children.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/layout.tsx#L1-L12",
+          "version": "repo-lines-v1:sha256:49566bde5db20e61f2320238ada10349181a18aeae2084f6b40e0e6ed216dfe0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4MDhkZmU4NmI4ODM1MGQ2YjRmNWUyYTQyYjNjODlmMjNjNzhmYWE0ZmQwM2E3NjNiZjhmYjRhMzUxNGMyYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYjcwMjU3NTkzZGEwNmY2ODJhM2RkZGE1NGE5ZDI2MGQ0ZmM1MTRmNjQ1MjM3ZjVjYTc0YjA4ZjhkYTYxYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/app/layout.tsx#L21-L36",
+          "version": "repo-lines-v1:sha256:b4a84a04b72e12ea3859fb4ce0ab5e8339cad398d03a32ee3f7bbfde5ecaef7d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5NGZhY2QyNmM3ZGI1MWNkYjY1ZDk3MzgyNGQzN2E4NGE1ZGRiNWM5OTdjMzY1M2M2YjdmODA4ZDE4MGYyMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0YWZhZTE3ZGI3NmQxMTJlMTA2MDA5MDg2M2U1YWUxYjBiMzhiMGZjZDZmZWYzMTczNTZlOWI3ZGZiZDY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_402a5d3a205a4c1cbd9af1ff792afbca",
+      "statement": "The middleware allows paths beginning with `/login` or `/api`; for other matched requests it redirects to `/login` only when the `access_token` cookie is absent.",
+      "evidence": [
+        {
+          "resource": "repo://src/middleware.ts#L4-L30",
+          "version": "repo-lines-v1:sha256:29794103af7219261cca21d62db22e797d594bf494483adfa58bb5c9c8122f0e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MzI0ODZjZWIzYWM2Mjk1MTJkMDFlMDA4N2FjNGI0MmFkYWMzMDExMGNmNDllODg5NDM4MjU1MDE5NGExZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmZTExYTcxMmI4YzczYzA5N2U4YTFmMGFjYmE5YzQyMjYxNWMzYjllZTc3ZjdhNzBiMTZhZGYxMTk3MTNlMGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlMmQ3ODdiNzcwZmEzMWNlOTRlZDFmNzE2YTk1ZGU4NWJmOWMwOTNkNzRhNDg5OGIzODZkMmQ3OTdiNjNkMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_68a8fca7579d4e7c8bf20ef564e9826c",
+      "statement": "On non-login paths, `AuthProvider` verifies the session with credentialed `/api/auth/me`; a non-OK response or error clears the user and replaces the client route with `/login`.",
+      "evidence": [
+        {
+          "resource": "repo://src/context/AuthContext.tsx#L20-L68",
+          "version": "repo-lines-v1:sha256:cf4fe7b50f155d7a4d562915ad3d6bf87c2135961234e66076cea2eeb817a33e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0OWQwNjc2OTg0MWNjYWFiM2Y4NTdmMDBiOTIyYmFhOGMyOWZkOWFlYjA3MmY4YWViNjVhMmU0ZjdmYThkYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzMTcxNTI3ZDhmMDgxMjhhNmU5MWYzZjRkOWMzZGUyMzlhNzY5NWU5MmExMDczMmY1OGNiYTMzN2MzZjk2MjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMDU4N2I1YTRlMDdkNmQyZTRkN2Q2NTQ1N2QxNDQ3ODJkMjNlZjBkZWIyZTNmMDBiNDc2ZGQ5YmE4YzBmZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkNDFlZjI5NTU1NjkxZWU5NjIwYzBkMmFmMjAyMzc1ZWNhMDEwYmQ2ZDRkOTRhM2UyZjMzNTIxMWY1MThhOGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d7c896c88d804a7d93d723b9a535c898",
+      "statement": "The login page posts credentialed email/password JSON to `/api/auth/login`, navigates to `/` and refreshes on success, and displays a caught error message on failure.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/login/page.tsx#L18-L45",
+          "version": "repo-lines-v1:sha256:414c92e96861125fae3750918e3010b8459acec433931bfe9993d64c3a2f17c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5NjRlMGM3NmNkNjlhNzA1ZjA1OGJlNDQ2MThiNTAwYzk2NTNhMTM4ODYyZTRkNmNmZmJhYWVmYWE0MTY0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyYWM1YjMxM2MwMjc5YWM4YjZjNWZkNmIyNzczNzFmYTRhZmRlOWI0YjMzNmM2ZjNkYmQzOGYwNjBlMzE2M2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhOGI1YzdjZmQ5ZWY1YmVmOGFhZGFhNzEwNjIwYmVlNmRkM2I0ZWE5MDIxZTU0NmY5YTA5MzhkNjk5NzY4YzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_60965792b84447d391c84682956a0b84",
+      "statement": "`AppShell` withholds child content while authentication is loading or no user is present, and otherwise renders the sidebar, user menu, and main content with locally managed sidebar state.",
+      "evidence": [
+        {
+          "resource": "repo://src/components/layout/AppShell/AppShell.tsx#L13-L64",
+          "version": "repo-lines-v1:sha256:0cbebbf010fd2ebc32dfd2570842041df67ffc4f55ed8077e1902b17db49c18e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlYTJlZjFjYTg3MGZlOTFhODAxYjE4MDNiMGI1YjVhZTY1YzE2MTZkZjY2ZDZiMTg1YTZmMDc1NGU0YjdjZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4YWE2YTIzZDRjMDE0OGYyZWZkN2RhOTk3MjMyMGJlOWEzZWQwMWQzY2JkNDEyMTVkNzU4OGE3ZTQzY2UwZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_91f4c3d5a89c4dddbeadba9123d38387",
+      "statement": "The sidebar exposes routes for products, branch stock, operations, financial accounts, price lists, and replenishment orders, and marks a route active for its descendants.",
+      "evidence": [
+        {
+          "resource": "repo://src/components/layout/Sidebar/Sidebar.tsx#L13-L53",
+          "version": "repo-lines-v1:sha256:76fb07970e4b92159f6d8d19c5b2efa67cedbbbb3605f34c056045ab293e1d35:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MzZkNWM5NTllNmNmYzBiNjhmMzcyYmM1MWJmODZmYWFlNjhiMTI0MGM2MjU1OWZjYTNmMDQwODQ3MGNmMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMWExNTBhYzY5OTViNmM4YjY4NzRkNjJmZmU3ZTQ2ODA5MGRhMTgwZDY4ZDMyZTNmMTA3N2YwNjA0NDBjYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

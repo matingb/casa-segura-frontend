@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:7f573faabd713213284949a2e48be2e9d63ab0c85f307ee61a93de0bb0d7c90c",
+  "claims": [
+    {
+      "id": "claim_bfc4c47964d84073af972996ad61b9dd",
+      "statement": "A `StockItem` is identified by a product-sucursal ID and contains both `productoId`/`sucursalId` and product, pricing, quantity, and enabled-state fields.",
+      "evidence": [
+        {
+          "resource": "repo://src/lib/types/Stock.ts#L1-L27",
+          "version": "repo-lines-v1:sha256:be4337860306a0a3543ee6227bdc2435756beb93faa2619c7f8f94a8621fdc1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YTIxN2UzNjU5ZGFhMTk3M2ZhMWEyNjg1NGVkMTVhMDcxN2Y4M2ZlNTUzZDc0YjljNGI2ZDI0ODAzOWJkNjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5cbd922e93e49fc8bf0fa6a6b0eef9a",
+      "statement": "The products and stock routes render separate catalog components; both use `useCatalogoPaginado`, while stock adds a branch filter and marks net availability at or below its threshold.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/productos/_components/ProductosCatalogo/ProductosCatalogo.tsx#L19-L45",
+          "version": "repo-lines-v1:sha256:f3f1a1b50401d5551883e19ca9963153632cd50ff9723c92256cca44698c898d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4NmVjZTk3MWMwMTcyZjA5YzEzOWIyZmQzNDQwODlhZjE1NTE2NTcwZGM1ODA5NWM4Nzk0MjMzMTYwNGRhMDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYzYxYTMxNDg3YzQ0MzMzMjRkYjYwZTA1M2EwZDI5NTFlNTg5NzgxY2M5Y2ZmNjY5ZDk5YTIwZjExZGI5ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiNGNiZmE0NzZiMTg3MjM0MDE1ZWIyOTJlZTRjMWYwYzY1N2Q0OGRiZDliOGFkNTE2MDE2Mjg3MjA3NGFlMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5YmQ1ZmQ0NzhlODY4MDRhNTE4ZDU1ODg1YTBkNWYzYmUyZDMwZGM0ZDRjMGFiNzY2MjkwNWU1YjBmODI3YjYifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/productos/page.tsx#L1-L10",
+          "version": "repo-lines-v1:sha256:5a43dc57a53ac042222528f6cf91de41b0be355e79b3085b94a0b572f956b945:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYmE2Y2ExNDFiNWMzODU4NThjYjI5MDZkNTU4NTlkOWVjNzdiNGQ3ZTdlMjNkM2M1MTJhNDkzNzk3Y2NkM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockCatalogo/StockCatalogo.tsx#L18-L51",
+          "version": "repo-lines-v1:sha256:be50490f56f62b323e57e46632c3aea34988f534d2856cd0f1679d3c1e84740f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ZWExMzFmZjZiNjkwYjk2OTBkZDhjMDkzNTk4NGNhZDUxZDA5NDUxMDQ5YTFkM2M2MzI4NTY2MzZkMmU3OGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNTcyN2YwNTJjYjhkZWQwOTE2MjRjOGUzNjZkMTdjMjk0ODMzYThlNDM4NzgwZTdhZTRjMzhjYWMzYmQ0NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3ZjgwNDEzY2RhZTQwMmNmYTRhMmVhOGNlNTE1MjU5YjNhMTU2MTM5OWEzZWVmYTQ5MjBkNGYzOGM1YjU1MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyNjFkMWE2MWMwYjY0ZDg4Y2ZjODY5NzhiYWQxNzA4YjMxNzU1ZDYyYWYwZWU3OWVjYTEyMzc1OTYyYTVkODEifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockCatalogo/StockCatalogo.tsx#L80-L91",
+          "version": "repo-lines-v1:sha256:1ac5c18bd5ec7c5f1cc475f3167d900349cd4029d014dbf91e8d21e6b3d84c74:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4OWM0ZWQxYmQ5NjBlODdhNjhmZmQ4NTZmNTA4OTNhZDVlNDhkYTA0ZjdkYTY3OTdiNmUyNDY2Mjk2ZTE0ZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZjQxNmFmYjFmZDUyNzMxYThmYjBlN2ViYTBlNmUyNTZlNjk0YjQwMTI5NDg2NWQxMjA4NzQwNzc4MDY0YzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5MjJjYmI0NjNkYzllNzI5MGU2NTY3ZGNkMzAxZmQ4ZDlkNjQzMzJlNzZhNzk5ZjBmYTQ0NTNlYjI2ODk3ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxZjE5MTIxN2FkNjRjYzhiNDhhOTQzMGVhNjIzODM4ZTljMjQ1NzVkMGM1N2Y3NmJkMzJmMmM0ZDdjYTdiNjEifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/page.tsx#L1-L10",
+          "version": "repo-lines-v1:sha256:37eb0d3be055164c7822a8d726f9192f7b98398b9b382d9e8af27702398b8d12:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxMjJhNGU4YTRjN2JmYmVkMmFiMTU1NWViZGM0ZWI3Zjc2NjAyZWFlZjUwN2EyOTNiOTkwY2U5N2U2NDk2NWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMmZhYTUzNWJkMmVhM2Q1MmU3NDFlZDQ1NDQzNWI3ZmU0OWU4MzU4NmU5NDNkOThkODJiYmZiMjRkMWY1YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e69f0328bed4593a290627aaa959916",
+      "statement": "`SucursalProvider` loads branches, exposes reload/loading/error state, and derives an all-branches selector option plus each branch's ID/name option.",
+      "evidence": [
+        {
+          "resource": "repo://src/context/SucursalContext.tsx#L19-L80",
+          "version": "repo-lines-v1:sha256:95ee120427d81f791c785ec7061a9d291109db04e034cfaec0f29a8c0c91c59e:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0YTc5YThkZDEyMmJjYzc5NjZmMjVmN2YwODU2Mjg0ZWIyM2IyNTQ1NjhmNDY5OGE0NDgxMDY4NTMwMjJjMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlZjVmYjZkZjcwNWEzMWE2YWVhMmFhZjdkYjBiNGUwN2IwYzk1YjQzY2U3MmVjYTk2YzJhZmIyMWE1MmQ1NWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYmFjM2JlOGU3OWYwNjA4NTA1YWVkM2E0NmJiMjhjNjUxMTRlNzU3ZWU3YjRmZGFlMzRkOGIwN2MxOGNkZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmZTExYTcxMmI4YzczYzA5N2U4YTFmMGFjYmE5YzQyMjYxNWMzYjllZTc3ZjdhNzBiMTZhZGYxMTk3MTNlMGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_be3fadc8bc2a48899d2e355c73f568ce",
+      "statement": "The product form derives type and subtype choices from classification data and posts an API-shaped product body through either create or update before navigating back to `/productos`.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/productos/_components/ProductoForm.tsx#L121-L160",
+          "version": "repo-lines-v1:sha256:86d5a4a4c35506ae860e3aaf6830cbfea278452f7c96d9daa9141cc33d08e160:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzYWI3YzQxNDlkZjA4ZGVjMmVlN2ZmMTg4Y2YxMTA4YzFiNjdhM2QzNzBlMmRlM2M1MTNjZWE5ZTJiY2ZlYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmYmRhN2UzNThkZGE1YzkxY2U3ZDcwMDJhMmU0ZDAzM2RkOTQxYzE3NDlmMDk4NDI5YTI4MzE2OGQ3MTllNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiZWViMzdmNjBmMTJkNjQ3YTUyZTFjNzEwYzdhMDU0OGM0MDkxZTcxMGZkYzg1YzdiNjYyY2JkZmM5MzUyODcifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/productos/_components/ProductoForm.tsx#L45-L55",
+          "version": "repo-lines-v1:sha256:e6d7419fe49bea4ed4795333e099182e4a83bf109175b89a1df0e0f16ce35767:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwMDY3OGI1ZTYwOThkZGJiNjYwYzgxYTllMzQwNGZiNDkxMGU5MTIwYWVkMmYzNGQ5YWY1MWQ0YjAxNGI5OTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyZTkzMTQzNTdjOTg0YWQxMTIxNzJkYWZjMmVlY2MwOTlkNTFkNjNkM2ZlZTQyNjBhY2U0NTllODMzZTNmMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2YyMjAzZGUzYWNhNjVhNjVhNjFmYjU3MmVmOTRkMTA5YzQ3OWZiNDQzMjZkMThhZWEzNGU2YjhiNTM5YjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmMjJlOWJkMGU3MTM0OGNhYTE4YTkwODMyZWY5Yzg4MDZkZjU3NTAzZTU2N2Y2N2MzMjE1M2ZhMzk2MTUxMTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e7dade5fa15047e8abcef13acadf69c9",
+      "statement": "For new stock records, the form loads product options and combines a selected product and branch in its creation body; updates identify the existing stock row and include available/reserved quantities.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L125-L160",
+          "version": "repo-lines-v1:sha256:3805242880de021c8392fd955780bedd6158cc043146654416e5ba14d2ab8522:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyZjI2YTcyOTU1YzQ5Y2QzZGE0N2E3ZTUzODJkZDExYTU2YmM0OGJhMTgzNWQzMDRlOTg3MzIyNmFhZDRlMjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZmI5M2VjY2ZhYzExNmZjN2Q4OGQ3OTk1ZGRkOTJiOTdiMmEyZDQ5YjMxZDM5NmU2ZWEyYjFhZmFlOGQ4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NjFiMzFkOGNmMWU5ZmRmZWZhZmQzMjgyOTcwOGNjMjUyMmM5ZTQzYjhiNjkzMzM4OTdlN2NmYjk1Nzk3NGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4ZThhNGViMzg0YWE1MGJlZTI1OTE2YjM0OTBkYTQ5YTM1Y2IxZmJhYmNkMTBhYmY3NWYxOWRmOWI3MzQzYTEifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L306-L329",
+          "version": "repo-lines-v1:sha256:9a51adc2371dbe96a10b46f4d04de5d2f2f88a7f1458970204e643448d925b1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNGJkZWMzZTczOTMzZDBjZmE3NTFjMzQyYjIzMTcxNWU2YzExOWUxZjRiMGYzOGVjM2RjNThkZDJlNWQ3YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5MWVlODQ5NGExYzU3NjAyZmZlMDMzYzZkN2E1MGExYzcwZjM3YTY0YTAxZGFkOTYxM2RlNTIzYTlhMjc1YzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5ZWVlNzM2ZTc5YjkxNTg2MGM3OGQ4MzBmNDQzMjNkNjQ3ZmFlZTFkZWQ1ZTNjMjljYzE4NWNiY2I3ZmIzNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5NTE3MzNlNzI4OTdlOTYzNmExZDNkZTExMDhmYTkyNGFjY2IyODM2YmU3MmM2NDQzNzBmZDk4MGQ3N2UyOGEifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L42-L77",
+          "version": "repo-lines-v1:sha256:6abbe8afd594f380177d22ccfbae200741fa9b2973cfb65e3fa9e786eafede5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxZmVhZjFjYjViODY0MGFiMTE2MjI5OTBlZGUyOTc4ZGEyZjZlY2YyYTFiMmUxZWY4MzJjODYyZjE2ZjZlYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ZTcwNjk1NDZhZmIxZmM4NTRlZTAzMjc4OWE5MWIzMTZhMTFiNGM4OGM2Njc3ZjBjYzhmMzM5NmI3NDA2YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxZTUzM2I0MGRkMDM5MWE1Yzc4NzgyNGIyMWIzM2YyZDcxN2MzNzcxOTk5ODQ3YWU0MDY0MmY2Yzg5MzZlOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiMjZjMjM5NTc4YjdmMzJjYzI4ZDgwZjhiZWRlODlkMjVlN2ZjNjVmOWU3YTkwZjY4ZjI1MzQwNTU2ZjczNjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_058313df1e084d69b9d10c86839c01b1",
+      "statement": "The stock form rejects invalid commercial inputs and prevents submission when an ARS sale price is below `cost * (1 + margin / 100)` for a positive cost and supplied margin.",
+      "evidence": [
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L346-L415",
+          "version": "repo-lines-v1:sha256:3961d80811104ace1dd1ec837f1faa115b39c7af002f35c8d73ee1540939c785:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZThjNTQ4MGE4ZWJiNzBmYjhmZTQwZWE5YTM1NGJhNGJjZmVkZTg2NmE3ZmM1YTRjNWZlZDdlODIyZWViMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhYTg1NjU5NzMwZTNkZmNmMGQ1M2JkZTk1NzNhMTMyMzIyMzNmYzZkYzhjYmJiOGZmM2VlYzhhZWRlZWUwOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYxNTEwODEzOGEwOTA5MzViNDIxNmY3NGRhOWMzODA1NTM5NWE4ODFkZGE1Zjg4ZmI2YzY0MGYzOTRiZWM1ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0ZWJkOTgxMWJjYjc2MzdhY2UyMjQ1Nzc2NTFkZGNkNGRhNjUyZGVlMjE3ODFjMGViNDRkYzJhNDAxZDVkMjAifQ"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L463-L470",
+          "version": "repo-lines-v1:sha256:fc889f9dc4fbe1f9b275f958c3687e2fbc3fa2bfd3aa199d9f0ecef5747e7de7:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNhY2FmNjc5NDkzZjRhOTA1YWRkNzU2Mzg3ODFkNzljNThkMjgxODY2YmNjNDZhMjg1OTE1NTE3YTZhMzE2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTQzNGQ2ZWZiYjUyM2Y1MGI1ODAzY2EzZWNkNDdiYWQzZjM3MjIxMTgyNWE1ODA0NmE4NGNmMGIxYjgxNzIzMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmEwZmRjM2ZkMzE2Nzc5Mzc4MDZmZTU4NzJlNzVhMDFmYWUzNjExZDEyM2JjZmRhOTBhYTRiMmRlZjRhYmQ3NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmYyMTZiMTBiZmJmODA5ODMyMTI0NzZiNTdmMDQ5YzA2MGQwZDBhZmFhZGU2YWQwY2E3MDhlNzRjNDQxNWQ3NyJ9"
+        },
+        {
+          "resource": "repo://src/app/(modulos)/stock/_components/StockForm.tsx#L99-L116",
+          "version": "repo-lines-v1:sha256:2c31871fbdaa929bdb2e8a45ffcf8de1459b7ced569ae91619a26c43d6b3023a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5MmJjMGU3ZGRmZTRjMjEwMGUxZWJlMWYzOTYyODQyNGZiYTNhNTU5YWM3OWRhZDJjZDY3ODgwNjJmZDBmOGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0MTlhNmRjYzA0ZTIxM2EzYzdhNzdhNDU2YjAxZTc2ZDFlZjc4Y2QwMGJiZWMxZDhmODE0NThmZTkzZWRjNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwNTVhNzNmNzNmODQ1ODhiNDNjNTdhMzZhZDc3ZDY3NDBkN2FiYzdkYTMyZTI4Njg5NGM3ZDlhMGM0OWQ0NzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmYjAxM2I5OWExYjYyZDY3MTBiMzVlYmQ4MmQyNTMzMzg3Y2M1YmY2Njk4YzVjNjZlMTBlZDllNmViNDY3N2EifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-05T04:38:11.524Z"
+  }
+}

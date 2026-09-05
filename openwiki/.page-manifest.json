@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "pages": {
+    "/openwiki/architecture/api-client-boundary.md": {
+      "pageVersion": "sha256:1bc193c3a714aeace4974895570ccb699aae9ab941af9842df8f4a62623ac605",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/architecture/application-shell-and-session.md": {
+      "pageVersion": "sha256:42c5b261c419abf402fdbaf57bea4813f0c0a126f2c30dd2dd13d253209c59e5",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/engineering/client-data-and-tests.md": {
+      "pageVersion": "sha256:a607a7c405d447d08a3da6bab2096cc1752ae7d77c981294f4484d60e533e971",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/quickstart.md": {
+      "pageVersion": "sha256:c71730dbda0bc3397719e742ae518a7b19a7b12c6a4cb39a094de69726e043e4",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/workflows/catalog-and-branch-inventory.md": {
+      "pageVersion": "sha256:7f573faabd713213284949a2e48be2e9d63ab0c85f307ee61a93de0bb0d7c90c",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/workflows/operations-and-financial-accounts.md": {
+      "pageVersion": "sha256:e1b9ab97f4dd5d3be40d140c1481d917ef5d4d7e8ddf5e4ee239f948e6647a7a",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    },
+    "/openwiki/workflows/replenishment-and-price-list.md": {
+      "pageVersion": "sha256:82497ddd23f49448a8a00e51908eb6c4ab5b1e11d2c82d933793ae70637f7f74",
+      "completedBy": "codex",
+      "completedRunId": "c10d1e32-c472-4d36-82c7-3b383c11a214",
+      "gitHead": "0ebf6b527661a6640663bcc23106ae0cad2bcc5d",
+      "sourceFingerprint": "sha256:8628f71a18aad3cd49e0bb4551c61451658aa078da5e034eb6ee7e50a93b2519"
+    }
+  }
+}
