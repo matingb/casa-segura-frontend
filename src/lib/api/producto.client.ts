@@ -30,8 +30,9 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
 }
 
 export const productoClient = {
-  obtenerTodos: async (): Promise<Producto[]> => {
-    const res = await apiFetch('/api/productos');
+  obtenerTodos: async (params?: { operativo?: boolean }): Promise<Producto[]> => {
+    const query = params?.operativo ? '?operativo=true' : '';
+    const res = await apiFetch(`/api/productos${query}`);
     if (!res.ok) throw new Error('Error al cargar productos');
 
     const json = await res.json();
@@ -138,5 +139,13 @@ export const productoClient = {
     }
     const json = await res.json();
     return mapApiProductoToProducto(json.data);
+  },
+
+  eliminar: async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/productos/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo eliminar el producto');
+    }
   },
 };

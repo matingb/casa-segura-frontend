@@ -30,8 +30,9 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
 }
 
 export const stockClient = {
-  obtenerTodos: async (): Promise<StockItem[]> => {
-    const res = await apiFetch('/api/producto-sucursal');
+  obtenerTodos: async (params?: { operativo?: boolean }): Promise<StockItem[]> => {
+    const query = params?.operativo ? '?operativo=true' : '';
+    const res = await apiFetch(`/api/producto-sucursal${query}`);
     if (!res.ok) throw new Error('Error al cargar stock');
     
     const json = await res.json();
@@ -57,12 +58,14 @@ export const stockClient = {
     offset: number;
     search?: string;
     sucursalId?: string;
+    operativo?: boolean;
   }): Promise<{ data: StockItem[]; hasMore: boolean }> => {
     const searchParams = new URLSearchParams();
     searchParams.set('limit', String(params.limit));
     searchParams.set('offset', String(params.offset));
     if (params.search) searchParams.set('search', params.search);
     if (params.sucursalId) searchParams.set('sucursalId', params.sucursalId);
+    if (params.operativo) searchParams.set('operativo', 'true');
 
     const res = await apiFetch(`/api/producto-sucursal?${searchParams}`);
     if (!res.ok) throw new Error('Error al cargar stock');
@@ -142,5 +145,13 @@ export const stockClient = {
     }
     const json = await res.json();
     return mapApiProductoSucursalToStockItem(json.data);
+  },
+
+  eliminar: async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/producto-sucursal/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo eliminar la configuración de stock');
+    }
   },
 };

@@ -122,8 +122,8 @@ export default function CuentasEditor({
     onChange([
       ...cuentas,
       modoReparto === 'porcentaje'
-        ? { cuentaFinancieraId: '', porcentajeVenta: 0 }
-        : { cuentaFinancieraId: '', montoArs: 0 },
+        ? { cuentaFinancieraId: '', porcentajeVenta: cuentas.length === 0 ? 100 : 0 }
+        : { cuentaFinancieraId: '', montoArs: cuentas.length === 0 ? base : 0 },
     ]);
   };
 
@@ -137,12 +137,12 @@ export default function CuentasEditor({
 
   const cambiarModo = (modo: ModoReparto) => {
     if (modo === modoReparto) return;
-    // Al cambiar de modo se limpia el valor del modo anterior para no arrastrar datos inconsistentes.
+    // Conserva el reparto actual y lo expresa en la unidad elegida.
     onChange(
-      cuentas.map((c) =>
+      cuentas.map((c, index) =>
         modo === 'porcentaje'
-          ? { cuentaFinancieraId: c.cuentaFinancieraId, porcentajeVenta: 0 }
-          : { cuentaFinancieraId: c.cuentaFinancieraId, montoArs: 0 }
+          ? { cuentaFinancieraId: c.cuentaFinancieraId, porcentajeVenta: filas[index].porcentaje }
+          : { cuentaFinancieraId: c.cuentaFinancieraId, montoArs: filas[index].montoArs }
       )
     );
     onModoRepartoChange(modo);

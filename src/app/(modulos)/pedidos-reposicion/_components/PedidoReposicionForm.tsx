@@ -12,10 +12,12 @@ import { stockClient } from '../../../../lib/api/stock.client';
 import { proveedorClient, Proveedor } from '../../../../lib/api/proveedor.client';
 import { pedidoReposicionClient } from '../../../../lib/api/pedido-reposicion.client';
 import { StockItem } from '../../../../lib/types/Stock';
+import { useToast } from '../../../../context/ToastContext';
 import styles from './PedidoReposicionForm.module.css';
 
 export default function PedidoReposicionForm() {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const { sucursales } = useSucursales();
 
   const [sucursalId, setSucursalId] = useState('');
@@ -60,8 +62,10 @@ export default function PedidoReposicionForm() {
         proveedorId,
         cantidad: Number(cantidad),
       });
+      showSuccess('Pedido de reposición creado correctamente.');
       router.push('/pedidos-reposicion');
     } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo crear el pedido de reposición. Intenta nuevamente.');
       console.error('Error al crear pedido de reposición:', err);
       setError(err instanceof Error ? err.message : 'Error al crear el pedido');
     } finally {

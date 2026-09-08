@@ -47,6 +47,11 @@ export default function OperacionesCatalogo() {
   const filterFields: FilterField[] = [
     { key: 'tipo', label: 'Tipo', options: tipoOptions },
     { key: 'sucursal', label: 'Sucursal' },
+    { key: 'estado', label: 'Estado', options: [
+      { value: 'activas', label: 'Activas' },
+      { value: 'canceladas', label: 'Canceladas' },
+      { value: 'todas', label: 'Todas' },
+    ] },
   ];
 
   const columns: TableColumn<Operacion>[] = [
@@ -60,7 +65,10 @@ export default function OperacionesCatalogo() {
       key: 'tipo',
       header: 'Tipo',
       render: (op) => (
-        <Badge variant={getTipoVariant(op.tipoNombre)}>{op.tipoNombre || '—'}</Badge>
+        <div className={styles.tipoCell}>
+          <Badge variant={getTipoVariant(op.tipoNombre)}>{op.tipoNombre || '—'}</Badge>
+          {op.cancelledAt && <Badge variant="danger">Cancelada</Badge>}
+        </div>
       ),
       sortable: true,
     },

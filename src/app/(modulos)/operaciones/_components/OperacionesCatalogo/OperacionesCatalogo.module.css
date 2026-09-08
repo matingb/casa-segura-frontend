@@ -78,6 +78,13 @@
   gap: 0.5rem;
 }
 
+.tipoCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .montoPositivo {
   color: var(--color-success);
 }

@@ -11,10 +11,12 @@ import Combobox from '../../../../components/ui/Combobox/Combobox';
 import ImageUploader from '../../../../components/ui/ImageUploader/ImageUploader';
 import Badge from '../../../../components/ui/Badge/Badge';
 import DetailField from '../../../../components/ui/DetailField/DetailField';
+import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { Producto, UnidadDimension, UnidadPeso } from '../../../../lib/types/Producto';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useProductoDetalle } from '../_hooks/useProductoDetalle';
+import { useToast } from '../../../../context/ToastContext';
 import { formatARS, formatMedida, parseNum } from '../../../../lib/utils/formatters';
 import styles from './ProductoForm.module.css';
 
@@ -44,7 +46,8 @@ function handleEnterAdvance(e: KeyboardEvent<HTMLInputElement>, formRef: React.R
 
 export default function ProductoForm({ title, producto: productoProp, productoId, readOnly = false }: ProductoFormProps) {
   const router = useRouter();
-  const { producto: productoCargado, isLoading, error } = useProductoDetalle(productoId ?? '');
+  const { showError, showSuccess } = useToast();
+  const { producto: productoCargado, isLoading, error, reload } = useProductoDetalle(productoId ?? '');
   const producto = productoId ? productoCargado ?? undefined : productoProp;
 
   const { tipos, loading: loadingClasificacion, getSubtiposPorTipo, getTipoIdDeSubtipo, getTipoNombre, getSubtipoNombre } = useClasificacion();
@@ -65,6 +68,13 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const codigoInputRef = useRef<HTMLInputElement>(null);
   const snapshotRef = useRef<string | null>(null);
   const [hasChanges, setHasChanges] = useState(!isEditing);
+  const [inlineEditing, setInlineEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isReadOnlyView = readOnly && !inlineEditing;
 
   const serializeForm = (): string => {
     if (!formRef.current) return '';
@@ -87,8 +97,8 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   };
 
   useEffect(() => {
-    if (!readOnly) codigoInputRef.current?.focus();
-  }, [readOnly]);
+    if (!isReadOnlyView) codigoInputRef.current?.focus();
+  }, [isReadOnlyView]);
 
   useEffect(() => {
     if (producto) {
@@ -120,6 +130,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (savingRef.current) return;
 
     const formData = new FormData(e.currentTarget);
     const body = {
@@ -148,14 +159,60 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     };
 
     try {
+      savingRef.current = true;
+      setIsSaving(true);
+      setSubmitError(null);
       if (isEditing) {
         await productoClient.actualizar(producto!.id, body);
+        if (readOnly) {
+          await reload();
+          setInlineEditing(false);
+        } else {
+          router.push(`/productos/${producto!.id}`);
+        }
+        showSuccess('Producto actualizado correctamente.');
       } else {
         await productoClient.crear(body);
+        router.push('/productos');
+        showSuccess('Producto creado correctamente.');
       }
-      router.push('/productos');
     } catch (err) {
       console.error('Error al guardar producto:', err);
+      const message = err instanceof Error ? err.message : 'No se pudo guardar el producto. Intenta nuevamente.';
+      setSubmitError(message);
+      showError(message);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const cancelInlineEdit = () => {
+    if (!producto) return;
+    setTipoId(getTipoIdDeSubtipo(producto.subtipoId) ?? '');
+    setSubtipoId(producto.subtipoId ?? '');
+    setImagenUrl(producto.imagenUrl);
+    setCodigoQr(producto.codigoQr ?? '');
+    setUnidadAlto(producto.unidadAlto ?? 'cm');
+    setUnidadAncho(producto.unidadAncho ?? 'cm');
+    setUnidadProfundidad(producto.unidadProfundidad ?? 'cm');
+    setUnidadPeso(producto.unidadPesoUnitario ?? 'kg');
+    setHasChanges(false);
+    setSubmitError(null);
+    setInlineEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (!producto || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      await productoClient.eliminar(producto.id);
+      showSuccess('Producto eliminado correctamente.');
+      router.push('/productos');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo eliminar el producto.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -187,7 +244,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const tipoOptions = tipos.map((t) => ({ value: t.id, label: t.nombre }));
   const subtipoOptions = subtipos.map((s) => ({ value: s.id, label: s.nombre }));
 
-  if (readOnly && producto) {
+  if (isReadOnlyView && producto) {
     const money = (value?: number) => (value ? formatARS(value) : '—');
     const text = (value?: string) => value || '—';
 
@@ -279,8 +336,24 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             <Button type="button" variant="secondary" onClick={() => router.push('/productos')}>
               Volver
             </Button>
+            <Button type="button" onClick={() => setInlineEditing(true)}>
+              Editar
+            </Button>
+            <Button type="button" variant="danger" onClick={() => setShowDeleteConfirmation(true)}>
+              Eliminar
+            </Button>
           </div>
         </Card>
+        {showDeleteConfirmation && (
+          <ConfirmActionModal
+            title="Eliminar producto"
+            description="Se dará de baja el producto y sus configuraciones de stock. Solo es posible si no tiene stock disponible ni reservado."
+            confirmLabel="Eliminar producto"
+            isConfirming={isDeleting}
+            onConfirm={handleDelete}
+            onClose={() => setShowDeleteConfirmation(false)}
+          />
+        )}
       </div>
     );
   }
@@ -561,13 +634,20 @@ export default function ProductoForm({ title, producto: productoProp, productoId
           </div>
 
           <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => router.push('/productos')} tabIndex={22}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={readOnly ? cancelInlineEdit : () => router.push('/productos')}
+              disabled={isSaving}
+              tabIndex={22}
+            >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isEditing && !hasChanges} tabIndex={21}>
-              Guardar
+            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges)} tabIndex={21}>
+              {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
+          {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
         </form>
       </Card>
     </div>

@@ -51,7 +51,7 @@ export default function ItemsEditor({ sucursalId, items, onChange, modo, onMarge
     }
     setLoading(true);
     stockClient
-      .obtenerPaginado({ limit: 200, offset: 0, sucursalId })
+      .obtenerPaginado({ limit: 200, offset: 0, sucursalId, operativo: true })
       .then((res) => setProductos(res.data))
       .catch((err) => console.error('[ItemsEditor] Error cargando productos:', err))
       .finally(() => setLoading(false));
@@ -75,6 +75,17 @@ export default function ItemsEditor({ sucursalId, items, onChange, modo, onMarge
 
   const actualizarItem = (index: number, patch: Partial<OperacionItemInput>) => {
     onChange(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const seleccionarProducto = (index: number, productoSucursalId: string) => {
+    const productoSeleccionado = productos.find((producto) => producto.id === productoSucursalId);
+    const precioPorDefecto = modo === 'venta'
+      ? { precioUnitArs: productoSeleccionado?.precioVentaArs }
+      : modo === 'compra'
+        ? { costoUnitArs: productoSeleccionado?.costoReposicion }
+        : {};
+
+    actualizarItem(index, { productoSucursalId, ...precioPorDefecto });
   };
 
   return (
@@ -102,7 +113,7 @@ export default function ItemsEditor({ sucursalId, items, onChange, modo, onMarge
               label="Producto"
               options={productoOptions}
               value={item.productoSucursalId}
-              onChange={(value) => actualizarItem(index, { productoSucursalId: value })}
+              onChange={(value) => seleccionarProducto(index, value)}
               placeholder="Buscar producto..."
               loading={loading}
             />

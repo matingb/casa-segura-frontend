@@ -10,7 +10,7 @@ export interface TipoOption {
   label: string;
 }
 
-const SELECT_FILTER_FIELDS = ['sucursal'] as const;
+const SELECT_FILTER_FIELDS = ['sucursal', 'estado'] as const;
 
 export function useOperacionesFiltrado() {
   const [tiposOperacion, setTiposOperacion] = useState<{ id: string; nombre: string }[]>([]);
@@ -21,13 +21,13 @@ export function useOperacionesFiltrado() {
 
   const table = useCatalogoPaginado(operacionesClient, SELECT_FILTER_FIELDS, {
     transformParams: ({ page, limit, sort, filtros, search }) => {
-      const { tipo, ...rest } = filtros;
+      const { tipo, estado, ...rest } = filtros;
       return {
         page,
         limit,
         tipoId: tipo || undefined,
         sort,
-        filtros: { ...rest, ...(search ? { usuario: search } : {}) },
+        filtros: { ...rest, ...(estado ? { estado } : {}), ...(search ? { usuario: search } : {}) },
       };
     },
   });

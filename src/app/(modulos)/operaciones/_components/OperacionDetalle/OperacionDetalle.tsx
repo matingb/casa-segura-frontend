@@ -1,12 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
-import { OperacionItem, OperacionCuentaDistribucion } from '../../../../../lib/types/OperacionDetalle';
+import { OperacionItem } from '../../../../../lib/types/OperacionDetalle';
 import { useOperacionDetalle } from '../../_hooks/useOperacionDetalle';
+import { operacionesClient } from '../../../../../lib/api/operaciones.client';
+import { useToast } from '../../../../../context/ToastContext';
+import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { formatFecha, formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './OperacionDetalle.module.css';
 
@@ -25,6 +29,23 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
 export default function OperacionDetalle({ operacionId }: OperacionDetalleProps) {
   const router = useRouter();
   const { operacion, isLoading, error, reload } = useOperacionDetalle(operacionId);
+  const { showError, showSuccess } = useToast();
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancel = async () => {
+    if (isCancelling) return;
+    try {
+      setIsCancelling(true);
+      await operacionesClient.cancelar(operacionId);
+      showSuccess('Operación cancelada correctamente. Se revirtieron sus movimientos.');
+      router.push('/operaciones');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo cancelar la operación.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const itemColumns: TableColumn<OperacionItem>[] = [
     {
@@ -60,26 +81,6 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
       key: 'subtotal',
       header: 'Subtotal',
       render: (item) => <span className={styles.montoCell}>{formatMonto(item.subtotal)}</span>,
-    },
-  ];
-
-  const cuentaColumns: TableColumn<OperacionCuentaDistribucion>[] = [
-    {
-      key: 'cuenta',
-      header: 'Cuenta bancaria / financiera',
-      render: (c) => <span className={styles.productoNombre}>{c.cuentaNombre}</span>,
-    },
-    {
-      key: 'porcentaje',
-      header: '% Asignado',
-      render: (c) => (
-        <span className={styles.porcentajeBadge}>{formatPorcentaje(c.porcentaje)}</span>
-      ),
-    },
-    {
-      key: 'monto',
-      header: 'Monto',
-      render: (c) => <span className={styles.montoCell}>{formatMonto(c.monto)}</span>,
     },
   ];
 
@@ -142,8 +143,14 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             <Badge variant={getTipoVariant(operacion.tipoNombre)}>
               {operacion.tipoNombre}
             </Badge>
+            {operacion.cancelledAt && <Badge variant="danger">Cancelada</Badge>}
           </div>
         </div>
+        {!operacion.cancelledAt && (
+          <Button type="button" variant="danger" onClick={() => setShowCancelConfirmation(true)}>
+            Cancelar operación
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -238,6 +245,16 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             ))}
           </div>
         </Card>
+      )}
+      {showCancelConfirmation && (
+        <ConfirmActionModal
+          title="Cancelar operación"
+          description="La cancelación revertirá el stock y los saldos asociados usando los datos originales de la operación. Esta acción no puede deshacerse desde la interfaz."
+          confirmLabel="Cancelar operación"
+          isConfirming={isCancelling}
+          onConfirm={handleCancel}
+          onClose={() => setShowCancelConfirmation(false)}
+        />
       )}
     </div>
   );

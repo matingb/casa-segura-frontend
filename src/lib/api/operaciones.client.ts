@@ -100,6 +100,7 @@ export function mapApiOperacionToOperacion(apiData: any): Operacion {
     monto: apiData.monto ? Number(apiData.monto) : 0,
     descripcion: apiData.descripcion ?? '',
     fecha: apiData.fecha ?? '',
+    cancelledAt: apiData.cancelled_at ?? undefined,
   };
 }
 
@@ -151,6 +152,7 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
   return {
     id: raw.id,
     fecha: raw.fecha ?? '',
+    cancelledAt: raw.cancelled_at ?? undefined,
     tipoId: raw.tipo_id ?? '',
     tipoNombre: raw.tipo_nombre ?? '',
     usuarioNombre: raw.usuario_nombre ?? '',
@@ -277,6 +279,16 @@ export const operacionesClient = {
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message ?? 'Error al crear la operación');
+    }
+    const json = await res.json();
+    return mapApiOperacionDetalleToOperacionDetalle(json.data);
+  },
+
+  cancelar: async (id: string): Promise<OperacionDetalle> => {
+    const res = await apiFetch(`/api/operaciones/${id}/cancelar`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo cancelar la operación');
     }
     const json = await res.json();
     return mapApiOperacionDetalleToOperacionDetalle(json.data);

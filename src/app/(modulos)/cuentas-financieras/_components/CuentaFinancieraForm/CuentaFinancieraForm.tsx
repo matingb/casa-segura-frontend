@@ -8,6 +8,7 @@ import Input from '../../../../../components/ui/Input/Input';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 import { cuentaFinancieraClient } from '../../../../../lib/api/cuenta-financiera.client';
 import { useCuentaFinancieraDetalle } from '../../_hooks/useCuentaFinancieraDetalle';
+import { useToast } from '../../../../../context/ToastContext';
 import { formatMonto } from '../../../../../lib/utils/formatters';
 import styles from './CuentaFinancieraForm.module.css';
 
@@ -23,6 +24,7 @@ export default function CuentaFinancieraForm({
   cuentaId,
 }: CuentaFinancieraFormProps) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const { cuenta: cuentaCargada, isLoading: isLoadingDetalle, error: errorDetalle } = useCuentaFinancieraDetalle(cuentaId ?? '');
   const cuenta = cuentaId ? cuentaCargada ?? undefined : cuentaProp;
   const isEditing = Boolean(cuentaId) || Boolean(cuentaProp?.id);
@@ -60,9 +62,12 @@ export default function CuentaFinancieraForm({
           porcentaje_extra,
         });
       }
+      showSuccess(isEditing ? 'Cuenta financiera actualizada correctamente.' : 'Cuenta financiera creada correctamente.');
       router.push('/cuentas-financieras');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar la cuenta');
+      const message = err instanceof Error ? err.message : 'No se pudo guardar la cuenta financiera. Intenta nuevamente.';
+      setError(message);
+      showError(message);
     } finally {
       setIsSubmitting(false);
     }

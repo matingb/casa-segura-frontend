@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
@@ -9,12 +9,14 @@ import Select from '../../../../components/ui/Select/Select';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
 import Badge from '../../../../components/ui/Badge/Badge';
 import DetailField from '../../../../components/ui/DetailField/DetailField';
+import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { StockItem } from '../../../../lib/types/Stock';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { stockClient } from '../../../../lib/api/stock.client';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useStockDetalle } from '../_hooks/useStockDetalle';
+import { useToast } from '../../../../context/ToastContext';
 import { formatARS, formatUSD } from '../../../../lib/utils/formatters';
 import styles from './StockForm.module.css';
 
@@ -35,7 +37,8 @@ interface StockFormProps {
 
 export default function StockForm({ title, stockItem: stockItemProp, stockItemId, readOnly = false }: StockFormProps) {
   const router = useRouter();
-  const { stockItem: stockItemCargado, isLoading: isLoadingDetalle, error: errorDetalle } = useStockDetalle(stockItemId ?? '');
+  const { showError, showSuccess } = useToast();
+  const { stockItem: stockItemCargado, isLoading: isLoadingDetalle, error: errorDetalle, reload } = useStockDetalle(stockItemId ?? '');
   const stockItem = stockItemId ? stockItemCargado ?? undefined : stockItemProp;
   const isEditing = Boolean(stockItemId) || Boolean(stockItemProp?.id);
 
@@ -48,13 +51,19 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const [precioVentaArs, setPrecioVentaArs] = useState('');
   const [margenMinimo, setMargenMinimo] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [inlineEditing, setInlineEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const savingRef = useRef(false);
+  const isReadOnlyView = readOnly && !inlineEditing;
 
   useEffect(() => {
     if (isEditing) return;
 
     const fetchOptions = async () => {
       try {
-        const data = await productoClient.obtenerTodos();
+        const data = await productoClient.obtenerTodos({ operativo: true });
         setProductos(
           data.map((p) => ({
             id: p.id,
@@ -110,6 +119,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (savingRef.current) return;
     if (margenInvalido) {
       setSubmitError('El precio de venta ARS debe respetar el margen minimo configurado.');
       return;
@@ -130,8 +140,10 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           iva: parseNum('iva'),
           margen_minimo: parseNum('margenMinimo'),
           stock_minimo: parseNum('stockMinimo'),
-          cantidad_disponible: parseNum('cantidadDisponible'),
-          cantidad_reservada: parseNum('cantidadReservada'),
+          ...(readOnly ? {} : {
+            cantidad_disponible: parseNum('cantidadDisponible'),
+            cantidad_reservada: parseNum('cantidadReservada'),
+          }),
           habilitado: formData.get('habilitado') === 'true',
         }
       : {
@@ -147,15 +159,53 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
         };
 
     try {
+      savingRef.current = true;
+      setIsSaving(true);
       if (isEditing) {
         await stockClient.actualizar(stockItem!.id, body);
+        if (readOnly) {
+          await reload();
+          setInlineEditing(false);
+        } else {
+          router.push(`/stock/${stockItem!.id}`);
+        }
+        showSuccess('Configuración de stock actualizada correctamente.');
       } else {
         await stockClient.crear(body);
+        router.push('/stock');
+        showSuccess('Configuración de stock creada correctamente.');
       }
-      router.push('/stock');
     } catch (err) {
       console.error('Error al guardar stock:', err);
-      setSubmitError(err instanceof Error ? err.message : 'No se pudo guardar la configuracion de stock.');
+      const message = err instanceof Error ? err.message : 'No se pudo guardar la configuración de stock. Intenta nuevamente.';
+      setSubmitError(message);
+      showError(message);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const cancelInlineEdit = () => {
+    if (!stockItem) return;
+    setCostoReposicion(stockItem.costoReposicion != null ? String(stockItem.costoReposicion) : '');
+    setPrecioVentaArs(stockItem.precioVentaArs != null ? String(stockItem.precioVentaArs) : '');
+    setMargenMinimo(stockItem.margenMinimo != null ? String(stockItem.margenMinimo) : '');
+    setSubmitError(null);
+    setInlineEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (!stockItem || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      await stockClient.eliminar(stockItem.id);
+      showSuccess('Configuración de stock eliminada correctamente.');
+      router.push('/stock');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo eliminar la configuración de stock.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -187,7 +237,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const money = (value?: number) => (value ? formatARS(value) : '—');
   const usd = (value?: number) => (value ? formatUSD(value) : '—');
 
-  if (readOnly && stockItem) {
+  if (isReadOnlyView && stockItem) {
     return (
       <div className={`${styles.page} ${styles.pageDetail}`}>
         <button type="button" className={styles.backLink} onClick={() => router.push('/stock')}>
@@ -270,8 +320,24 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             <Button type="button" variant="secondary" onClick={() => router.push('/stock')}>
               Volver
             </Button>
+            <Button type="button" onClick={() => setInlineEditing(true)}>
+              Editar
+            </Button>
+            <Button type="button" variant="danger" onClick={() => setShowDeleteConfirmation(true)}>
+              Eliminar
+            </Button>
           </div>
         </Card>
+        {showDeleteConfirmation && (
+          <ConfirmActionModal
+            title="Eliminar configuración de stock"
+            description="Se dará de baja esta configuración de stock. Solo es posible si no tiene cantidades disponibles ni reservadas."
+            confirmLabel="Eliminar configuración"
+            isConfirming={isDeleting}
+            onConfirm={handleDelete}
+            onClose={() => setShowDeleteConfirmation(false)}
+          />
+        )}
       </div>
     );
   }
@@ -419,7 +485,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Control de stock</h2>
             <div className={styles.grid}>
-              {isEditing && (
+              {isEditing && !readOnly && (
                 <>
                   <Input
                     label="Cantidad disponible"
@@ -461,11 +527,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           </div>
 
           <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => router.push('/stock')}>
+            <Button type="button" variant="secondary" onClick={readOnly ? cancelInlineEdit : () => router.push('/stock')} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={margenInvalido}>
-              Guardar
+            <Button type="submit" variant="primary" disabled={isSaving || margenInvalido}>
+              {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
         </form>

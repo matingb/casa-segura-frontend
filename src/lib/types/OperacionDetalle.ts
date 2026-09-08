@@ -27,6 +27,7 @@ export interface OperacionCuentaDistribucion {
 export interface OperacionDetalle {
   id: string;
   fecha: string;
+  cancelledAt?: string;
   tipoId: string;
   tipoNombre: string;
   usuarioNombre: string;

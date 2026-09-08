@@ -8,4 +8,5 @@ export interface Operacion {
   monto: number;
   descripcion: string;
   fecha: string;
+  cancelledAt?: string;
 }
