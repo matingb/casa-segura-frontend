@@ -21,10 +21,9 @@ const navItems: NavItem[] = [
 
 interface SidebarProps {
   isOpen: boolean;
-  onNavigate: () => void;
 }
 
-export default function Sidebar({ isOpen, onNavigate }: SidebarProps) {
+export default function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -37,7 +36,6 @@ export default function Sidebar({ isOpen, onNavigate }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              onClick={onNavigate}
               className={isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
             >
               {item.label}
@@ -48,7 +46,6 @@ export default function Sidebar({ isOpen, onNavigate }: SidebarProps) {
       <div className={styles.bottomSection}>
         <Link
           href="/configuracion"
-          onClick={onNavigate}
           className={
             pathname === '/configuracion' || pathname?.startsWith('/configuracion/')
               ? `${styles.configLink} ${styles.active}`

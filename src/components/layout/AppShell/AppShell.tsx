@@ -31,7 +31,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div className={styles.shell}>
-      <Sidebar isOpen={isSidebarOpen} onNavigate={closeSidebar} />
+      <Sidebar isOpen={isSidebarOpen} />
 
       {isSidebarOpen && (
         <button

@@ -48,7 +48,7 @@ The `(modulos)` layout nests `SucursalProvider` inside the global authentication
 
 `AppShell` waits on the auth provider, showing a loading spinner while `isLoading` is true and rendering no protected content if `user` is absent. With a user present it renders the sidebar, user menu, and a main content area. Its sidebar open state is local UI state; opening it also renders a button overlay that closes it.
 
-The sidebar is the functional route map: products, branch stock, operations, financial accounts, price lists, and replenishment orders. It derives active state from the pathname, including descendant routes, and closes itself after a navigation click.
+The sidebar is the functional route map: products, branch stock, operations, financial accounts, price lists, and replenishment orders. It derives active state from the pathname, including descendant routes, and preserves its open/closed state across navigations.
 
 ## Practical implications
 
