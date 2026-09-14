@@ -25,17 +25,24 @@ export default function VentaForm() {
   const [cuentas, setCuentas] = useState<OperacionCuentaInput[]>([]);
   const [modoReparto, setModoReparto] = useState<ModoReparto>('monto');
   const [margenInvalido, setMargenInvalido] = useState(false);
-  const [repartoValido, setRepartoValido] = useState(true);
+  const [repartoValido, setRepartoValido] = useState(false);
 
   const handleMargenInvalidoChange = useCallback((v: boolean) => setMargenInvalido(v), []);
   const handleRepartoValidoChange = useCallback((v: boolean) => setRepartoValido(v), []);
 
   const subtotalArs = items.reduce((sum, item) => sum + item.cantidad * (item.precioUnitArs ?? 0), 0);
+  const descuentoNumero = Number(descuentoArs);
+  const descuentoValido = descuentoArs === '' || Number.isFinite(descuentoNumero);
   // Base sobre la que se reparte entre cuentas (sin recargos).
-  const baseReparto = subtotalArs - (Number(descuentoArs) || 0);
+  const baseReparto = subtotalArs - (descuentoArs === '' ? 0 : descuentoNumero);
 
   const puedeGuardar =
-    Boolean(sucursalId) && items.length > 0 && cuentas.length > 0 && !margenInvalido && repartoValido;
+    Boolean(sucursalId) &&
+    items.length > 0 &&
+    cuentas.length > 0 &&
+    descuentoValido &&
+    !margenInvalido &&
+    repartoValido;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,7 +57,7 @@ export default function VentaForm() {
       venta: {
         numeroComprobante: numeroComprobante || undefined,
         subtotalArs,
-        descuentoArs: descuentoArs ? Number(descuentoArs) : undefined,
+        descuentoArs: descuentoArs === '' ? undefined : descuentoNumero,
         // El total lo recalcula el backend sumando los recargos de cada cuenta.
       },
     });
@@ -101,6 +108,7 @@ export default function VentaForm() {
             onModoRepartoChange={setModoReparto}
             base={baseReparto}
             onValidezChange={handleRepartoValidoChange}
+            requiereCuentas
             etiquetaMonto="Monto a cobrar ($)"
           />
 

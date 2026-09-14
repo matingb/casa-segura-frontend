@@ -110,6 +110,7 @@ export default function TrasladoForm() {
               onModoRepartoChange={setModoReparto}
               base={fleteArs}
               onValidezChange={handleRepartoValidoChange}
+              requiereCuentas
             />
           )}
 

@@ -27,7 +27,7 @@ export default function CompraForm() {
   const [items, setItems] = useState<OperacionItemInput[]>([]);
   const [cuentas, setCuentas] = useState<OperacionCuentaInput[]>([]);
   const [modoReparto, setModoReparto] = useState<ModoReparto>('monto');
-  const [repartoValido, setRepartoValido] = useState(true);
+  const [repartoValido, setRepartoValido] = useState(false);
 
   const handleRepartoValidoChange = useCallback((v: boolean) => setRepartoValido(v), []);
 
@@ -98,6 +98,7 @@ export default function CompraForm() {
             onModoRepartoChange={setModoReparto}
             base={totalArs}
             onValidezChange={handleRepartoValidoChange}
+            requiereCuentas
             etiquetaMonto="Monto a pagar ($)"
           />
 

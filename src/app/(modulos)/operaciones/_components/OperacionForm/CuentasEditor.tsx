@@ -8,10 +8,8 @@ import { cuentaFinancieraClient } from '../../../../../lib/api/cuenta-financiera
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 import { OperacionCuentaInput, ModoReparto } from '../../../../../lib/types/OperacionCrear';
 import { formatARS } from '../../../../../lib/utils/formatters';
+import { calcularReparto } from './reparto';
 import styles from './CuentasEditor.module.css';
-
-/** Tolerancia en pesos para diferencias de redondeo, igual que en el backend. */
-const TOLERANCIA = 0.01;
 
 interface CuentasEditorProps {
   cuentas: OperacionCuentaInput[];
@@ -27,15 +25,10 @@ interface CuentasEditorProps {
   derivarTotalDeCuentas?: boolean;
   /** Informa al formulario si el reparto no cierra. */
   onValidezChange?: (valido: boolean) => void;
+  /** True si no se puede guardar sin al menos una cuenta cargada. */
+  requiereCuentas?: boolean;
   /** Etiqueta del importe segun el sentido de la operacion. */
   etiquetaMonto?: string;
-}
-
-interface FilaCalculada {
-  extra: number;
-  baseArs: number;
-  montoArs: number;
-  porcentaje: number;
 }
 
 export default function CuentasEditor({
@@ -46,6 +39,7 @@ export default function CuentasEditor({
   base = 0,
   derivarTotalDeCuentas = false,
   onValidezChange,
+  requiereCuentas = false,
   etiquetaMonto = 'Monto ($)',
 }: CuentasEditorProps) {
   const [cuentasDisponibles, setCuentasDisponibles] = useState<CuentaFinanciera[]>([]);
@@ -65,65 +59,30 @@ export default function CuentasEditor({
     return map;
   }, [cuentasDisponibles]);
 
-  /**
-   * Resuelve cada fila según el modo:
-   *  - porcentaje: base = total * %, monto = base + recargo
-   *  - monto: el usuario carga lo que cobra la cuenta (con recargo), base = monto / (1 + extra)
-   */
-  const filas: FilaCalculada[] = useMemo(() => {
-    return cuentas.map((cuenta) => {
-      const extra = extraDe.get(cuenta.cuentaFinancieraId) ?? 0;
-      if (modoReparto === 'porcentaje') {
-        const porcentaje = cuenta.porcentajeVenta ?? 0;
-        const baseArs = base * (porcentaje / 100);
-        return { extra, porcentaje, baseArs, montoArs: baseArs * (1 + extra / 100) };
-      }
-      const montoArs = cuenta.montoArs ?? 0;
-      const baseArs = montoArs / (1 + extra / 100);
-      const referencia = derivarTotalDeCuentas ? null : base;
-      return {
-        extra,
-        baseArs,
-        montoArs,
-        porcentaje: referencia && referencia > 0 ? (baseArs / referencia) * 100 : 0,
-      };
-    });
-  }, [cuentas, extraDe, modoReparto, base, derivarTotalDeCuentas]);
-
-  const subtotalCubierto = filas.reduce((acc, f) => acc + f.baseArs, 0);
-  const totalRecargos = filas.reduce((acc, f) => acc + (f.montoArs - f.baseArs), 0);
-  const totalFinal = filas.reduce((acc, f) => acc + f.montoArs, 0);
-  const sumaPorcentajes = cuentas.reduce((acc, c) => acc + (c.porcentajeVenta ?? 0), 0);
-
-  const sinCuenta = cuentas.some((c) => !c.cuentaFinancieraId);
-  const diferencia = derivarTotalDeCuentas ? 0 : subtotalCubierto - base;
-
-  let mensajeError: string | null = null;
-  if (cuentas.length === 0) {
-    mensajeError = null; // el formulario decide si son obligatorias
-  } else if (sinCuenta) {
-    mensajeError = 'Seleccioná una cuenta financiera en cada fila.';
-  } else if (modoReparto === 'porcentaje' && Math.abs(sumaPorcentajes - 100) > TOLERANCIA) {
-    mensajeError = `Los porcentajes deben sumar 100%. Suman ${sumaPorcentajes.toFixed(2)}%.`;
-  } else if (!derivarTotalDeCuentas && Math.abs(diferencia) > TOLERANCIA) {
-    mensajeError =
-      diferencia < 0
-        ? `Faltan ${formatARS(Math.abs(diferencia))} por asignar.`
-        : `Hay ${formatARS(diferencia)} asignados de más.`;
-  } else if (derivarTotalDeCuentas && totalFinal <= 0) {
-    mensajeError = 'El monto del movimiento debe ser mayor a 0.';
-  }
+  const { filas, subtotalCubierto, totalRecargos, totalFinal, mensajeError, valido } = useMemo(
+    () =>
+      calcularReparto({
+        cuentas,
+        modoReparto,
+        base,
+        extraDe,
+        derivarTotalDeCuentas,
+        requiereCuentas,
+        formatMonto: formatARS,
+      }),
+    [cuentas, modoReparto, base, extraDe, derivarTotalDeCuentas, requiereCuentas]
+  );
 
   useEffect(() => {
-    onValidezChange?.(mensajeError === null);
-  }, [mensajeError, onValidezChange]);
+    onValidezChange?.(valido);
+  }, [valido, onValidezChange]);
 
   const agregarCuenta = () => {
     onChange([
       ...cuentas,
       modoReparto === 'porcentaje'
         ? { cuentaFinancieraId: '', porcentajeVenta: cuentas.length === 0 ? 100 : 0 }
-        : { cuentaFinancieraId: '', montoArs: cuentas.length === 0 ? base : 0 },
+        : { cuentaFinancieraId: '', montoArs: undefined },
     ]);
   };
 
