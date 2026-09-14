@@ -6,6 +6,8 @@ erDiagram
   TENANT ||--o{ CUENTA_FINANCIERA : tiene
   TENANT ||--o{ ROL : tiene
   TENANT ||--o{ PROVEEDOR : tiene
+  TENANT ||--o{ OPERACION : registra
+  TENANT ||--o{ PEDIDO_REPOSICION : tiene
 
   USUARIO ||--o{ USUARIO_SUCURSAL : accede
   SUCURSAL ||--o{ USUARIO_SUCURSAL : asignada
@@ -15,6 +17,7 @@ erDiagram
 
   TIPO_OPERACION ||--o{ OPERACION : clasifica
   USUARIO_SUCURSAL ||--o{ OPERACION : origina
+  USUARIO_SUCURSAL o|--o{ OPERACION : cancela
   OPERACION ||--o{ OPERACION_DETALLE : contiene
   PRODUCTO_SUCURSAL ||--o{ OPERACION_DETALLE : referencia
 
@@ -34,7 +37,7 @@ erDiagram
   CUENTA_FINANCIERA ||--o{ OPERACION_CUENTA : recibe
 
   TIPO ||--o{ SUBTIPO : agrupa
-  SUBTIPO ||--o{ PRODUCTO : clasifica
+  SUBTIPO o|--o{ PRODUCTO : clasifica
   PRODUCTO ||--o{ PRODUCTO_SUCURSAL : comercializa
   SUCURSAL ||--o{ PRODUCTO_SUCURSAL : ofrece
 
@@ -48,7 +51,7 @@ erDiagram
   USUARIO {
     uuid id PK
     uuid tenant_id FK
-    uuid auth_id
+    uuid auth_id FK
     string email
     string nombre
     bool activo
@@ -121,14 +124,22 @@ erDiagram
     string color
     string presentacion
     decimal alto
+    unidad_dimension unidad_alto
     decimal ancho
+    unidad_dimension unidad_ancho
     decimal profundidad
+    unidad_dimension unidad_profundidad
     decimal peso_unitario
+    unidad_peso unidad_peso_unitario
     string imagen_url
     string descripcion
     bool activo
+    decimal precio_base
+    string codigo_qr
+    decimal costo_reposicion_base
     datetime created_at
     datetime updated_at
+    datetime deleted_at
   }
   PRODUCTO_SUCURSAL {
     uuid id PK
@@ -143,8 +154,10 @@ erDiagram
     int stock_minimo
     int cantidad_disponible
     int cantidad_reservada
+    int cantidad_en_transito
     datetime created_at
     datetime updated_at
+    datetime deleted_at
   }
   TIPO_OPERACION {
     uuid id PK
@@ -158,12 +171,15 @@ erDiagram
     datetime fecha
     datetime created_at
     datetime updated_at
+    datetime cancelled_at
+    uuid cancelled_by_usuario_sucursal_id FK
   }
   OPERACION_DETALLE {
     uuid id PK
     uuid operacion_id FK
     uuid producto_sucursal_id FK
     int cantidad
+    int cantidad_impactada
     decimal alicuota_iva
     decimal iva_ars
     decimal iva_usd
