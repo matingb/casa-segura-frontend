@@ -20,8 +20,8 @@ export default function VentaForm() {
   const [sucursalElegida, setSucursalElegida] = useState('');
   const [numeroComprobante, setNumeroComprobante] = useState('');
   const [descuentoArs, setDescuentoArs] = useState('');
-  const [items, setItems] = useState<OperacionItemInput[]>([]);
-  const [modoPago, setModoPago] = useState<ModoPagoElegido>(null);
+  const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
+  const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
   const [margenInvalido, setMargenInvalido] = useState(false);
@@ -30,8 +30,8 @@ export default function VentaForm() {
   const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
   const handleMargenInvalidoChange = useCallback((v: boolean) => setMargenInvalido(v), []);
 
-  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
-  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+  // Si hay sucursales disponibles, se selecciona la primera por defecto.
+  const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + importeItem(item, 'venta'), 0),
@@ -56,7 +56,10 @@ export default function VentaForm() {
   );
 
   const unidades = useMemo(
-    () => items.reduce((sum, item) => sum + (item.cantidad || 0), 0),
+    () =>
+      items
+        .filter((item) => Boolean(item.productoSucursalId))
+        .reduce((sum, item) => sum + (item.cantidad || 0), 0),
     [items]
   );
 
@@ -153,6 +156,7 @@ export default function VentaForm() {
         <>
           <div>
             <Select
+              id="sucursal"
               label="Sucursal"
               value={sucursalId}
               onChange={(e) => {

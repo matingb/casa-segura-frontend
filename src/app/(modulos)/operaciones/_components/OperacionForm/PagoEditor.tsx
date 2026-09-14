@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Check } from 'lucide-react';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
 import { cuentaFinancieraClient } from '../../../../../lib/api/cuenta-financiera.client';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
@@ -184,6 +184,7 @@ export default function PagoEditor({
 
       {habilitado && (
         <>
+      {modo !== 'derivado' && (
       <div className={styles.modos}>
         <button
           type="button"
@@ -204,6 +205,7 @@ export default function PagoEditor({
           <span className={styles.modoDetalle}>Se reparte entre dos o más cuentas</span>
         </button>
       </div>
+      )}
 
       {loading && <p className={styles.hint}>Cargando cuentas...</p>}
 
@@ -211,6 +213,7 @@ export default function PagoEditor({
         <div className={styles.opciones}>
           {cuentasDisponibles.map((cuenta) => {
             const tasa = cuenta.porcentajeExtra ?? 0;
+            const recargo = mercaderia * (tasa / 100);
             const total = mercaderia * (1 + tasa / 100);
             const elegida = cuenta.id === cuentaUnicaId;
             return (
@@ -221,13 +224,32 @@ export default function PagoEditor({
                 onClick={() => elegirCuentaUnica(cuenta.id)}
                 aria-pressed={elegida}
               >
-                <span className={styles.opcionInfo}>
-                  <span className={styles.opcionNombre}>{cuenta.nombre}</span>
-                  <span className={styles.opcionRecargo}>
-                    {tasa > 0 ? `${tasa}% de recargo` : 'Sin recargo'}
-                  </span>
-                </span>
-                <span className={styles.opcionTotal}>{formatARS(total)}</span>
+                <div className={styles.opcionIzquierda}>
+                  <div className={styles.checkContainer} aria-hidden="true">
+                    {elegida ? (
+                      <div className={styles.checkActivo}>
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    ) : (
+                      <div className={styles.checkInactivo} />
+                    )}
+                  </div>
+                  <div className={styles.opcionTextos}>
+                    <span className={styles.opcionNombre}>{cuenta.nombre}</span>
+                    <span className={styles.opcionRecargo}>
+                      {tasa > 0 ? `Recargo ${tasa}%` : 'Sin recargo'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.opcionDerecha}>
+                  <span className={styles.opcionTotal}>{formatARS(total)}</span>
+                  {tasa > 0 && (
+                    <span className={styles.opcionSubtotal}>
+                      {formatARS(mercaderia)} + {formatARS(recargo)}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -410,7 +432,7 @@ export default function PagoEditor({
               <tr className={styles.filaAgregar}>
                 <td colSpan={modo === 'dividido' && unidad === 'porcentaje' ? 6 : 5}>
                   <button type="button" className={styles.botonAgregar} onClick={agregarFila}>
-                    <Plus size={14} aria-hidden="true" />
+                    <Plus size={13} aria-hidden="true" />
                     Agregar cuenta
                   </button>
                 </td>

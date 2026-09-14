@@ -264,7 +264,7 @@ export default function ItemsEditor({
                   onClick={agregarItem}
                   disabled={!sucursalId}
                 >
-                  <Plus size={14} aria-hidden="true" />
+                  <Plus size={13} aria-hidden="true" />
                   Agregar producto
                 </button>
               </td>

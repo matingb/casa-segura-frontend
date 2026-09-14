@@ -23,8 +23,7 @@ export default function MovimientoForm() {
 
   const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
 
-  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
-  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+  const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
 
   // El monto del movimiento se deriva de las cuentas, no al revés.
   const pago = useMemo(
@@ -89,6 +88,7 @@ export default function MovimientoForm() {
         <>
           <div>
             <Select
+              id="sucursal"
               label="Sucursal"
               value={sucursalId}
               onChange={(e) => {

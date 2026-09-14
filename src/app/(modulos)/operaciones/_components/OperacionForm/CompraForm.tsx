@@ -23,8 +23,8 @@ export default function CompraForm() {
   const [proveedorId, setProveedorId] = useState('');
   const [numeroRemito, setNumeroRemito] = useState('');
   const [numeroFactura, setNumeroFactura] = useState('');
-  const [items, setItems] = useState<OperacionItemInput[]>([]);
-  const [modoPago, setModoPago] = useState<ModoPagoElegido>(null);
+  const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
+  const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -35,8 +35,8 @@ export default function CompraForm() {
     proveedorClient.obtenerTodos().then(setProveedores).catch((err) => console.error(err));
   }, []);
 
-  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
-  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+  // Si hay sucursales disponibles, se selecciona la primera por defecto.
+  const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
 
   const mercaderia = useMemo(
     () => items.reduce((sum, item) => sum + importeItem(item, 'compra'), 0),
@@ -54,7 +54,10 @@ export default function CompraForm() {
   );
 
   const unidades = useMemo(
-    () => items.reduce((sum, item) => sum + (item.cantidad || 0), 0),
+    () =>
+      items
+        .filter((item) => Boolean(item.productoSucursalId))
+        .reduce((sum, item) => sum + (item.cantidad || 0), 0),
     [items]
   );
 
@@ -141,6 +144,7 @@ export default function CompraForm() {
         <>
           <div>
             <Select
+              id="sucursal"
               label="Sucursal"
               value={sucursalId}
               onChange={(e) => {

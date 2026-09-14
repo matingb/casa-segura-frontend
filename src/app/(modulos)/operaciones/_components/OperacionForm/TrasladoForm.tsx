@@ -20,16 +20,16 @@ export default function TrasladoForm() {
   const [sucursalElegida, setSucursalElegida] = useState('');
   const [sucursalDestinoId, setSucursalDestinoId] = useState('');
   const [costoFleteArs, setCostoFleteArs] = useState('');
-  const [items, setItems] = useState<OperacionItemInput[]>([]);
-  const [modoPago, setModoPago] = useState<ModoPagoElegido>(null);
+  const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
+  const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
   const [errores, setErrores] = useState<Record<string, string>>({});
 
   const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
 
-  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
-  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+  // Si hay sucursales disponibles, se selecciona la primera por defecto.
+  const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
 
   const fleteNumero = Number(costoFleteArs);
   const fleteValido = costoFleteArs === '' || Number.isFinite(fleteNumero);
@@ -42,7 +42,10 @@ export default function TrasladoForm() {
   );
 
   const unidades = useMemo(
-    () => items.reduce((sum, item) => sum + (item.cantidad || 0), 0),
+    () =>
+      items
+        .filter((item) => Boolean(item.productoSucursalId))
+        .reduce((sum, item) => sum + (item.cantidad || 0), 0),
     [items]
   );
 
@@ -132,6 +135,7 @@ export default function TrasladoForm() {
         <>
           <div>
             <Select
+              id="sucursalOrigen"
               label="Sucursal origen"
               value={sucursalId}
               onChange={(e) => {
@@ -149,6 +153,7 @@ export default function TrasladoForm() {
 
           <div>
             <Select
+              id="sucursalDestino"
               label="Sucursal destino"
               value={sucursalDestinoId}
               onChange={(e) => {
