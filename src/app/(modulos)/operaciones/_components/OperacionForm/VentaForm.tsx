@@ -1,133 +1,238 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Card from '../../../../../components/ui/Card/Card';
-import Button from '../../../../../components/ui/Button/Button';
+import { useCallback, useMemo, useState } from 'react';
 import Input from '../../../../../components/ui/Input/Input';
 import Select from '../../../../../components/ui/Select/Select';
 import { useSucursales } from '../../../../../context/SucursalContext';
-import { OperacionItemInput, OperacionCuentaInput, ModoReparto } from '../../../../../lib/types/OperacionCrear';
+import { OperacionItemInput } from '../../../../../lib/types/OperacionCrear';
 import { useOperacionCrear } from '../../_hooks/useOperacionCrear';
-import ItemsEditor from './ItemsEditor';
-import CuentasEditor from './CuentasEditor';
-import styles from './OperacionForm.module.css';
+import ItemsEditor, { importeItem } from './ItemsEditor';
+import PagoEditor from './PagoEditor';
+import ResumenOperacion from './ResumenOperacion';
+import OperacionFormLayout from './OperacionFormLayout';
+import { aCuentasInput, calcularPago, validarPago, FilaPago, ModoPagoElegido } from './pago';
+import styles from './OperacionFormLayout.module.css';
 
 export default function VentaForm() {
-  const router = useRouter();
   const { sucursales } = useSucursales();
   const { submitting, error, crear } = useOperacionCrear();
 
-  const [sucursalId, setSucursalId] = useState('');
+  const [sucursalElegida, setSucursalElegida] = useState('');
   const [numeroComprobante, setNumeroComprobante] = useState('');
   const [descuentoArs, setDescuentoArs] = useState('');
   const [items, setItems] = useState<OperacionItemInput[]>([]);
-  const [cuentas, setCuentas] = useState<OperacionCuentaInput[]>([]);
-  const [modoReparto, setModoReparto] = useState<ModoReparto>('monto');
+  const [modoPago, setModoPago] = useState<ModoPagoElegido>(null);
+  const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
+  const [tasas, setTasas] = useState<Map<string, number>>(new Map());
   const [margenInvalido, setMargenInvalido] = useState(false);
-  const [repartoValido, setRepartoValido] = useState(false);
+  const [errores, setErrores] = useState<Record<string, string>>({});
 
+  const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
   const handleMargenInvalidoChange = useCallback((v: boolean) => setMargenInvalido(v), []);
-  const handleRepartoValidoChange = useCallback((v: boolean) => setRepartoValido(v), []);
 
-  const subtotalArs = items.reduce((sum, item) => sum + item.cantidad * (item.precioUnitArs ?? 0), 0);
+  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
+  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+
+  const subtotal = useMemo(
+    () => items.reduce((sum, item) => sum + importeItem(item, 'venta'), 0),
+    [items]
+  );
+
   const descuentoNumero = Number(descuentoArs);
   const descuentoValido = descuentoArs === '' || Number.isFinite(descuentoNumero);
-  // Base sobre la que se reparte entre cuentas (sin recargos).
-  const baseReparto = subtotalArs - (descuentoArs === '' ? 0 : descuentoNumero);
+  const descuento = descuentoArs === '' || !descuentoValido ? 0 : descuentoNumero;
 
-  const puedeGuardar =
-    Boolean(sucursalId) &&
-    items.length > 0 &&
-    cuentas.length > 0 &&
-    descuentoValido &&
-    !margenInvalido &&
-    repartoValido;
+  // Base sobre la que se reparte entre cuentas: lo vendido menos el descuento.
+  const mercaderia = subtotal - descuento;
+
+  const pago = useMemo(
+    () => calcularPago(mercaderia, filasPago, tasas, modoPago),
+    [mercaderia, filasPago, tasas, modoPago]
+  );
+
+  // Sin un producto con importe cargado no hay monto que repartir entre cuentas.
+  const hayProductos = items.some(
+    (item) => item.productoSucursalId && (item.cantidad || 0) > 0 && (item.precioUnitArs ?? 0) > 0
+  );
+
+  const unidades = useMemo(
+    () => items.reduce((sum, item) => sum + (item.cantidad || 0), 0),
+    [items]
+  );
+
+  const sucursalNombre = sucursales.find((s) => s.id === sucursalId)?.nombre;
+
+  /** Limpia el error de un campo apenas el usuario lo edita. */
+  const limpiarError = useCallback((campo: string) => {
+    setErrores((prev) => {
+      if (!(campo in prev)) return prev;
+      const resto = { ...prev };
+      delete resto[campo];
+      return resto;
+    });
+  }, []);
+
+  const validar = (): Record<string, string> => {
+    const nuevos: Record<string, string> = {};
+
+    if (!sucursalId) nuevos.sucursalId = 'Elegí una sucursal.';
+
+    if (!descuentoValido) {
+      nuevos.descuentoArs = 'Ingresá un número válido.';
+    } else if (descuento < 0) {
+      nuevos.descuentoArs = 'El descuento no puede ser negativo.';
+    } else if (descuento > subtotal) {
+      nuevos.descuentoArs = 'El descuento no puede superar el subtotal.';
+    }
+
+    if (items.length === 0) {
+      nuevos.items = 'Agregá al menos un producto.';
+    } else {
+      items.forEach((item, i) => {
+        if (!item.productoSucursalId) nuevos[`items.${i}.producto`] = 'Elegí un producto.';
+        if (!item.cantidad || item.cantidad <= 0) {
+          nuevos[`items.${i}.cantidad`] = 'Tiene que ser mayor a 0.';
+        }
+        if (item.precioUnitArs === undefined || item.precioUnitArs <= 0) {
+          nuevos[`items.${i}.unitario`] = 'Tiene que ser mayor a 0.';
+        }
+      });
+    }
+
+    if (margenInvalido) {
+      nuevos.margen =
+        'Hay productos por debajo del margen mínimo configurado. Corregí los precios marcados para continuar.';
+    }
+
+    validarPago({
+      mercaderia,
+      modo: modoPago,
+      filas: filasPago,
+      resultado: pago,
+      politicaExceso: 'limitar',
+    }).forEach((e) => {
+      nuevos[e.campo] = e.mensaje;
+    });
+
+    return nuevos;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!puedeGuardar) return;
+
+    // El botón siempre está habilitado: al tocarlo se muestra lo que falta.
+    const nuevos = validar();
+    setErrores(nuevos);
+    if (Object.keys(nuevos).length > 0) return;
 
     await crear({
       tipo: 'venta',
       sucursalId,
-      modoReparto,
+      modoReparto: 'monto',
       items,
-      cuentas,
+      cuentas: aCuentasInput(pago),
       venta: {
-        numeroComprobante: numeroComprobante || undefined,
-        subtotalArs,
-        descuentoArs: descuentoArs === '' ? undefined : descuentoNumero,
+        numeroComprobante: numeroComprobante.trim() || undefined,
+        subtotalArs: subtotal,
+        descuentoArs: descuento > 0 ? descuento : undefined,
         // El total lo recalcula el backend sumando los recargos de cada cuenta.
       },
     });
   };
 
   return (
-    <div className={styles.page}>
-      <button type="button" className={styles.backLink} onClick={() => router.push('/operaciones')}>
-        ← Volver a operaciones
-      </button>
-
-      <h1 className={styles.pageTitle}>Nueva venta</h1>
-
-      <Card>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <div className={styles.section}>
-            <div className={styles.grid}>
-              <Select label="Sucursal" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
-                <option value="">Seleccionar sucursal</option>
-                {sucursales.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </Select>
-              <Input label="Número de comprobante" value={numeroComprobante} onChange={(e) => setNumeroComprobante(e.target.value)} />
-              <Input
-                label="Descuento ($)"
-                type="number"
-                step="0.01"
-                value={descuentoArs}
-                onChange={(e) => setDescuentoArs(e.target.value)}
-              />
-            </div>
+    <OperacionFormLayout
+      titulo="Nueva venta"
+      error={error}
+      total={pago.total}
+      etiquetaTotal="Total a cobrar"
+      etiquetaAccion="Registrar venta"
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      cabecera={
+        <>
+          <div>
+            <Select
+              label="Sucursal"
+              value={sucursalId}
+              onChange={(e) => {
+                limpiarError('sucursalId');
+                setSucursalElegida(e.target.value);
+              }}
+            >
+              <option value="">Seleccionar sucursal</option>
+              {sucursales.map((s) => (
+                <option key={s.id} value={s.id}>{s.nombre}</option>
+              ))}
+            </Select>
+            {errores.sucursalId && <span className={styles.errorCampo}>{errores.sucursalId}</span>}
           </div>
 
-          <ItemsEditor
-            sucursalId={sucursalId}
-            items={items}
-            onChange={setItems}
-            modo="venta"
-            onMargenInvalidoChange={handleMargenInvalidoChange}
-          />
-          <CuentasEditor
-            cuentas={cuentas}
-            onChange={setCuentas}
-            modoReparto={modoReparto}
-            onModoRepartoChange={setModoReparto}
-            base={baseReparto}
-            onValidezChange={handleRepartoValidoChange}
-            requiereCuentas
-            etiquetaMonto="Monto a cobrar ($)"
+          <Input
+            label={<>Número de comprobante <span className={styles.campoOpcional}>(opcional)</span></>}
+            value={numeroComprobante}
+            onChange={(e) => setNumeroComprobante(e.target.value)}
           />
 
-          {margenInvalido && (
-            <div className={styles.errorBanner}>
-              Hay productos con un precio por debajo del margen mínimo configurado. Corregí los precios marcados para continuar.
-            </div>
-          )}
-
-          <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => router.push('/operaciones')}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" disabled={submitting || !puedeGuardar}>
-              {submitting ? 'Guardando...' : 'Registrar venta'}
-            </Button>
+          <div>
+            <Input
+              label={<>Descuento ($) <span className={styles.campoOpcional}>(opcional)</span></>}
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={descuentoArs}
+              onChange={(e) => {
+                limpiarError('descuentoArs');
+                setDescuentoArs(e.target.value);
+              }}
+            />
+            {errores.descuentoArs && <span className={styles.errorCampo}>{errores.descuentoArs}</span>}
           </div>
-        </form>
-      </Card>
-    </div>
+        </>
+      }
+      resumen={
+        <ResumenOperacion
+          mercaderia={subtotal}
+          recargos={pago.recargos}
+          total={pago.total}
+          etiquetaTotal="Total a cobrar"
+          lineasExtra={descuento > 0 ? [{ etiqueta: 'Descuento', valor: descuento, negativo: true }] : []}
+          etiquetaAccion="Registrar venta"
+          submitting={submitting}
+        />
+      }
+    >
+      <div>
+        <ItemsEditor
+          sucursalId={sucursalId}
+          items={items}
+          onChange={setItems}
+          modo="venta"
+          onMargenInvalidoChange={handleMargenInvalidoChange}
+          errores={errores}
+          onCampoEditado={limpiarError}
+          unidades={-unidades}
+          sucursalNombre={sucursalNombre}
+        />
+        {errores.items && <span className={styles.errorCampo}>{errores.items}</span>}
+        {errores.margen && <div className={styles.errorBanner}>{errores.margen}</div>}
+      </div>
+
+      <PagoEditor
+        mercaderia={mercaderia}
+        modo={modoPago}
+        onModoChange={setModoPago}
+        filas={filasPago}
+        onFilasChange={setFilasPago}
+        onTasasChange={handleTasasChange}
+        errores={errores}
+        onCampoEditado={limpiarError}
+        etiquetaAccion="cobrar"
+        etiquetaDebita="Acredita"
+        habilitado={hayProductos}
+        politicaExceso="limitar"
+      />
+    </OperacionFormLayout>
   );
 }

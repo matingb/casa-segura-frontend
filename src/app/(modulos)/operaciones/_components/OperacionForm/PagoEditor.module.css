@@ -1,0 +1,445 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-elevated);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Dos columnas iguales, compactas. */
+.modos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.modo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.modo:hover {
+  border-color: var(--color-primary);
+}
+
+.modo:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.modoActivo {
+  composes: modo;
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.modoNombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.modoDetalle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Modo "una sola cuenta": opciones con su total ya resuelto. */
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.opcion:hover {
+  border-color: var(--color-primary);
+}
+
+.opcion:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.opcionActiva {
+  composes: opcion;
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.opcionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.opcionNombre {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.opcionRecargo {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.opcionTotal {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modo dividido: tabla */
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+/*
+ * Las cuatro columnas se reparten el ancho en proporción, en vez de encogerse
+ * al contenido y dejar que la primera absorba todo el sobrante.
+ */
+.colCuenta {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.tabla th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* `.tabla th` alinea a la izquierda: el encabezado numérico necesita el mismo
+   peso de especificidad y aparecer después para ganarle. */
+.tabla th.colNumero,
+.tabla td.colNumero,
+.tabla th.colPorcentaje,
+.tabla td.colPorcentaje,
+.tabla th.colAccion,
+.tabla td.colAccion {
+  text-align: right;
+}
+
+.tabla td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.colNumero {
+  text-align: right;
+  white-space: nowrap;
+  width: 104px;
+}
+
+.colAccion {
+  width: 26px;
+  text-align: right;
+}
+
+/* IconButton es flex: se lo alinea a la derecha desde la celda. */
+.celdaAccion {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.celdaCalculada {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.celdaDebita {
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El resto es un chip al lado del monto, no un mensaje debajo. */
+.celdaResto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.chipResto {
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.inputNumero {
+  width: 100%;
+  height: 30px;
+  padding: 0 0.45rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.inputNumero::-webkit-outer-spin-button,
+.inputNumero::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inputNumero:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+.inputNumero:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
+
+.inputError {
+  composes: inputNumero;
+  border-color: var(--color-danger);
+}
+
+.selectCuenta {
+  /* Se adapta al texto de las opciones en vez de estirarse a la columna. */
+  width: auto;
+  max-width: 260px;
+  height: 30px;
+  padding: 0 0.45rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
+.selectCuenta:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+.selectCuenta:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
+
+.errorCampo {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-danger);
+}
+
+.errorBloque {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-danger);
+}
+
+.filaAgregar td {
+  border-bottom: none;
+  border-top: 1px dashed var(--color-border-strong);
+  padding: 0;
+}
+
+.botonAgregar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.botonAgregar:hover {
+  background: var(--color-primary-soft);
+}
+
+.botonAgregar:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .modos {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla,
+  .tabla tbody,
+  .tabla tr,
+  .tabla td {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla thead {
+    display: none;
+  }
+
+  .tabla tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .tabla td {
+    border: none;
+    padding: 0.25rem 0;
+  }
+
+  .colCuenta,
+  .colNumero,
+  .colPorcentaje,
+  .colAccion {
+    text-align: left;
+    width: auto;
+    white-space: normal;
+  }
+
+  .selectCuenta,
+  .selectCuentaError {
+    width: 100%;
+    max-width: none;
+  }
+
+  .celdaResto {
+    justify-content: flex-start;
+  }
+}
+
+/* Barra de reparto, encima de la tabla: etiqueta + los tres modos juntos. */
+.reparto {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.repartoEtiqueta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Selector de unidad: monto o porcentaje. */
+.unidades {
+  display: inline-flex;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.unidad {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.unidad + .unidad {
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.unidad:hover {
+  color: var(--color-primary);
+}
+
+.unidad:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.unidadActiva {
+  composes: unidad;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-weight: 600;
+}
+
+.unidadActiva:hover {
+  color: var(--color-primary-contrast);
+}
+
+/* Fila sin cuenta: el resto se muestra atenuado, no como monto confirmado. */
+.celdaAtenuada {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.selectCuentaError {
+  composes: selectCuenta;
+  border-color: var(--color-danger);
+}
+
+/* Columna propia para el porcentaje de cada cuenta. */
+.colPorcentaje {
+  width: 88px;
+  text-align: right;
+  white-space: nowrap;
+}

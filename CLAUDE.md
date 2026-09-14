@@ -55,6 +55,40 @@ conectando al backend real en paralelo, módulo por módulo. Reglas:
   en `src/components/`.
 - Si hay design tokens o estilos compartidos en `src/app/styles.ts`, usarlos.
 
+## Reglas de negocio validadas en los formularios
+
+El backend es la autoridad: valida todo dentro de la transacción y con
+`SELECT ... FOR UPDATE` donde corresponde. El front **espeja** estas reglas para
+avisar antes de que el usuario pierda la carga, pero nunca las reemplaza.
+
+| Regla | Dónde vive en el back | Front | Comportamiento |
+|---|---|---|---|
+| Stock insuficiente en venta | — (no se valida) | `excedeStock` (ItemsEditor.tsx) | **Advierte**, no bloquea |
+| Margen mínimo de utilidad | `operacion.repository.ts` | `violaMargenMinimo` (ItemsEditor.tsx) | Bloquea el registro |
+| El reparto entre cuentas cierra contra el subtotal | `resolverReparto` (reparto-cuentas.ts) | `calcularPago` / `validarPago` (pago.ts) | Bloquea el registro |
+
+### Stock insuficiente en venta: se permite, solo se advierte
+
+**Una venta se registra aunque no haya stock suficiente**, y `cantidad_disponible`
+queda en negativo. Es una decisión de negocio: la venta ocurrió en el mundo real y
+el sistema tiene que poder registrarla; el faltante se corrige después con una
+compra o un ajuste manual de stock.
+
+El formulario muestra un aviso en ámbar debajo de la línea de stock, indicando qué
+productos se exceden y en cuántas unidades, pero no bloquea el registro.
+
+Implicancias a tener en cuenta:
+
+- `ajustarStockVenta` (operacion.repository.ts) ya no valida el disponible. La
+  columna tampoco tiene un CHECK de no-negativo en la base, así que nada impide
+  que quede negativo.
+- El disponible que muestra el formulario es una foto del momento en que se cargó
+  la pantalla, así que el aviso es orientativo: puede haber cambiado al registrar.
+- **Traslado sí sigue bloqueando** (`ajustarStockTraslado`): no se puede mover
+  mercadería que no está físicamente en la sucursal de origen.
+- La cancelación de una compra sí verifica que el stock no se haya consumido, para
+  no dejar inconsistencias al revertir.
+
 ## Módulos a maquetar (según el alcance de la Iteración 1)
 
 1. Layout general con sidebar de navegación entre módulos.

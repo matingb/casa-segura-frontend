@@ -268,10 +268,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 <DetailField label="Código de barra proveedor">{text(producto.codigoBarraProveedor)}</DetailField>
                 <DetailField label="Nombre">{text(producto.nombre)}</DetailField>
                 <DetailField label="Precio base">
-                  {producto.precioBase != null ? money(producto.precioBase) : 'â€”'}
+                  {producto.precioBase != null ? money(producto.precioBase) : '—'}
                 </DetailField>
                 <DetailField label="Costo de reposicion base">
-                  {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : 'â€”'}
+                  {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : '—'}
                 </DetailField>
               </div>
             </div>

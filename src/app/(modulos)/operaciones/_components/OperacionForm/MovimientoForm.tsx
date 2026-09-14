@@ -1,102 +1,158 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Card from '../../../../../components/ui/Card/Card';
-import Button from '../../../../../components/ui/Button/Button';
-import Input from '../../../../../components/ui/Input/Input';
+import { useCallback, useMemo, useState } from 'react';
 import Select from '../../../../../components/ui/Select/Select';
 import { useSucursales } from '../../../../../context/SucursalContext';
-import { OperacionCuentaInput } from '../../../../../lib/types/OperacionCrear';
 import { useOperacionCrear } from '../../_hooks/useOperacionCrear';
-import CuentasEditor from './CuentasEditor';
-import styles from './OperacionForm.module.css';
+import PagoEditor from './PagoEditor';
+import ResumenOperacion from './ResumenOperacion';
+import OperacionFormLayout from './OperacionFormLayout';
+import { aCuentasInput, calcularPago, validarPago, FilaPago } from './pago';
+import styles from './OperacionFormLayout.module.css';
 
 export default function MovimientoForm() {
-  const router = useRouter();
   const { sucursales } = useSucursales();
   const { submitting, error, crear } = useOperacionCrear();
 
-  const [sucursalId, setSucursalId] = useState('');
+  const [sucursalElegida, setSucursalElegida] = useState('');
   const [tipoMovimiento, setTipoMovimiento] = useState<'ingreso' | 'egreso'>('ingreso');
   const [descripcion, setDescripcion] = useState('');
-  const [cuentas, setCuentas] = useState<OperacionCuentaInput[]>([]);
-  const [repartoValido, setRepartoValido] = useState(false);
+  const [filasPago, setFilasPago] = useState<FilaPago[]>([{ cuentaFinancieraId: '' }]);
+  const [tasas, setTasas] = useState<Map<string, number>>(new Map());
+  const [errores, setErrores] = useState<Record<string, string>>({});
 
-  const handleRepartoValidoChange = useCallback((v: boolean) => setRepartoValido(v), []);
+  const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
 
-  const puedeGuardar = Boolean(sucursalId) && cuentas.length > 0 && repartoValido;
+  // No hay sucursal por defecto en el modelo: si el usuario tiene una sola, se usa esa.
+  const sucursalId = sucursalElegida || (sucursales.length === 1 ? sucursales[0].id : '');
+
+  // El monto del movimiento se deriva de las cuentas, no al revés.
+  const pago = useMemo(
+    () => calcularPago(0, filasPago, tasas, 'derivado'),
+    [filasPago, tasas]
+  );
+
+  const esIngreso = tipoMovimiento === 'ingreso';
+
+  /** Limpia el error de un campo apenas el usuario lo edita. */
+  const limpiarError = useCallback((campo: string) => {
+    setErrores((prev) => {
+      if (!(campo in prev)) return prev;
+      const resto = { ...prev };
+      delete resto[campo];
+      return resto;
+    });
+  }, []);
+
+  const validar = (): Record<string, string> => {
+    const nuevos: Record<string, string> = {};
+
+    if (!sucursalId) nuevos.sucursalId = 'Elegí una sucursal.';
+
+    validarPago({ mercaderia: 0, modo: 'derivado', filas: filasPago }).forEach((e) => {
+      nuevos[e.campo] = e.mensaje;
+    });
+
+    return nuevos;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!puedeGuardar) return;
+
+    // El botón siempre está habilitado: al tocarlo se muestra lo que falta.
+    const nuevos = validar();
+    setErrores(nuevos);
+    if (Object.keys(nuevos).length > 0) return;
 
     await crear({
       tipo: 'movimiento',
       sucursalId,
       // El monto del movimiento lo deriva el backend de las cuentas cargadas.
-      cuentas,
+      cuentas: aCuentasInput(pago),
       movimiento: {
         tipo: tipoMovimiento,
-        descripcion: descripcion || undefined,
+        descripcion: descripcion.trim() || undefined,
       },
     });
   };
 
   return (
-    <div className={styles.page}>
-      <button type="button" className={styles.backLink} onClick={() => router.push('/operaciones')}>
-        ← Volver a operaciones
-      </button>
-
-      <h1 className={styles.pageTitle}>
-        Nuevo movimiento financiero — {tipoMovimiento === 'ingreso' ? 'Ingreso' : 'Egreso'}
-      </h1>
-
-      <Card>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <div className={styles.section}>
-            <div className={styles.grid}>
-              <Select label="Sucursal" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
-                <option value="">Seleccionar sucursal</option>
-                {sucursales.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </Select>
-              <Select
-                label="Tipo"
-                value={tipoMovimiento}
-                onChange={(e) => setTipoMovimiento(e.target.value as 'ingreso' | 'egreso')}
-              >
-                <option value="ingreso">Ingreso</option>
-                <option value="egreso">Egreso</option>
-              </Select>
-            </div>
-            <Input label="Descripción" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+    <OperacionFormLayout
+      titulo={`Nuevo movimiento financiero — ${esIngreso ? 'Ingreso' : 'Egreso'}`}
+      error={error}
+      total={pago.total}
+      etiquetaTotal={esIngreso ? 'Total a ingresar' : 'Total a egresar'}
+      etiquetaAccion="Registrar movimiento"
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      cabecera={
+        <>
+          <div>
+            <Select
+              label="Sucursal"
+              value={sucursalId}
+              onChange={(e) => {
+                limpiarError('sucursalId');
+                setSucursalElegida(e.target.value);
+              }}
+            >
+              <option value="">Seleccionar sucursal</option>
+              {sucursales.map((s) => (
+                <option key={s.id} value={s.id}>{s.nombre}</option>
+              ))}
+            </Select>
+            {errores.sucursalId && <span className={styles.errorCampo}>{errores.sucursalId}</span>}
           </div>
 
-          <CuentasEditor
-            cuentas={cuentas}
-            onChange={setCuentas}
-            modoReparto="monto"
-            onModoRepartoChange={() => {}}
-            derivarTotalDeCuentas
-            onValidezChange={handleRepartoValidoChange}
-            requiereCuentas
-          />
+          <Select
+            label="Tipo"
+            value={tipoMovimiento}
+            onChange={(e) => setTipoMovimiento(e.target.value as 'ingreso' | 'egreso')}
+          >
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </Select>
 
-          <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => router.push('/operaciones')}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" disabled={submitting || !puedeGuardar}>
-              {submitting ? 'Guardando...' : 'Registrar movimiento'}
-            </Button>
+          <div className={styles.campoAncho}>
+            <label htmlFor="descripcion">
+              Descripción <span className={styles.campoOpcional}>(opcional)</span>
+            </label>
+            <textarea
+              id="descripcion"
+              className={styles.textarea}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              rows={3}
+              placeholder="Motivo del movimiento"
+            />
           </div>
-        </form>
-      </Card>
-    </div>
+        </>
+      }
+      resumen={
+        <ResumenOperacion
+          mercaderia={pago.mercaderia}
+          recargos={pago.recargos}
+          total={pago.total}
+          etiquetaTotal={esIngreso ? 'Total a ingresar' : 'Total a egresar'}
+          etiquetaAccion="Registrar movimiento"
+          submitting={submitting}
+        />
+      }
+    >
+      <PagoEditor
+        mercaderia={0}
+        modo="derivado"
+        onModoChange={() => {}}
+        filas={filasPago}
+        onFilasChange={setFilasPago}
+        onTasasChange={handleTasasChange}
+        errores={errores}
+        onCampoEditado={limpiarError}
+        etiquetaAccion={esIngreso ? 'ingresar' : 'egresar'}
+        etiquetaDebita={esIngreso ? 'Acredita' : 'Debita'}
+        titulo="Cuentas financieras"
+        etiquetaBase="Monto"
+      />
+    </OperacionFormLayout>
   );
 }

@@ -9,7 +9,12 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  /*
+   * `clip` en vez de `hidden`: contiene el desborde horizontal igual, pero no
+   * crea un contexto de scroll. `hidden` fuerza overflow-y: auto y rompe
+   * `position: sticky` en todos los descendientes (paneles y thead de tablas).
+   */
+  overflow-x: clip;
 }
 
 body {

@@ -1,0 +1,77 @@
+/*
+ * Offset del panel pegajoso. El topbar del AppShell scrollea con la página,
+ * así que solo hace falta el aire propio del panel.
+ */
+.panel {
+  --offset-sticky: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-elevated);
+
+  position: sticky;
+  top: var(--offset-sticky);
+  /* Si el panel superara la ventana, scrollea por dentro y el total sigue alcanzable. */
+  max-height: calc(100vh - var(--offset-sticky) - 16px);
+  overflow-y: auto;
+}
+
+.titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.linea {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.lineaEtiqueta {
+  color: var(--color-text-muted);
+}
+
+.lineaValor {
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.totalEtiqueta {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.totalValor {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* La acción va pegada al número que confirma. */
+.accion {
+  margin-top: 0.25rem;
+}
+
+.botonAncho {
+  width: 100%;
+  justify-content: center;
+}
