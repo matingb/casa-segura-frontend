@@ -37,4 +37,51 @@ export const clasificacionClient = {
     }
     return [];
   },
+
+  crearTipo: async (nombre: string): Promise<Tipo> => {
+    const res = await apiFetch('/api/tipos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre }),
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al crear tipo');
+    }
+    return mapApiTipoToTipo(json.data);
+  },
+
+  eliminarTipo: async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/tipos/${id}`, {
+      method: 'DELETE',
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al eliminar tipo');
+    }
+  },
+
+  crearSubtipo: async (tipoId: string, nombre: string): Promise<Subtipo> => {
+    const res = await apiFetch('/api/subtipos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipoId, nombre }),
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al crear subtipo');
+    }
+    return mapApiSubtipoToSubtipo(json.data);
+  },
+
+  eliminarSubtipo: async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/subtipos/${id}`, {
+      method: 'DELETE',
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al eliminar subtipo');
+    }
+  },
 };
+

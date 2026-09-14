@@ -5,11 +5,20 @@ import { Tipo } from '../types/Tipo';
 import { Subtipo } from '../types/Subtipo';
 import { clasificacionClient } from '../api/clasificacion.client';
 
+export const CLASIFICACION_CHANGED_EVENT = 'clasificacion-changed';
+
+export function notifyClasificacionChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(CLASIFICACION_CHANGED_EVENT));
+  }
+}
+
 interface UseClasificacionResult {
   tipos: Tipo[];
   subtipos: Subtipo[];
   loading: boolean;
   error: string | null;
+  refetch: () => Promise<void>;
   getSubtipoNombre: (subtipoId: string) => string;
   getTipoIdDeSubtipo: (subtipoId: string) => string | undefined;
   getTipoNombre: (tipoId: string) => string;
@@ -44,6 +53,17 @@ export function useClasificacion(): UseClasificacionResult {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUpdate = () => {
+      fetchData();
+    };
+    window.addEventListener(CLASIFICACION_CHANGED_EVENT, handleUpdate);
+    return () => {
+      window.removeEventListener(CLASIFICACION_CHANGED_EVENT, handleUpdate);
+    };
+  }, [fetchData]);
+
   const getSubtipoNombre = useCallback(
     (subtipoId: string) => subtipos.find((s) => s.id === subtipoId)?.nombre ?? 'Sin subtipo',
     [subtipos]
@@ -65,7 +85,7 @@ export function useClasificacion(): UseClasificacionResult {
   );
 
   return useMemo(
-    () => ({ tipos, subtipos, loading, error, getSubtipoNombre, getTipoIdDeSubtipo, getTipoNombre, getSubtiposPorTipo }),
-    [tipos, subtipos, loading, error, getSubtipoNombre, getTipoIdDeSubtipo, getTipoNombre, getSubtiposPorTipo]
+    () => ({ tipos, subtipos, loading, error, refetch: fetchData, getSubtipoNombre, getTipoIdDeSubtipo, getTipoNombre, getSubtiposPorTipo }),
+    [tipos, subtipos, loading, error, fetchData, getSubtipoNombre, getTipoIdDeSubtipo, getTipoNombre, getSubtiposPorTipo]
   );
 }
