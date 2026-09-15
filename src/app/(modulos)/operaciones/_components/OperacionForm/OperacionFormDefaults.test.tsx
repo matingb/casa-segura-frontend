@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import VentaForm from './VentaForm';
 import CompraForm from './CompraForm';
@@ -157,6 +157,18 @@ describe('Operaciones Forms - Valores por defecto', () => {
   });
 
   describe('Pago por defecto: "Una sola cuenta" sin cuenta seleccionada', () => {
+    it('permite dejar una compra pendiente y oculta la selección de cuentas', async () => {
+      render(<CompraForm />);
+
+      expect(screen.getByRole('heading', { name: 'Pago' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('radio', { name: 'Dejar pendiente de pago' }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('heading', { name: 'Pago' })).not.toBeInTheDocument();
+      });
+      expect(screen.getByRole('radio', { name: 'Dejar pendiente de pago' })).toBeChecked();
+    });
+
     it('activa "Una sola cuenta" por defecto pero sin cuenta seleccionada', async () => {
       render(
         <PagoEditor

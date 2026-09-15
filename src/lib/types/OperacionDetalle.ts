@@ -22,6 +22,8 @@ export interface OperacionCuentaDistribucion {
   porcentajeExtra?: number;
   monto: number;
   montoUsd?: number;
+  fechaEfectiva?: string;
+  observacion?: string;
 }
 
 export interface OperacionDetalle {
@@ -35,6 +37,9 @@ export interface OperacionDetalle {
   sucursalId: string;
   sucursalNombre: string;
   total: number;
+  montoPagado?: number;
+  saldoPendiente?: number;
+  estadoFinanciero?: EstadoFinanciero;
   subtotal?: number;
   descuento?: number;
   otrosImpuestos?: number;
@@ -48,3 +53,4 @@ export interface OperacionDetalle {
   items: OperacionItem[];
   cuentas: OperacionCuentaDistribucion[];
 }
+import type { EstadoFinanciero } from './Operacion';

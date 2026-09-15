@@ -21,6 +21,7 @@ export default function VentaForm() {
   const [numeroComprobante, setNumeroComprobante] = useState('');
   const [descuentoArs, setDescuentoArs] = useState('');
   const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
+  const [registrarFinanzasAhora, setRegistrarFinanzasAhora] = useState(true);
   const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
@@ -49,6 +50,7 @@ export default function VentaForm() {
     () => calcularPago(mercaderia, filasPago, tasas, modoPago),
     [mercaderia, filasPago, tasas, modoPago]
   );
+  const totalOperacion = registrarFinanzasAhora ? pago.total : mercaderia;
 
   // Sin un producto con importe cargado no hay monto que repartir entre cuentas.
   const hayProductos = items.some(
@@ -107,15 +109,17 @@ export default function VentaForm() {
         'Hay productos por debajo del margen mínimo configurado. Corregí los precios marcados para continuar.';
     }
 
-    validarPago({
-      mercaderia,
-      modo: modoPago,
-      filas: filasPago,
-      resultado: pago,
-      politicaExceso: 'limitar',
-    }).forEach((e) => {
-      nuevos[e.campo] = e.mensaje;
-    });
+    if (registrarFinanzasAhora) {
+      validarPago({
+        mercaderia,
+        modo: modoPago,
+        filas: filasPago,
+        resultado: pago,
+        politicaExceso: 'limitar',
+      }).forEach((e) => {
+        nuevos[e.campo] = e.mensaje;
+      });
+    }
 
     return nuevos;
   };
@@ -131,14 +135,15 @@ export default function VentaForm() {
     await crear({
       tipo: 'venta',
       sucursalId,
+      registrarFinanzasAhora,
       modoReparto: 'monto',
       items,
-      cuentas: aCuentasInput(pago),
+      cuentas: registrarFinanzasAhora ? aCuentasInput(pago) : [],
       venta: {
         numeroComprobante: numeroComprobante.trim() || undefined,
         subtotalArs: subtotal,
         descuentoArs: descuento > 0 ? descuento : undefined,
-        // El total lo recalcula el backend sumando los recargos de cada cuenta.
+        totalArs: totalOperacion,
       },
     });
   };
@@ -147,7 +152,7 @@ export default function VentaForm() {
     <OperacionFormLayout
       titulo="Nueva venta"
       error={error}
-      total={pago.total}
+      total={totalOperacion}
       etiquetaTotal="Total a cobrar"
       etiquetaAccion="Registrar venta"
       submitting={submitting}
@@ -199,7 +204,7 @@ export default function VentaForm() {
         <ResumenOperacion
           mercaderia={subtotal}
           recargos={pago.recargos}
-          total={pago.total}
+          total={totalOperacion}
           etiquetaTotal="Total a cobrar"
           lineasExtra={descuento > 0 ? [{ etiqueta: 'Descuento', valor: descuento, negativo: true }] : []}
           etiquetaAccion="Registrar venta"
@@ -223,20 +228,42 @@ export default function VentaForm() {
         {errores.margen && <div className={styles.errorBanner}>{errores.margen}</div>}
       </div>
 
-      <PagoEditor
-        mercaderia={mercaderia}
-        modo={modoPago}
-        onModoChange={setModoPago}
-        filas={filasPago}
-        onFilasChange={setFilasPago}
-        onTasasChange={handleTasasChange}
-        errores={errores}
-        onCampoEditado={limpiarError}
-        etiquetaAccion="cobrar"
-        etiquetaDebita="Acredita"
-        habilitado={hayProductos}
-        politicaExceso="limitar"
-      />
+      <fieldset className={styles.opcionesFinancieras}>
+        <legend>Estado del cobro</legend>
+        <label className={styles.opcionFinanciera}>
+          <input
+            type="radio"
+            checked={registrarFinanzasAhora}
+            onChange={() => setRegistrarFinanzasAhora(true)}
+          />
+          Registrar cobro ahora
+        </label>
+        <label className={styles.opcionFinanciera}>
+          <input
+            type="radio"
+            checked={!registrarFinanzasAhora}
+            onChange={() => setRegistrarFinanzasAhora(false)}
+          />
+          Dejar pendiente de cobro
+        </label>
+      </fieldset>
+
+      {registrarFinanzasAhora && (
+        <PagoEditor
+          mercaderia={mercaderia}
+          modo={modoPago}
+          onModoChange={setModoPago}
+          filas={filasPago}
+          onFilasChange={setFilasPago}
+          onTasasChange={handleTasasChange}
+          errores={errores}
+          onCampoEditado={limpiarError}
+          etiquetaAccion="cobrar"
+          etiquetaDebita="Acredita"
+          habilitado={hayProductos}
+          politicaExceso="limitar"
+        />
+      )}
     </OperacionFormLayout>
   );
 }

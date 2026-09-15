@@ -19,6 +19,12 @@
   gap: 0.5rem;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .backLink {
   display: inline-flex;
   align-items: center;
@@ -107,6 +113,20 @@
   gap: 1rem;
 }
 
+.finanzasResumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.finanzasResumen strong {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
 .cuentaCard {
   display: flex;
   flex-direction: column;
@@ -120,6 +140,12 @@
 .cuentaHeader {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cuentaAcciones {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
 }
@@ -139,6 +165,11 @@
   border-radius: 6px;
 }
 
+.eliminarPagoButton {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+}
+
 .cuentaMonto {
   font-size: 1.25rem;
   font-weight: 700;
@@ -147,6 +178,17 @@
 
 .cuentaRecargo {
   font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.cuentaFecha,
+.cuentaObservacion {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.sinMovimientos {
+  margin: 0;
   color: var(--color-text-muted);
 }
 

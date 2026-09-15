@@ -32,6 +32,10 @@ export function mapOperacionCrearInputToApiBody(input: OperacionCrearInput): Rec
     tipo: input.tipo,
     sucursal_id: input.sucursalId,
     fecha: input.fecha,
+    registrar_finanzas_ahora:
+      input.tipo === 'compra' || input.tipo === 'venta'
+        ? input.registrarFinanzasAhora ?? true
+        : undefined,
     modo_reparto: input.modoReparto ?? 'monto',
     cuentas: input.cuentas.map(mapCuentaInputToApi),
   };
@@ -100,6 +104,7 @@ export function mapApiOperacionToOperacion(apiData: any): Operacion {
     monto: apiData.monto ? Number(apiData.monto) : 0,
     descripcion: apiData.descripcion ?? '',
     fecha: apiData.fecha ?? '',
+    estadoFinanciero: apiData.estado_financiero ?? undefined,
     cancelledAt: apiData.cancelled_at ?? undefined,
   };
 }
@@ -146,6 +151,8 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
         porcentajeExtra: c.porcentaje_extra !== null && c.porcentaje_extra !== undefined ? Number(c.porcentaje_extra) : undefined,
         monto: Number(c.monto_ars ?? 0),
         montoUsd: c.monto_usd !== null && c.monto_usd !== undefined ? Number(c.monto_usd) : undefined,
+        fechaEfectiva: c.fecha_efectiva ?? undefined,
+        observacion: c.observacion ?? undefined,
       }))
     : [];
 
@@ -160,6 +167,9 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
     sucursalId: raw.sucursal_id ?? '',
     sucursalNombre: raw.sucursal_nombre ?? '',
     total,
+    montoPagado: raw.monto_pagado_ars !== undefined ? Number(raw.monto_pagado_ars) : cuentas.reduce((sum: number, cuenta: { monto: number }) => sum + cuenta.monto, 0),
+    saldoPendiente: Math.max(0, total - (raw.monto_pagado_ars !== undefined ? Number(raw.monto_pagado_ars) : cuentas.reduce((sum: number, cuenta: { monto: number }) => sum + cuenta.monto, 0))),
+    estadoFinanciero: raw.estado_financiero ?? undefined,
     subtotal: raw.venta_subtotal_ars ? Number(raw.venta_subtotal_ars) : (raw.compra_subtotal_ars ? Number(raw.compra_subtotal_ars) : undefined),
     descuento: raw.venta_descuento_ars ? Number(raw.venta_descuento_ars) : undefined,
     otrosImpuestos: raw.compra_otros_impuestos_ars ? Number(raw.compra_otros_impuestos_ars) : undefined,
@@ -289,6 +299,47 @@ export const operacionesClient = {
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message ?? 'No se pudo cancelar la operación');
+    }
+    const json = await res.json();
+    return mapApiOperacionDetalleToOperacionDetalle(json.data);
+  },
+
+  registrarPago: async (
+    id: string,
+    input: {
+      cuentas: Array<{
+        cuentaFinancieraId: string;
+        montoArs: number;
+        fechaEfectiva?: string;
+        observacion?: string;
+      }>;
+    }
+  ): Promise<OperacionDetalle> => {
+    const res = await apiFetch(`/api/operaciones/${id}/pagos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cuentas: input.cuentas.map((cuenta) => ({
+          cuenta_financiera_id: cuenta.cuentaFinancieraId,
+          monto_ars: cuenta.montoArs,
+          fecha_efectiva: cuenta.fechaEfectiva ?? undefined,
+          observacion: cuenta.observacion?.trim() || undefined,
+        })),
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo registrar el pago/cobro.');
+    }
+    const json = await res.json();
+    return mapApiOperacionDetalleToOperacionDetalle(json.data);
+  },
+
+  eliminarPago: async (id: string, pagoId: string): Promise<OperacionDetalle> => {
+    const res = await apiFetch(`/api/operaciones/${id}/pagos/${pagoId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo eliminar el pago/cobro.');
     }
     const json = await res.json();
     return mapApiOperacionDetalleToOperacionDetalle(json.data);

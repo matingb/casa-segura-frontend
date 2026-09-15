@@ -29,6 +29,7 @@ export type OperacionCrearInput =
       tipo: 'compra';
       sucursalId: string;
       fecha?: string;
+      registrarFinanzasAhora?: boolean;
       modoReparto?: ModoReparto;
       items: OperacionItemInput[];
       cuentas: OperacionCuentaInput[];
@@ -48,6 +49,7 @@ export type OperacionCrearInput =
       tipo: 'venta';
       sucursalId: string;
       fecha?: string;
+      registrarFinanzasAhora?: boolean;
       modoReparto?: ModoReparto;
       items: OperacionItemInput[];
       cuentas: OperacionCuentaInput[];

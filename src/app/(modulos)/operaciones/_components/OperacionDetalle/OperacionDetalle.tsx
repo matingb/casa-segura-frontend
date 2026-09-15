@@ -6,11 +6,12 @@ import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
-import { OperacionItem } from '../../../../../lib/types/OperacionDetalle';
+import { OperacionCuentaDistribucion, OperacionItem } from '../../../../../lib/types/OperacionDetalle';
 import { useOperacionDetalle } from '../../_hooks/useOperacionDetalle';
 import { operacionesClient } from '../../../../../lib/api/operaciones.client';
 import { useToast } from '../../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
+import RegistrarPagoModal from './RegistrarPagoModal';
 import { formatFecha, formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './OperacionDetalle.module.css';
 
@@ -26,12 +27,31 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
   return 'neutral';
 }
 
+function etiquetaEstadoFinanciero(estado: string | undefined, tipoNombre: string): string | null {
+  if (!estado) return null;
+  const esCompra = tipoNombre.toLowerCase() === 'compra';
+  const etiquetas: Record<string, string> = esCompra
+    ? { PENDIENTE: 'Pendiente de pago', PARCIAL: 'Pago parcial', SALDADA: 'Pagada', SOBREPAGADA: 'Sobrepagada' }
+    : { PENDIENTE: 'Pendiente de cobro', PARCIAL: 'Cobro parcial', SALDADA: 'Cobrada', SOBREPAGADA: 'Sobrecobrada' };
+  return etiquetas[estado] ?? estado;
+}
+
+function varianteEstadoFinanciero(estado: string | undefined): 'success' | 'danger' | 'warning' | 'neutral' {
+  if (estado === 'SALDADA') return 'success';
+  if (estado === 'SOBREPAGADA') return 'danger';
+  if (estado === 'PENDIENTE' || estado === 'PARCIAL') return 'warning';
+  return 'neutral';
+}
+
 export default function OperacionDetalle({ operacionId }: OperacionDetalleProps) {
   const router = useRouter();
   const { operacion, isLoading, error, reload } = useOperacionDetalle(operacionId);
   const { showError, showSuccess } = useToast();
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [showRegistrarPago, setShowRegistrarPago] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [pagoAEliminar, setPagoAEliminar] = useState<OperacionCuentaDistribucion | null>(null);
+  const [isDeletingPago, setIsDeletingPago] = useState(false);
 
   const handleCancel = async () => {
     if (isCancelling) return;
@@ -44,6 +64,27 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
       showError(err instanceof Error ? err.message : 'No se pudo cancelar la operación.');
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handlePagoRegistrado = async () => {
+    await reload();
+    setShowRegistrarPago(false);
+    showSuccess(operacion?.tipoNombre.toLowerCase() === 'compra' ? 'Pago registrado correctamente.' : 'Cobro registrado correctamente.');
+  };
+
+  const handleEliminarPago = async () => {
+    if (!pagoAEliminar || isDeletingPago) return;
+    try {
+      setIsDeletingPago(true);
+      await operacionesClient.eliminarPago(operacionId, pagoAEliminar.id);
+      await reload();
+      setPagoAEliminar(null);
+      showSuccess(operacion?.tipoNombre === 'Compra' ? 'Pago eliminado correctamente.' : 'Cobro eliminado correctamente.');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo eliminar el pago/cobro.');
+    } finally {
+      setIsDeletingPago(false);
     }
   };
 
@@ -126,6 +167,13 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
     );
   }
 
+  const esOperacionComercial = operacion.tipoNombre === 'Compra' || operacion.tipoNombre === 'Venta';
+  const puedeRegistrarPago = esOperacionComercial
+    && !operacion.cancelledAt
+    && operacion.estadoFinanciero !== 'SALDADA'
+    && operacion.estadoFinanciero !== 'SOBREPAGADA';
+  const etiquetaEstado = etiquetaEstadoFinanciero(operacion.estadoFinanciero, operacion.tipoNombre);
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -143,14 +191,22 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             <Badge variant={getTipoVariant(operacion.tipoNombre)}>
               {operacion.tipoNombre}
             </Badge>
+            {etiquetaEstado && <Badge variant={varianteEstadoFinanciero(operacion.estadoFinanciero)}>{etiquetaEstado}</Badge>}
             {operacion.cancelledAt && <Badge variant="danger">Cancelada</Badge>}
           </div>
         </div>
-        {!operacion.cancelledAt && (
-          <Button type="button" variant="danger" onClick={() => setShowCancelConfirmation(true)}>
-            Cancelar operación
-          </Button>
-        )}
+        <div className={styles.actions}>
+          {puedeRegistrarPago && (
+            <Button type="button" variant="primary" onClick={() => setShowRegistrarPago(true)}>
+              {operacion.tipoNombre === 'Compra' ? 'Registrar pago' : 'Registrar cobro'}
+            </Button>
+          )}
+          {!operacion.cancelledAt && (
+            <Button type="button" variant="danger" onClick={() => setShowCancelConfirmation(true)}>
+              Cancelar operación
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -161,6 +217,14 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             {formatMonto(operacion.total)}
           </span>
         </div>
+        {esOperacionComercial && (
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>{operacion.tipoNombre === 'Compra' ? 'Saldo pendiente de pago' : 'Saldo pendiente de cobro'}</span>
+            <span className={`${styles.summaryValue} ${styles.montoTotal}`}>
+              {formatMonto(operacion.saldoPendiente ?? Math.max(0, operacion.total - (operacion.montoPagado ?? 0)))}
+            </span>
+          </div>
+        )}
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Fecha</span>
           <span className={styles.summaryValue}>{formatFecha(operacion.fecha)}</span>
@@ -226,14 +290,34 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
       )}
 
       {/* Cuentas bancarias / financieras involucradas */}
-      {operacion.cuentas.length > 0 && (
-        <Card title="Cuentas bancarias y financieras involucradas">
-          <div className={styles.cuentasGrid}>
+      {(operacion.cuentas.length > 0 || esOperacionComercial) && (
+        <Card title={esOperacionComercial ? 'Historial de pagos y cobros' : 'Cuentas bancarias y financieras involucradas'}>
+          {esOperacionComercial && (
+            <div className={styles.finanzasResumen}>
+              <span>{operacion.tipoNombre === 'Compra' ? 'Pagado' : 'Cobrado'}: <strong>{formatMonto(operacion.montoPagado ?? 0)}</strong></span>
+              <span>Saldo pendiente: <strong>{formatMonto(operacion.saldoPendiente ?? Math.max(0, operacion.total - (operacion.montoPagado ?? 0)))}</strong></span>
+            </div>
+          )}
+          {operacion.cuentas.length > 0 ? (
+            <div className={styles.cuentasGrid}>
             {operacion.cuentas.map((c) => (
               <div key={c.id} className={styles.cuentaCard}>
                 <div className={styles.cuentaHeader}>
                   <span className={styles.cuentaNombre}>{c.cuentaNombre}</span>
-                  <span className={styles.porcentajeBadge}>{formatPorcentaje(c.porcentaje)}</span>
+                  <div className={styles.cuentaAcciones}>
+                    <span className={styles.porcentajeBadge}>{formatPorcentaje(c.porcentaje)}</span>
+                    {esOperacionComercial && !operacion.cancelledAt && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className={styles.eliminarPagoButton}
+                        onClick={() => setPagoAEliminar(c)}
+                        aria-label={`Eliminar ${operacion.tipoNombre === 'Compra' ? 'pago' : 'cobro'} de ${formatMonto(c.monto)} en ${c.cuentaNombre}`}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <span className={styles.cuentaMonto}>{formatMonto(c.monto)}</span>
                 {c.porcentajeExtra ? (
@@ -241,9 +325,14 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
                     incluye {formatPorcentaje(c.porcentajeExtra)} de recargo
                   </span>
                 ) : null}
+                {c.fechaEfectiva && <span className={styles.cuentaFecha}>{formatFecha(c.fechaEfectiva)}</span>}
+                {c.observacion && <span className={styles.cuentaObservacion}>{c.observacion}</span>}
               </div>
             ))}
-          </div>
+            </div>
+          ) : (
+            <p className={styles.sinMovimientos}>Todavía no hay pagos/cobros registrados para esta operación.</p>
+          )}
         </Card>
       )}
       {showCancelConfirmation && (
@@ -254,6 +343,23 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
           isConfirming={isCancelling}
           onConfirm={handleCancel}
           onClose={() => setShowCancelConfirmation(false)}
+        />
+      )}
+      {showRegistrarPago && (
+        <RegistrarPagoModal
+          operacion={operacion}
+          onClose={() => setShowRegistrarPago(false)}
+          onRegistered={handlePagoRegistrado}
+        />
+      )}
+      {pagoAEliminar && (
+        <ConfirmActionModal
+          title={`Eliminar ${operacion.tipoNombre === 'Compra' ? 'pago' : 'cobro'}`}
+          description={`Se eliminará ${formatMonto(pagoAEliminar.monto)} de ${pagoAEliminar.cuentaNombre}. Se revertirá el saldo de la cuenta y se recalculará el estado financiero de la operación.`}
+          confirmLabel={`Eliminar ${operacion.tipoNombre === 'Compra' ? 'pago' : 'cobro'}`}
+          isConfirming={isDeletingPago}
+          onConfirm={handleEliminarPago}
+          onClose={() => setPagoAEliminar(null)}
         />
       )}
     </div>

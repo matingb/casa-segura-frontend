@@ -24,6 +24,22 @@ function getTipoVariant(tipoNombre: string): 'success' | 'danger' | 'warning' | 
   return 'neutral';
 }
 
+function estadoFinancieroLabel(estado: Operacion['estadoFinanciero'], tipo: string): string {
+  const esCompra = tipo === 'Compra';
+  if (estado === 'PENDIENTE') return esCompra ? 'Pendiente de pago' : 'Pendiente de cobro';
+  if (estado === 'PARCIAL') return esCompra ? 'Pago parcial' : 'Cobro parcial';
+  if (estado === 'SALDADA') return esCompra ? 'Pagada' : 'Cobrada';
+  if (estado === 'SOBREPAGADA') return esCompra ? 'Sobrepagada' : 'Sobrecobrada';
+  return '—';
+}
+
+function estadoFinancieroVariant(estado: Operacion['estadoFinanciero']): 'success' | 'danger' | 'warning' | 'neutral' {
+  if (estado === 'SALDADA') return 'success';
+  if (estado === 'SOBREPAGADA') return 'danger';
+  if (estado === 'PENDIENTE' || estado === 'PARCIAL') return 'warning';
+  return 'neutral';
+}
+
 export default function OperacionesCatalogo() {
   const router = useRouter();
   const [showNuevaOperacion, setShowNuevaOperacion] = useState(false);
@@ -77,6 +93,15 @@ export default function OperacionesCatalogo() {
       header: 'Sucursal',
       render: (op) => op.sucursalNombre || '—',
       sortable: true,
+    },
+    {
+      key: 'estadoFinanciero',
+      header: 'Estado financiero',
+      render: (op) => op.estadoFinanciero ? (
+        <Badge variant={estadoFinancieroVariant(op.estadoFinanciero)}>
+          {estadoFinancieroLabel(op.estadoFinanciero, op.tipoNombre)}
+        </Badge>
+      ) : '—',
     },
     {
       key: 'usuario',

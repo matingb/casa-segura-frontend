@@ -1,3 +1,5 @@
+export type EstadoFinanciero = 'PENDIENTE' | 'PARCIAL' | 'SALDADA' | 'SOBREPAGADA';
+
 export interface Operacion {
   id: string;
   sucursalId?: string;
@@ -8,5 +10,6 @@ export interface Operacion {
   monto: number;
   descripcion: string;
   fecha: string;
+  estadoFinanciero?: EstadoFinanciero;
   cancelledAt?: string;
 }

@@ -21,6 +21,10 @@
   overflow: hidden;
 }
 
+.wide {
+  max-width: 760px;
+}
+
 .header {
   display: flex;
   align-items: center;

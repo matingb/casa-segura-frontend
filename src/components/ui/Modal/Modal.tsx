@@ -8,9 +8,10 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  size?: 'default' | 'wide';
 }
 
-export default function Modal({ title, onClose, children, footer }: ModalProps) {
+export default function Modal({ title, onClose, children, footer, size = 'default' }: ModalProps) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -22,7 +23,7 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
   return (
     <div className={styles.overlay} onMouseDown={onClose}>
       <div
-        className={styles.modal}
+        className={`${styles.modal} ${size === 'wide' ? styles.wide : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

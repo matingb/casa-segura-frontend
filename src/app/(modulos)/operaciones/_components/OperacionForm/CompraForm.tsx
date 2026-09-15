@@ -24,6 +24,7 @@ export default function CompraForm() {
   const [numeroRemito, setNumeroRemito] = useState('');
   const [numeroFactura, setNumeroFactura] = useState('');
   const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
+  const [registrarFinanzasAhora, setRegistrarFinanzasAhora] = useState(true);
   const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
@@ -47,6 +48,7 @@ export default function CompraForm() {
     () => calcularPago(mercaderia, filasPago, tasas, modoPago),
     [mercaderia, filasPago, tasas, modoPago]
   );
+  const totalOperacion = registrarFinanzasAhora ? pago.total : mercaderia;
 
   // Sin un producto con importe cargado no hay monto que repartir entre cuentas.
   const hayProductos = items.some(
@@ -94,15 +96,17 @@ export default function CompraForm() {
       });
     }
 
-    validarPago({
-      mercaderia,
-      modo: modoPago,
-      filas: filasPago,
-      resultado: pago,
-      politicaExceso: 'permitir',
-    }).forEach((e) => {
-      nuevos[e.campo] = e.mensaje;
-    });
+    if (registrarFinanzasAhora) {
+      validarPago({
+        mercaderia,
+        modo: modoPago,
+        filas: filasPago,
+        resultado: pago,
+        politicaExceso: 'permitir',
+      }).forEach((e) => {
+        nuevos[e.campo] = e.mensaje;
+      });
+    }
 
     return nuevos;
   };
@@ -118,15 +122,16 @@ export default function CompraForm() {
     await crear({
       tipo: 'compra',
       sucursalId,
+      registrarFinanzasAhora,
       modoReparto: 'monto',
       items,
-      cuentas: aCuentasInput(pago),
+      cuentas: registrarFinanzasAhora ? aCuentasInput(pago) : [],
       compra: {
         proveedorId,
         numeroRemito: numeroRemito.trim() || undefined,
         numeroFactura: numeroFactura.trim() || undefined,
         subtotalArs: mercaderia,
-        totalArs: pago.total,
+        totalArs: totalOperacion,
       },
     });
   };
@@ -135,7 +140,7 @@ export default function CompraForm() {
     <OperacionFormLayout
       titulo="Nueva compra"
       error={error}
-      total={pago.total}
+      total={totalOperacion}
       etiquetaTotal="Total a pagar"
       etiquetaAccion="Registrar compra"
       submitting={submitting}
@@ -200,7 +205,7 @@ export default function CompraForm() {
         <ResumenOperacion
           mercaderia={pago.mercaderia}
           recargos={pago.recargos}
-          total={pago.total}
+          total={totalOperacion}
           etiquetaTotal="Total a pagar"
           etiquetaAccion="Registrar compra"
           submitting={submitting}
@@ -221,20 +226,42 @@ export default function CompraForm() {
         {errores.items && <span className={styles.errorCampo}>{errores.items}</span>}
       </div>
 
-      <PagoEditor
-        mercaderia={mercaderia}
-        modo={modoPago}
-        onModoChange={setModoPago}
-        filas={filasPago}
-        onFilasChange={setFilasPago}
-        onTasasChange={handleTasasChange}
-        errores={errores}
-        onCampoEditado={limpiarError}
-        etiquetaAccion="pagar"
-        etiquetaDebita="Debita"
-        habilitado={hayProductos}
-        politicaExceso="permitir"
-      />
+      <fieldset className={styles.opcionesFinancieras}>
+        <legend>Estado del pago</legend>
+        <label className={styles.opcionFinanciera}>
+          <input
+            type="radio"
+            checked={registrarFinanzasAhora}
+            onChange={() => setRegistrarFinanzasAhora(true)}
+          />
+          Registrar pago ahora
+        </label>
+        <label className={styles.opcionFinanciera}>
+          <input
+            type="radio"
+            checked={!registrarFinanzasAhora}
+            onChange={() => setRegistrarFinanzasAhora(false)}
+          />
+          Dejar pendiente de pago
+        </label>
+      </fieldset>
+
+      {registrarFinanzasAhora && (
+        <PagoEditor
+          mercaderia={mercaderia}
+          modo={modoPago}
+          onModoChange={setModoPago}
+          filas={filasPago}
+          onFilasChange={setFilasPago}
+          onTasasChange={handleTasasChange}
+          errores={errores}
+          onCampoEditado={limpiarError}
+          etiquetaAccion="pagar"
+          etiquetaDebita="Debita"
+          habilitado={hayProductos}
+          politicaExceso="permitir"
+        />
+      )}
     </OperacionFormLayout>
   );
 }
