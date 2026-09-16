@@ -23,8 +23,9 @@ export default function CompraForm() {
   const [proveedorId, setProveedorId] = useState('');
   const [numeroRemito, setNumeroRemito] = useState('');
   const [numeroFactura, setNumeroFactura] = useState('');
-  const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
-  const [registrarFinanzasAhora, setRegistrarFinanzasAhora] = useState(true);
+  const [items, setItems] = useState<OperacionItemInput[]>([
+    { productoSucursalId: '', cantidad: 1, cantidadImpactadaStock: 1 },
+  ]);
   const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
@@ -48,6 +49,7 @@ export default function CompraForm() {
     () => calcularPago(mercaderia, filasPago, tasas, modoPago),
     [mercaderia, filasPago, tasas, modoPago]
   );
+  const registrarFinanzasAhora = modoPago !== 'pendiente';
   const totalOperacion = registrarFinanzasAhora ? pago.total : mercaderia;
 
   // Sin un producto con importe cargado no hay monto que repartir entre cuentas.
@@ -59,7 +61,7 @@ export default function CompraForm() {
     () =>
       items
         .filter((item) => Boolean(item.productoSucursalId))
-        .reduce((sum, item) => sum + (item.cantidad || 0), 0),
+        .reduce((sum, item) => sum + (item.cantidadImpactadaStock ?? item.cantidad ?? 0), 0),
     [items]
   );
 
@@ -89,6 +91,10 @@ export default function CompraForm() {
         if (!item.productoSucursalId) nuevos[`items.${i}.producto`] = 'Elegí un producto.';
         if (!item.cantidad || item.cantidad <= 0) {
           nuevos[`items.${i}.cantidad`] = 'Tiene que ser mayor a 0.';
+        }
+        const cantidadImpactada = item.cantidadImpactadaStock ?? item.cantidad;
+        if (!Number.isInteger(cantidadImpactada) || cantidadImpactada < 0 || cantidadImpactada > item.cantidad) {
+          nuevos[`items.${i}.impactoStock`] = 'Debe ser un entero entre 0 y la cantidad.';
         }
         if (item.costoUnitArs === undefined || item.costoUnitArs <= 0) {
           nuevos[`items.${i}.unitario`] = 'Tiene que ser mayor a 0.';
@@ -226,42 +232,22 @@ export default function CompraForm() {
         {errores.items && <span className={styles.errorCampo}>{errores.items}</span>}
       </div>
 
-      <fieldset className={styles.opcionesFinancieras}>
-        <legend>Estado del pago</legend>
-        <label className={styles.opcionFinanciera}>
-          <input
-            type="radio"
-            checked={registrarFinanzasAhora}
-            onChange={() => setRegistrarFinanzasAhora(true)}
-          />
-          Registrar pago ahora
-        </label>
-        <label className={styles.opcionFinanciera}>
-          <input
-            type="radio"
-            checked={!registrarFinanzasAhora}
-            onChange={() => setRegistrarFinanzasAhora(false)}
-          />
-          Dejar pendiente de pago
-        </label>
-      </fieldset>
-
-      {registrarFinanzasAhora && (
-        <PagoEditor
-          mercaderia={mercaderia}
-          modo={modoPago}
-          onModoChange={setModoPago}
-          filas={filasPago}
-          onFilasChange={setFilasPago}
-          onTasasChange={handleTasasChange}
-          errores={errores}
-          onCampoEditado={limpiarError}
-          etiquetaAccion="pagar"
-          etiquetaDebita="Debita"
-          habilitado={hayProductos}
-          politicaExceso="permitir"
-        />
-      )}
+      <PagoEditor
+        mercaderia={mercaderia}
+        modo={modoPago}
+        onModoChange={setModoPago}
+        filas={filasPago}
+        onFilasChange={setFilasPago}
+        onTasasChange={handleTasasChange}
+        errores={errores}
+        onCampoEditado={limpiarError}
+        etiquetaAccion="pagar"
+        etiquetaDebita="Debita"
+        etiquetaPendiente="No pagar ahora"
+        detallePendiente="La compra queda pendiente de pago."
+        habilitado={hayProductos}
+        politicaExceso="permitir"
+      />
     </OperacionFormLayout>
   );
 }

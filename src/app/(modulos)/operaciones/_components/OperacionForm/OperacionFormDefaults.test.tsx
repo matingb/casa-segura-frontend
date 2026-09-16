@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import VentaForm from './VentaForm';
 import CompraForm from './CompraForm';
@@ -140,14 +140,18 @@ describe('Operaciones Forms - Valores por defecto', () => {
       render(<VentaForm />);
       expect(await screen.findByPlaceholderText('Buscar producto...')).toBeInTheDocument();
       const inputCantidad = screen.getByLabelText('Cantidad de la fila 1') as HTMLInputElement;
+      const inputImpacto = screen.getByLabelText('Cantidad a impactar del stock de la fila 1') as HTMLInputElement;
       expect(inputCantidad.value).toBe('1');
+      expect(inputImpacto.value).toBe('1');
     });
 
     it('muestra una fila de producto lista para agregar en CompraForm', async () => {
       render(<CompraForm />);
       expect(await screen.findByPlaceholderText('Buscar producto...')).toBeInTheDocument();
       const inputCantidad = screen.getByLabelText('Cantidad de la fila 1') as HTMLInputElement;
+      const inputImpacto = screen.getByLabelText('Cantidad a impactar del stock de la fila 1') as HTMLInputElement;
       expect(inputCantidad.value).toBe('1');
+      expect(inputImpacto.value).toBe('1');
     });
 
     it('muestra una fila de producto lista para agregar en TrasladoForm', async () => {
@@ -156,17 +160,48 @@ describe('Operaciones Forms - Valores por defecto', () => {
     });
   });
 
-  describe('Pago por defecto: "Una sola cuenta" sin cuenta seleccionada', () => {
-    it('permite dejar una compra pendiente y oculta la selección de cuentas', async () => {
+  describe('Pago e impacto por defecto', () => {
+    it('sincroniza el impacto inicial con la cantidad de una compra', () => {
+      render(<CompraForm />);
+
+      const cantidad = screen.getByLabelText('Cantidad de la fila 1');
+      const impacto = screen.getByLabelText('Cantidad a impactar del stock de la fila 1');
+      fireEvent.change(cantidad, { target: { value: '4' } });
+
+      expect(impacto).toHaveValue(4);
+
+      fireEvent.change(impacto, { target: { value: '0' } });
+      expect(impacto).toHaveValue(0);
+      expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    });
+
+    it('no muestra los switches globales de pago ni stock en una compra', () => {
       render(<CompraForm />);
 
       expect(screen.getByRole('heading', { name: 'Pago' })).toBeInTheDocument();
-      fireEvent.click(screen.getByRole('radio', { name: 'Dejar pendiente de pago' }));
+      expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    });
 
-      await waitFor(() => {
-        expect(screen.queryByRole('heading', { name: 'Pago' })).not.toBeInTheDocument();
-      });
-      expect(screen.getByRole('radio', { name: 'Dejar pendiente de pago' })).toBeChecked();
+    it('ofrece dejar pendiente el pago desde el bloque Pago', () => {
+      const onModoChange = vi.fn();
+      const onFilasChange = vi.fn();
+      render(
+        <PagoEditor
+          mercaderia={1000}
+          modo="unica"
+          onModoChange={onModoChange}
+          filas={[{ cuentaFinancieraId: 'cta-1' }]}
+          onFilasChange={onFilasChange}
+          habilitado={true}
+          etiquetaPendiente="No pagar ahora"
+          detallePendiente="La compra queda pendiente de pago."
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /no pagar ahora/i }));
+
+      expect(onModoChange).toHaveBeenCalledWith('pendiente');
+      expect(onFilasChange).toHaveBeenCalledWith([]);
     });
 
     it('activa "Una sola cuenta" por defecto pero sin cuenta seleccionada', async () => {

@@ -1,4 +1,5 @@
 export type EstadoFinanciero = 'PENDIENTE' | 'PARCIAL' | 'SALDADA' | 'SOBREPAGADA';
+export type EstadoStock = 'PENDIENTE' | 'PARCIAL' | 'COMPLETO';
 
 export interface Operacion {
   id: string;
@@ -11,5 +12,6 @@ export interface Operacion {
   descripcion: string;
   fecha: string;
   estadoFinanciero?: EstadoFinanciero;
+  estadoStock?: EstadoStock;
   cancelledAt?: string;
 }

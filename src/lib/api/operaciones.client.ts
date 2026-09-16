@@ -7,6 +7,7 @@ function mapItemInputToApi(item: OperacionItemInput) {
   return {
     producto_sucursal_id: item.productoSucursalId,
     cantidad: item.cantidad,
+    cantidad_impactada_stock: item.cantidadImpactadaStock ?? item.cantidad,
     precio_unit_ars: item.precioUnitArs ?? null,
     precio_unit_usd: item.precioUnitUsd ?? null,
     costo_unit_ars: item.costoUnitArs ?? null,
@@ -105,6 +106,7 @@ export function mapApiOperacionToOperacion(apiData: any): Operacion {
     descripcion: apiData.descripcion ?? '',
     fecha: apiData.fecha ?? '',
     estadoFinanciero: apiData.estado_financiero ?? undefined,
+    estadoStock: apiData.estado_stock ?? undefined,
     cancelledAt: apiData.cancelled_at ?? undefined,
   };
 }
@@ -124,6 +126,9 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
           ? Number(it.precio_unit_ars) 
           : Number(it.costo_unit_ars ?? 0);
         const cantidad = Number(it.cantidad ?? 0);
+        const cantidadImpactadaStock = it.cantidad_impactada_stock !== undefined
+          ? Number(it.cantidad_impactada_stock)
+          : undefined;
         return {
           id: it.id,
           productoId: it.producto_id,
@@ -133,6 +138,11 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
           productoModelo: it.producto_modelo ?? '',
           productoImagenUrl: it.producto_imagen_url ?? '',
           cantidad,
+          cantidadImpactadaStock,
+          cantidadPendienteStock: cantidadImpactadaStock !== undefined
+            ? Math.max(0, cantidad - cantidadImpactadaStock)
+            : undefined,
+          ultimaModificacionStock: it.ultima_modificacion_stock_at ?? undefined,
           precioUnitario,
           costoUnitario: it.costo_unit_ars !== null && it.costo_unit_ars !== undefined ? Number(it.costo_unit_ars) : undefined,
           alicuotaIva: Number(it.alicuota_iva ?? 0),
@@ -170,6 +180,7 @@ export function mapApiOperacionDetalleToOperacionDetalle(raw: any): OperacionDet
     montoPagado: raw.monto_pagado_ars !== undefined ? Number(raw.monto_pagado_ars) : cuentas.reduce((sum: number, cuenta: { monto: number }) => sum + cuenta.monto, 0),
     saldoPendiente: Math.max(0, total - (raw.monto_pagado_ars !== undefined ? Number(raw.monto_pagado_ars) : cuentas.reduce((sum: number, cuenta: { monto: number }) => sum + cuenta.monto, 0))),
     estadoFinanciero: raw.estado_financiero ?? undefined,
+    estadoStock: raw.estado_stock ?? undefined,
     subtotal: raw.venta_subtotal_ars ? Number(raw.venta_subtotal_ars) : (raw.compra_subtotal_ars ? Number(raw.compra_subtotal_ars) : undefined),
     descuento: raw.venta_descuento_ars ? Number(raw.venta_descuento_ars) : undefined,
     otrosImpuestos: raw.compra_otros_impuestos_ars ? Number(raw.compra_otros_impuestos_ars) : undefined,
@@ -330,6 +341,28 @@ export const operacionesClient = {
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message ?? 'No se pudo registrar el pago/cobro.');
+    }
+    const json = await res.json();
+    return mapApiOperacionDetalleToOperacionDetalle(json.data);
+  },
+
+  registrarImpactoStock: async (
+    id: string,
+    input: { items: Array<{ operacionDetalleId: string; cantidad: number }> }
+  ): Promise<OperacionDetalle> => {
+    const res = await apiFetch(`/api/operaciones/${id}/impactos-stock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: input.items.map((item) => ({
+          operacion_detalle_id: item.operacionDetalleId,
+          cantidad: item.cantidad,
+        })),
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message ?? 'No se pudo registrar el impacto de stock.');
     }
     const json = await res.json();
     return mapApiOperacionDetalleToOperacionDetalle(json.data);

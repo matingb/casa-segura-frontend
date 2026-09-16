@@ -11,6 +11,7 @@ import { useOperacionDetalle } from '../../_hooks/useOperacionDetalle';
 import { operacionesClient } from '../../../../../lib/api/operaciones.client';
 import { useToast } from '../../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
+import RegistrarImpactoStockModal from './RegistrarImpactoStockModal';
 import RegistrarPagoModal from './RegistrarPagoModal';
 import { formatFecha, formatMonto, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './OperacionDetalle.module.css';
@@ -43,15 +44,23 @@ function varianteEstadoFinanciero(estado: string | undefined): 'success' | 'dang
   return 'neutral';
 }
 
+function varianteEstadoStock(estado: string | undefined): 'success' | 'warning' | 'neutral' {
+  if (estado === 'COMPLETO') return 'success';
+  if (estado === 'PENDIENTE' || estado === 'PARCIAL') return 'warning';
+  return 'neutral';
+}
+
 export default function OperacionDetalle({ operacionId }: OperacionDetalleProps) {
   const router = useRouter();
   const { operacion, isLoading, error, reload } = useOperacionDetalle(operacionId);
   const { showError, showSuccess } = useToast();
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [showRegistrarPago, setShowRegistrarPago] = useState(false);
+  const [showRegistrarImpactoStock, setShowRegistrarImpactoStock] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [pagoAEliminar, setPagoAEliminar] = useState<OperacionCuentaDistribucion | null>(null);
   const [isDeletingPago, setIsDeletingPago] = useState(false);
+  const esOperacionComercial = operacion?.tipoNombre === 'Compra' || operacion?.tipoNombre === 'Venta';
 
   const handleCancel = async () => {
     if (isCancelling) return;
@@ -71,6 +80,14 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
     await reload();
     setShowRegistrarPago(false);
     showSuccess(operacion?.tipoNombre.toLowerCase() === 'compra' ? 'Pago registrado correctamente.' : 'Cobro registrado correctamente.');
+  };
+
+  const handleImpactoStockRegistrado = async () => {
+    await reload();
+    setShowRegistrarImpactoStock(false);
+    showSuccess(operacion?.tipoNombre === 'Compra'
+      ? 'Ingreso de stock registrado correctamente.'
+      : 'Salida de stock registrada correctamente.');
   };
 
   const handleEliminarPago = async () => {
@@ -108,6 +125,24 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
       header: 'Cantidad',
       render: (item) => <span className={styles.numCell}>{item.cantidad}</span>,
     },
+    ...(esOperacionComercial ? [{
+      key: 'impactoStock',
+      header: 'Stock',
+      render: (item: OperacionItem) => (
+        <span className={styles.numCell}>
+          {item.cantidadImpactadaStock ?? 0} / {item.cantidad}
+          {(item.cantidadPendienteStock ?? 0) > 0 && ` · Pendiente: ${item.cantidadPendienteStock}`}
+        </span>
+      ),
+    }, {
+      key: 'ultimaModificacionStock',
+      header: 'Última modificación',
+      render: (item: OperacionItem) => (
+        <span className={styles.numCell}>
+          {item.ultimaModificacionStock ? formatFecha(item.ultimaModificacionStock) : 'Sin impactos'}
+        </span>
+      ),
+    }] : []),
     {
       key: 'precioUnitario',
       header: 'Precio Unitario',
@@ -167,12 +202,15 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
     );
   }
 
-  const esOperacionComercial = operacion.tipoNombre === 'Compra' || operacion.tipoNombre === 'Venta';
   const puedeRegistrarPago = esOperacionComercial
     && !operacion.cancelledAt
     && operacion.estadoFinanciero !== 'SALDADA'
     && operacion.estadoFinanciero !== 'SOBREPAGADA';
   const etiquetaEstado = etiquetaEstadoFinanciero(operacion.estadoFinanciero, operacion.tipoNombre);
+  const puedeRegistrarImpactoStock = esOperacionComercial
+    && !operacion.cancelledAt
+    && operacion.estadoStock !== 'COMPLETO'
+    && operacion.items.some((item) => (item.cantidadPendienteStock ?? 0) > 0);
 
   return (
     <div className={styles.page}>
@@ -191,7 +229,8 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             <Badge variant={getTipoVariant(operacion.tipoNombre)}>
               {operacion.tipoNombre}
             </Badge>
-            {etiquetaEstado && <Badge variant={varianteEstadoFinanciero(operacion.estadoFinanciero)}>{etiquetaEstado}</Badge>}
+             {etiquetaEstado && <Badge variant={varianteEstadoFinanciero(operacion.estadoFinanciero)}>{etiquetaEstado}</Badge>}
+             {operacion.estadoStock && <Badge variant={varianteEstadoStock(operacion.estadoStock)}>Stock: {operacion.estadoStock}</Badge>}
             {operacion.cancelledAt && <Badge variant="danger">Cancelada</Badge>}
           </div>
         </div>
@@ -199,6 +238,11 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
           {puedeRegistrarPago && (
             <Button type="button" variant="primary" onClick={() => setShowRegistrarPago(true)}>
               {operacion.tipoNombre === 'Compra' ? 'Registrar pago' : 'Registrar cobro'}
+            </Button>
+          )}
+          {puedeRegistrarImpactoStock && (
+            <Button type="button" variant="primary" onClick={() => setShowRegistrarImpactoStock(true)}>
+              {operacion.tipoNombre === 'Compra' ? 'Registrar ingreso de stock' : 'Registrar salida de stock'}
             </Button>
           )}
           {!operacion.cancelledAt && (
@@ -223,6 +267,12 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
             <span className={`${styles.summaryValue} ${styles.montoTotal}`}>
               {formatMonto(operacion.saldoPendiente ?? Math.max(0, operacion.total - (operacion.montoPagado ?? 0)))}
             </span>
+          </div>
+        )}
+        {esOperacionComercial && operacion.estadoStock && (
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Estado de stock</span>
+            <span className={styles.summaryValue}>{operacion.estadoStock}</span>
           </div>
         )}
         <div className={styles.summaryCard}>
@@ -350,6 +400,13 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
           operacion={operacion}
           onClose={() => setShowRegistrarPago(false)}
           onRegistered={handlePagoRegistrado}
+        />
+      )}
+      {showRegistrarImpactoStock && (
+        <RegistrarImpactoStockModal
+          operacion={operacion}
+          onClose={() => setShowRegistrarImpactoStock(false)}
+          onRegistered={handleImpactoStockRegistrado}
         />
       )}
       {pagoAEliminar && (

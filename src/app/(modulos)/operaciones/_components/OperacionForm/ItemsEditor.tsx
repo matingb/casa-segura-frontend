@@ -107,7 +107,7 @@ export default function ItemsEditor({
   }, [items, productos, modo, onMargenInvalidoChange]);
 
   const agregarItem = () => {
-    onChange([...items, { productoSucursalId: '', cantidad: 1 }]);
+    onChange([...items, { productoSucursalId: '', cantidad: 1, cantidadImpactadaStock: 1 }]);
   };
 
   const quitarItem = (index: number) => {
@@ -158,6 +158,7 @@ export default function ItemsEditor({
             <tr>
               <th scope="col" className={styles.colProducto}>Producto</th>
               <th scope="col" className={styles.colNumero}>Cantidad</th>
+              <th scope="col" className={styles.colNumero}>Impactar ahora</th>
               <th scope="col" className={styles.colNumero}>
                 {modo === 'compra' ? 'Costo unit.' : 'Precio unit.'}
               </th>
@@ -174,6 +175,7 @@ export default function ItemsEditor({
               }));
               const unitario = modo === 'compra' ? item.costoUnitArs : item.precioUnitArs;
               const errorCantidad = errores[`items.${index}.cantidad`];
+              const errorImpactoStock = errores[`items.${index}.impactoStock`];
               const errorUnitario = errores[`items.${index}.unitario`];
 
               return (
@@ -206,10 +208,30 @@ export default function ItemsEditor({
                       onChange={(e) => {
                         onCampoEditado?.(`items.${index}.cantidad`);
                         const v = e.target.value;
-                        actualizarItem(index, { cantidad: v === '' ? 0 : Number(v) });
+                        const cantidad = v === '' ? 0 : Number(v);
+                        actualizarItem(index, { cantidad, cantidadImpactadaStock: cantidad });
                       }}
                     />
                     {errorCantidad && <span className={styles.errorCampo}>{errorCantidad}</span>}
+                  </td>
+
+                  <td className={styles.colNumero}>
+                    <input
+                      className={errorImpactoStock ? styles.inputCantidadError : styles.inputCantidad}
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      max={item.cantidad ?? 0}
+                      step="1"
+                      aria-label={`Cantidad a impactar del stock de la fila ${index + 1}`}
+                      value={item.cantidadImpactadaStock ?? item.cantidad ?? ''}
+                      onChange={(e) => {
+                        onCampoEditado?.(`items.${index}.impactoStock`);
+                        const v = e.target.value;
+                        actualizarItem(index, { cantidadImpactadaStock: v === '' ? 0 : Number(v) });
+                      }}
+                    />
+                    {errorImpactoStock && <span className={styles.errorCampo}>{errorImpactoStock}</span>}
                   </td>
 
                   <td className={styles.colNumero}>
@@ -257,7 +279,7 @@ export default function ItemsEditor({
             })}
 
             <tr className={styles.filaAgregar}>
-              <td colSpan={5}>
+              <td colSpan={6}>
                 <button
                   type="button"
                   className={styles.botonAgregar}

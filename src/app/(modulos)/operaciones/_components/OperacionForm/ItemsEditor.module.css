@@ -79,14 +79,14 @@
 }
 
 .colProducto {
-  width: 37%;
+  width: 31%;
 }
 
 /* Las columnas numéricas y sus encabezados van alineados a la derecha. */
 .colNumero {
   text-align: right;
   white-space: nowrap;
-  width: 19%;
+  width: 16%;
 }
 
 .colAccion {

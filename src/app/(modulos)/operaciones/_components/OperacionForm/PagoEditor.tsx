@@ -47,6 +47,9 @@ interface PagoEditorProps {
   titulo?: string;
   /** Encabezado de la columna editable. */
   etiquetaBase?: string;
+  /** Opción para no registrar el movimiento financiero al crear la operación. */
+  etiquetaPendiente?: string;
+  detallePendiente?: string;
 }
 
 export default function PagoEditor({
@@ -64,6 +67,8 @@ export default function PagoEditor({
   politicaExceso = 'permitir',
   titulo = 'Pago',
   etiquetaBase = 'Base',
+  etiquetaPendiente = 'Dejar pendiente',
+  detallePendiente = 'No se registra el movimiento financiero ahora.',
 }: PagoEditorProps) {
   const [cuentasDisponibles, setCuentasDisponibles] = useState<CuentaFinanciera[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +104,9 @@ export default function PagoEditor({
     if (nuevo === modo) return;
     onCampoEditado?.('pago');
 
-    if (nuevo === 'unica') {
+    if (nuevo === 'pendiente') {
+      onFilasChange([]);
+    } else if (nuevo === 'unica') {
       // Conserva la cuenta ya elegida, que pasa a cubrir el total.
       const elegida = filas.find((f) => f.cuentaFinancieraId)?.cuentaFinancieraId ?? '';
       onFilasChange(elegida ? [{ cuentaFinancieraId: elegida }] : []);
@@ -204,10 +211,19 @@ export default function PagoEditor({
           <span className={styles.modoNombre}>Dividido</span>
           <span className={styles.modoDetalle}>Se reparte entre dos o más cuentas</span>
         </button>
+        <button
+          type="button"
+          className={modo === 'pendiente' ? styles.modoActivo : styles.modo}
+          onClick={() => cambiarModo('pendiente')}
+          aria-pressed={modo === 'pendiente'}
+        >
+          <span className={styles.modoNombre}>{etiquetaPendiente}</span>
+          <span className={styles.modoDetalle}>{detallePendiente}</span>
+        </button>
       </div>
       )}
 
-      {loading && <p className={styles.hint}>Cargando cuentas...</p>}
+      {loading && modo !== 'pendiente' && <p className={styles.hint}>Cargando cuentas...</p>}
 
       {!loading && modo === 'unica' && (
         <div className={styles.opciones}>

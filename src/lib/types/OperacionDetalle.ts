@@ -7,6 +7,9 @@ export interface OperacionItem {
   productoModelo?: string;
   productoImagenUrl?: string;
   cantidad: number;
+  cantidadImpactadaStock?: number;
+  cantidadPendienteStock?: number;
+  ultimaModificacionStock?: string;
   precioUnitario: number;
   costoUnitario?: number;
   alicuotaIva: number;
@@ -40,6 +43,7 @@ export interface OperacionDetalle {
   montoPagado?: number;
   saldoPendiente?: number;
   estadoFinanciero?: EstadoFinanciero;
+  estadoStock?: EstadoStock;
   subtotal?: number;
   descuento?: number;
   otrosImpuestos?: number;
@@ -53,4 +57,4 @@ export interface OperacionDetalle {
   items: OperacionItem[];
   cuentas: OperacionCuentaDistribucion[];
 }
-import type { EstadoFinanciero } from './Operacion';
+import type { EstadoFinanciero, EstadoStock } from './Operacion';

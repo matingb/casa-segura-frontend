@@ -40,6 +40,12 @@ function estadoFinancieroVariant(estado: Operacion['estadoFinanciero']): 'succes
   return 'neutral';
 }
 
+function estadoStockVariant(estado: Operacion['estadoStock']): 'success' | 'warning' | 'neutral' {
+  if (estado === 'COMPLETO') return 'success';
+  if (estado === 'PENDIENTE' || estado === 'PARCIAL') return 'warning';
+  return 'neutral';
+}
+
 export default function OperacionesCatalogo() {
   const router = useRouter();
   const [showNuevaOperacion, setShowNuevaOperacion] = useState(false);
@@ -101,6 +107,13 @@ export default function OperacionesCatalogo() {
         <Badge variant={estadoFinancieroVariant(op.estadoFinanciero)}>
           {estadoFinancieroLabel(op.estadoFinanciero, op.tipoNombre)}
         </Badge>
+      ) : '—',
+    },
+    {
+      key: 'estadoStock',
+      header: 'Estado de stock',
+      render: (op) => op.estadoStock ? (
+        <Badge variant={estadoStockVariant(op.estadoStock)}>{op.estadoStock}</Badge>
       ) : '—',
     },
     {

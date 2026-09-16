@@ -1,6 +1,8 @@
 export interface OperacionItemInput {
   productoSucursalId: string;
   cantidad: number;
+  /** Unidades que modifican el stock físico al registrar la operación. */
+  cantidadImpactadaStock?: number;
   precioUnitArs?: number;
   precioUnitUsd?: number;
   costoUnitArs?: number;

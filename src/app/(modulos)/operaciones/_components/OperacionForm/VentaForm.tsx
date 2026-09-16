@@ -20,8 +20,9 @@ export default function VentaForm() {
   const [sucursalElegida, setSucursalElegida] = useState('');
   const [numeroComprobante, setNumeroComprobante] = useState('');
   const [descuentoArs, setDescuentoArs] = useState('');
-  const [items, setItems] = useState<OperacionItemInput[]>([{ productoSucursalId: '', cantidad: 1 }]);
-  const [registrarFinanzasAhora, setRegistrarFinanzasAhora] = useState(true);
+  const [items, setItems] = useState<OperacionItemInput[]>([
+    { productoSucursalId: '', cantidad: 1, cantidadImpactadaStock: 1 },
+  ]);
   const [modoPago, setModoPago] = useState<ModoPagoElegido>('unica');
   const [filasPago, setFilasPago] = useState<FilaPago[]>([]);
   const [tasas, setTasas] = useState<Map<string, number>>(new Map());
@@ -50,6 +51,7 @@ export default function VentaForm() {
     () => calcularPago(mercaderia, filasPago, tasas, modoPago),
     [mercaderia, filasPago, tasas, modoPago]
   );
+  const registrarFinanzasAhora = modoPago !== 'pendiente';
   const totalOperacion = registrarFinanzasAhora ? pago.total : mercaderia;
 
   // Sin un producto con importe cargado no hay monto que repartir entre cuentas.
@@ -61,7 +63,7 @@ export default function VentaForm() {
     () =>
       items
         .filter((item) => Boolean(item.productoSucursalId))
-        .reduce((sum, item) => sum + (item.cantidad || 0), 0),
+        .reduce((sum, item) => sum + (item.cantidadImpactadaStock ?? item.cantidad ?? 0), 0),
     [items]
   );
 
@@ -97,6 +99,10 @@ export default function VentaForm() {
         if (!item.productoSucursalId) nuevos[`items.${i}.producto`] = 'Elegí un producto.';
         if (!item.cantidad || item.cantidad <= 0) {
           nuevos[`items.${i}.cantidad`] = 'Tiene que ser mayor a 0.';
+        }
+        const cantidadImpactada = item.cantidadImpactadaStock ?? item.cantidad;
+        if (!Number.isInteger(cantidadImpactada) || cantidadImpactada < 0 || cantidadImpactada > item.cantidad) {
+          nuevos[`items.${i}.impactoStock`] = 'Debe ser un entero entre 0 y la cantidad.';
         }
         if (item.precioUnitArs === undefined || item.precioUnitArs <= 0) {
           nuevos[`items.${i}.unitario`] = 'Tiene que ser mayor a 0.';
@@ -228,42 +234,22 @@ export default function VentaForm() {
         {errores.margen && <div className={styles.errorBanner}>{errores.margen}</div>}
       </div>
 
-      <fieldset className={styles.opcionesFinancieras}>
-        <legend>Estado del cobro</legend>
-        <label className={styles.opcionFinanciera}>
-          <input
-            type="radio"
-            checked={registrarFinanzasAhora}
-            onChange={() => setRegistrarFinanzasAhora(true)}
-          />
-          Registrar cobro ahora
-        </label>
-        <label className={styles.opcionFinanciera}>
-          <input
-            type="radio"
-            checked={!registrarFinanzasAhora}
-            onChange={() => setRegistrarFinanzasAhora(false)}
-          />
-          Dejar pendiente de cobro
-        </label>
-      </fieldset>
-
-      {registrarFinanzasAhora && (
-        <PagoEditor
-          mercaderia={mercaderia}
-          modo={modoPago}
-          onModoChange={setModoPago}
-          filas={filasPago}
-          onFilasChange={setFilasPago}
-          onTasasChange={handleTasasChange}
-          errores={errores}
-          onCampoEditado={limpiarError}
-          etiquetaAccion="cobrar"
-          etiquetaDebita="Acredita"
-          habilitado={hayProductos}
-          politicaExceso="limitar"
-        />
-      )}
+      <PagoEditor
+        mercaderia={mercaderia}
+        modo={modoPago}
+        onModoChange={setModoPago}
+        filas={filasPago}
+        onFilasChange={setFilasPago}
+        onTasasChange={handleTasasChange}
+        errores={errores}
+        onCampoEditado={limpiarError}
+        etiquetaAccion="cobrar"
+        etiquetaDebita="Acredita"
+        etiquetaPendiente="No cobrar ahora"
+        detallePendiente="La venta queda pendiente de cobro."
+        habilitado={hayProductos}
+        politicaExceso="limitar"
+      />
     </OperacionFormLayout>
   );
 }

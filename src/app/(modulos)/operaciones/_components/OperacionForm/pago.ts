@@ -7,7 +7,7 @@ export const TOLERANCIA = 0.01;
  * Cómo se cubre el total de la operación. `null` mientras no se eligió.
  * 'derivado' es el caso de los movimientos: el total sale de las cuentas.
  */
-export type ModoPago = 'unica' | 'dividido' | 'derivado';
+export type ModoPago = 'unica' | 'dividido' | 'pendiente' | 'derivado';
 export type ModoPagoElegido = ModoPago | null;
 
 /**
@@ -86,6 +86,10 @@ export function calcularPago(
   // Sin modo elegido todavía no hay reparto: solo se conoce la mercadería.
   if (modo === null) {
     return armar([], mercaderiaSegura, mercaderiaSegura);
+  }
+
+  if (modo === 'pendiente') {
+    return armar([], mercaderiaSegura, 0);
   }
 
   const resolver = (cuentaFinancieraId: string, baseArs: number, esResto: boolean): FilaResuelta => {
@@ -181,6 +185,8 @@ export function validarPago({
     errores.push({ campo: 'pago', mensaje: 'Elegí cómo se reparte el pago.' });
     return errores;
   }
+
+  if (modo === 'pendiente') return errores;
 
   if (filas.length === 0) {
     errores.push({ campo: 'pago', mensaje: 'Elegí con qué cuenta se paga.' });
