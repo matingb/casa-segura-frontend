@@ -1,0 +1,38 @@
+.toolbar {
+  margin-top: -0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.nombreCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-width: 240px;
+}
+
+.nombrePrincipal,
+.nombreSecundario {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nombreSecundario {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.sucursalesCell {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}

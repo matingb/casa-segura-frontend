@@ -16,6 +16,7 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
     subtipoId: apiData.producto_subtipo_id ?? '',
     precioBase: apiData.producto_precio_base != null ? Number(apiData.producto_precio_base) : null,
     costoReposicionBase: apiData.producto_costo_reposicion_base != null ? Number(apiData.producto_costo_reposicion_base) : null,
+    descuentoBase: apiData.producto_descuento_base != null ? Number(apiData.producto_descuento_base) : null,
 
     activo: apiData.habilitado ?? apiData.producto_activo ?? false,
     costoReposicion: apiData.costo_reposicion ? Number(apiData.costo_reposicion) : 0,
@@ -23,6 +24,7 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
     precioVentaUsd: apiData.precio_venta_usd ? Number(apiData.precio_venta_usd) : 0,
     iva: apiData.iva ? Number(apiData.iva) : 21,
     margenMinimo: apiData.margen_minimo ? Number(apiData.margen_minimo) : 0,
+    descuento: apiData.descuento != null ? Number(apiData.descuento) : null,
     stockMinimo: apiData.stock_minimo ?? 0,
     cantidadDisponible: apiData.cantidad_disponible ?? 0,
     cantidadReservada: apiData.cantidad_reservada ?? 0,

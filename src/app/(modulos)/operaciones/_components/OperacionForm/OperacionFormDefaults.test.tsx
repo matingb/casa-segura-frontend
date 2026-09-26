@@ -49,8 +49,8 @@ import { Sucursal } from '../../../../../lib/api/sucursal.client';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 
 const mockSucursales: Sucursal[] = [
-  { id: 'suc-1', nombre: 'Sucursal Centro', esCentral: true, valorDolar: 1000 },
-  { id: 'suc-2', nombre: 'Sucursal Norte', esCentral: false, valorDolar: 1000 },
+  { id: 'suc-1', nombre: 'Sucursal Centro', esCentral: true, valorDolar: 1000, descuento: null, activo: true },
+  { id: 'suc-2', nombre: 'Sucursal Norte', esCentral: false, valorDolar: 1000, descuento: null, activo: true },
 ];
 
 const mockCuentas: CuentaFinanciera[] = [

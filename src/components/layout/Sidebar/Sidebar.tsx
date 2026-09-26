@@ -12,6 +12,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Productos', href: '/productos' },
+  { label: 'Clientes', href: '/clientes' },
   { label: 'Stock por sucursal', href: '/stock' },
   { label: 'Operaciones', href: '/operaciones' },
   { label: 'Cuentas financieras', href: '/cuentas-financieras' },

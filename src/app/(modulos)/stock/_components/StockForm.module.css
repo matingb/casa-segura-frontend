@@ -144,6 +144,12 @@
   font-weight: 500;
 }
 
+.hintDescuento {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
 .imageCard {
   display: flex;
   justify-content: center;

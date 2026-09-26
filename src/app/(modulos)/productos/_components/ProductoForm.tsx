@@ -155,6 +155,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       imagen_url:             imagenUrl ?? null,
       precio_base:            parseNum(formData.get('precioBase'), 2),
       costo_reposicion_base:  parseNum(formData.get('costoReposicionBase'), 2),
+      descuento_base:         parseNum(formData.get('descuentoBase'), 2),
       codigo_qr:              codigoQr || null,
     };
 
@@ -272,6 +273,9 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 </DetailField>
                 <DetailField label="Costo de reposicion base">
                   {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : '—'}
+                </DetailField>
+                <DetailField label="Descuento general">
+                  {producto.descuentoBase != null ? `${producto.descuentoBase}%` : '—'}
                 </DetailField>
               </div>
             </div>
@@ -421,7 +425,23 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 tabIndex={4}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
+              <Input
+                label="Descuento general (%)"
+                name="descuentoBase"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                defaultValue={producto?.descuentoBase ?? undefined}
+                placeholder="—"
+                tabIndex={4}
+                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+              />
             </div>
+            <p className={styles.hintDescuento}>
+              El descuento general aplica a todas las sucursales. Se puede cambiar por sucursal
+              desde Stock.
+            </p>
           </div>
 
           <div className={styles.section}>

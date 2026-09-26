@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useClasificacion, notifyClasificacionChanged } from '../../../../lib/hooks/useClasificacion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
 import { useToast } from '../../../../context/ToastContext';
+import DescuentoEditor from './DescuentoEditor';
 import styles from './CategoriasConfiguracion.module.css';
 
 export default function CategoriasConfiguracion() {
@@ -12,6 +13,8 @@ export default function CategoriasConfiguracion() {
 
   // Estados de acordeón (categorías expandidas)
   const [expandedTipos, setExpandedTipos] = useState<Set<string>>(new Set());
+  // Subcategorías con su panel de descuentos abierto
+  const [expandedSubtipos, setExpandedSubtipos] = useState<Set<string>>(new Set());
 
   // Formulario de nueva categoría
   const [isAddingTipo, setIsAddingTipo] = useState(false);
@@ -37,6 +40,24 @@ export default function CategoriasConfiguracion() {
       }
       return next;
     });
+  };
+
+  const toggleSubtipoExpanded = (subtipoId: string) => {
+    setExpandedSubtipos((prev) => {
+      const next = new Set(prev);
+      if (next.has(subtipoId)) {
+        next.delete(subtipoId);
+      } else {
+        next.add(subtipoId);
+      }
+      return next;
+    });
+  };
+
+  // Los descuentos viajan con la clasificación, así que alcanza con releerla.
+  const recargar = async () => {
+    await refetch();
+    notifyClasificacionChanged();
   };
 
   // Crear categoría
@@ -309,18 +330,50 @@ export default function CategoriasConfiguracion() {
                 {/* Panel de subcategorías desplegado */}
                 {isExpanded && (
                   <div className={styles.subcategoriesPanel}>
+                    <div className={styles.descuentoBloque}>
+                      <span className={styles.descuentoTitulo}>Descuentos de la categoría</span>
+                      <DescuentoEditor
+                        destino="tipos"
+                        id={tipo.id}
+                        nombre={tipo.nombre}
+                        descuentoGeneral={tipo.descuentoGeneral}
+                        descuentosSucursal={tipo.descuentosSucursal}
+                        textoSinDescuento="que no tenga descuento"
+                        onChanged={recargar}
+                      />
+                    </div>
+
                     {tipoSubtipos.length === 0 ? (
                       <div className={styles.emptySubs}>No hay subcategorías en esta categoría.</div>
                     ) : (
                       <div className={styles.subcategoriesList}>
                         {tipoSubtipos.map((subtipo) => {
                           const isDeletingSub = deletingSubtipoId === subtipo.id;
+                          const descuentoAbierto = expandedSubtipos.has(subtipo.id);
+                          const tieneDescuento =
+                            subtipo.descuentoGeneral !== null || subtipo.descuentosSucursal.length > 0;
                           return (
-                            <div key={subtipo.id} className={styles.subcategoryRow}>
+                            <div key={subtipo.id} className={styles.subcategoryBlock}>
+                            <div className={styles.subcategoryRow}>
                               <div className={styles.subLeft}>
                                 <span className={styles.subBullet} />
                                 <span className={styles.subName}>{subtipo.nombre}</span>
+                                {tieneDescuento && (
+                                  <span className={styles.descuentoBadge}>
+                                    {subtipo.descuentoGeneral !== null
+                                      ? `${subtipo.descuentoGeneral}%`
+                                      : 'por sucursal'}
+                                  </span>
+                                )}
                               </div>
+                              <button
+                                type="button"
+                                className={styles.btnDescuento}
+                                onClick={() => toggleSubtipoExpanded(subtipo.id)}
+                                aria-expanded={descuentoAbierto}
+                              >
+                                {descuentoAbierto ? 'Ocultar descuentos' : 'Descuentos'}
+                              </button>
                               <button
                                 type="button"
                                 className={styles.btnDangerIcon}
@@ -347,6 +400,19 @@ export default function CategoriasConfiguracion() {
                                   </svg>
                                 )}
                               </button>
+                            </div>
+
+                            {descuentoAbierto && (
+                              <DescuentoEditor
+                                destino="subtipos"
+                                id={subtipo.id}
+                                nombre={subtipo.nombre}
+                                descuentoGeneral={subtipo.descuentoGeneral}
+                                descuentosSucursal={subtipo.descuentosSucursal}
+                                textoSinDescuento="que herede el de la categoría"
+                                onChanged={recargar}
+                              />
+                            )}
                             </div>
                           );
                         })}

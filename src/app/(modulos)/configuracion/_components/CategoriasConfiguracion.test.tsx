@@ -1,8 +1,18 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CategoriasConfiguracion from './CategoriasConfiguracion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
 import { ToastProvider } from '../../../../context/ToastContext';
+
+vi.mock('../../../../context/SucursalContext', () => ({
+  useSucursales: () => ({
+    sucursales: [{ id: 'suc1', nombre: 'Casa Central', esCentral: true, valorDolar: 1000 }],
+    sucursalOptions: [],
+    isLoading: false,
+    error: null,
+    recargarSucursales: vi.fn(),
+  }),
+}));
 
 vi.mock('../../../../lib/api/clasificacion.client', () => ({
   clasificacionClient: {
@@ -17,12 +27,12 @@ vi.mock('../../../../lib/api/clasificacion.client', () => ({
 
 describe('CategoriasConfiguracion', () => {
   const mockTipos = [
-    { id: 't1', nombre: 'Herramientas' },
-    { id: 't2', nombre: 'Seguridad' },
+    { id: 't1', nombre: 'Herramientas', descuentoGeneral: null, descuentosSucursal: [] },
+    { id: 't2', nombre: 'Seguridad', descuentoGeneral: null, descuentosSucursal: [] },
   ];
   const mockSubtipos = [
-    { id: 's1', tipoId: 't1', nombre: 'Manuales' },
-    { id: 's2', tipoId: 't2', nombre: 'Candados' },
+    { id: 's1', tipoId: 't1', nombre: 'Manuales', descuentoGeneral: null, descuentosSucursal: [] },
+    { id: 's2', tipoId: 't2', nombre: 'Candados', descuentoGeneral: null, descuentosSucursal: [] },
   ];
 
   beforeEach(() => {
@@ -60,7 +70,7 @@ describe('CategoriasConfiguracion', () => {
   });
 
   it('permite crear una nueva categoría', async () => {
-    vi.mocked(clasificacionClient.crearTipo).mockResolvedValue({ id: 't3', nombre: 'Iluminación' });
+    vi.mocked(clasificacionClient.crearTipo).mockResolvedValue({ id: 't3', nombre: 'Iluminación', descuentoGeneral: null, descuentosSucursal: [] });
 
     renderComponent();
     await screen.findByText('Herramientas');
@@ -97,6 +107,8 @@ describe('CategoriasConfiguracion', () => {
       id: 's3',
       tipoId: 't1',
       nombre: 'Eléctricas',
+      descuentoGeneral: null,
+      descuentosSucursal: [],
     });
 
     renderComponent();
@@ -107,7 +119,10 @@ describe('CategoriasConfiguracion', () => {
 
     const input = screen.getByPlaceholderText(/nombre de la subcategoría/i);
     fireEvent.change(input, { target: { value: 'Eléctricas' } });
-    fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
+    // El editor de descuentos tiene su propio "Guardar": buscamos el del formulario
+    // de la subcategoría, que es el submit que acompaña a este input.
+    const form = input.closest('form')!;
+    fireEvent.click(within(form).getByRole('button', { name: /guardar/i }));
 
     await waitFor(() => {
       expect(clasificacionClient.crearSubtipo).toHaveBeenCalledWith('t1', 'Eléctricas');

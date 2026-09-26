@@ -13,6 +13,8 @@ export interface StockItem {
   subtipoId: string;
   precioBase: number | null;
   costoReposicionBase?: number | null;
+  /** Descuento general del producto, que el de la sucursal puede pisar. */
+  descuentoBase?: number | null;
 
   // Datos específicos del stock (mezclados)
   activo: boolean; // Mezcla entre habilitado y producto_activo
@@ -21,6 +23,8 @@ export interface StockItem {
   precioVentaUsd: number;
   iva: number;
   margenMinimo: number;
+  /** Descuento del producto en esta sucursal (nivel 3 de la lista de precios). */
+  descuento: number | null;
   stockMinimo: number;
   cantidadDisponible: number;
   cantidadReservada: number;

@@ -38,6 +38,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       descripcion: '',
       activo: true,
       precioBase: 0,
+      descuentoBase: null,
       codigoQr: '',
     },
     {
@@ -62,6 +63,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       descripcion: '',
       activo: true,
       precioBase: 0,
+      descuentoBase: null,
       codigoQr: '',
     },
   ];
@@ -209,6 +211,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
         descripcion: '',
         activo: true,
         precioBase: 0,
+      descuentoBase: null,
         codigoQr: '',
       },
     ];

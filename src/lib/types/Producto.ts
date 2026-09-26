@@ -24,5 +24,7 @@ export interface Producto {
   activo: boolean;
   precioBase: number | null;
   costoReposicionBase?: number | null;
+  /** Descuento del producto para todas las sucursales (nivel 3 de la lista de precios). */
+  descuentoBase: number | null;
   codigoQr: string;
 }

@@ -50,6 +50,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const [costoReposicion, setCostoReposicion] = useState('');
   const [precioVentaArs, setPrecioVentaArs] = useState('');
   const [margenMinimo, setMargenMinimo] = useState('');
+  const [descuento, setDescuento] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [inlineEditing, setInlineEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +91,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       setCostoReposicion(stockItem?.costoReposicion != null ? String(stockItem.costoReposicion) : '');
       setPrecioVentaArs(stockItem?.precioVentaArs != null ? String(stockItem.precioVentaArs) : '');
       setMargenMinimo(stockItem?.margenMinimo != null ? String(stockItem.margenMinimo) : '');
+      setDescuento(stockItem?.descuento != null ? String(stockItem.descuento) : '');
     } else {
       setCostoReposicion(productoSeleccionado?.costoReposicionBase != null ? String(productoSeleccionado.costoReposicionBase) : '');
       setPrecioVentaArs(productoSeleccionado?.precioBase != null ? String(productoSeleccionado.precioBase) : '');
@@ -117,6 +119,20 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     precioVenta < precioMinimo
   );
 
+  // Nivel 3 de la lista de precios: el margen mínimo marca cuánto se puede
+  // descontar como máximo sobre este producto.
+  const descuentoMaximo =
+    precioMinimo !== null && precioVenta !== null && precioVenta > 0 && precioMinimo < precioVenta
+      ? Math.round((1 - precioMinimo / precioVenta) * 10000) / 100
+      : precioMinimo !== null && precioVenta !== null
+      ? 0
+      : null;
+  const descuentoNum = numeroDeCampo(descuento);
+  const descuentoExcedido =
+    descuentoMaximo !== null && descuentoNum !== null && descuentoNum > descuentoMaximo;
+  // Sin valor propio, el nivel 3 toma el descuento general del producto.
+  const heredaDescuento = descuento.trim() === '' && stockItem?.descuentoBase != null;
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (savingRef.current) return;
@@ -139,6 +155,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           precio_venta_usd: parseNum('precioVentaUsd'),
           iva: parseNum('iva'),
           margen_minimo: parseNum('margenMinimo'),
+          descuento: parseNum('descuento'),
           stock_minimo: parseNum('stockMinimo'),
           ...(readOnly ? {} : {
             cantidad_disponible: parseNum('cantidadDisponible'),
@@ -154,6 +171,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           precio_venta_usd: parseNum('precioVentaUsd'),
           iva: parseNum('iva'),
           margen_minimo: parseNum('margenMinimo'),
+          descuento: parseNum('descuento'),
           stock_minimo: parseNum('stockMinimo'),
           habilitado: formData.get('habilitado') === 'true',
         };
@@ -191,6 +209,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     setCostoReposicion(stockItem.costoReposicion != null ? String(stockItem.costoReposicion) : '');
     setPrecioVentaArs(stockItem.precioVentaArs != null ? String(stockItem.precioVentaArs) : '');
     setMargenMinimo(stockItem.margenMinimo != null ? String(stockItem.margenMinimo) : '');
+    setDescuento(stockItem.descuento != null ? String(stockItem.descuento) : '');
     setSubmitError(null);
     setInlineEditing(false);
   };
@@ -288,6 +307,13 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 </DetailField>
                 <DetailField label="Margen mínimo">
                   {stockItem.margenMinimo ? `${stockItem.margenMinimo}%` : '—'}
+                </DetailField>
+                <DetailField label="Descuento">
+                  {stockItem.descuento != null
+                    ? `${stockItem.descuento}%`
+                    : stockItem.descuentoBase != null
+                    ? `${stockItem.descuentoBase}% (del producto)`
+                    : '—'}
                 </DetailField>
                 <DetailField label="Precio venta ARS">
                   {money(stockItem.precioVentaArs)}
@@ -470,7 +496,29 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 className={margenInvalido ? styles.invalidInput : undefined}
                 placeholder="Ej: 30"
               />
+              <Input
+                label="Descuento (%)"
+                name="descuento"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={descuento}
+                onChange={(event) => setDescuento(event.target.value)}
+                placeholder={heredaDescuento ? String(stockItem!.descuentoBase) : '—'}
+              />
             </div>
+            {heredaDescuento && (
+              <p className={styles.hintDescuento}>
+                Vacío: hereda el descuento general del producto ({stockItem!.descuentoBase}%).
+              </p>
+            )}
+            {descuentoMaximo !== null && (
+              <p className={styles.hintDescuento}>
+                Descuento máximo sin perforar el margen mínimo: <b>{descuentoMaximo}%</b>.
+                {descuentoExcedido && ' El valor cargado lo supera y se topeará al generar la lista de precios.'}
+              </p>
+            )}
             {margenInvalido && (
               <p className={styles.validationError} role="alert">
                 {precioMinimo !== null

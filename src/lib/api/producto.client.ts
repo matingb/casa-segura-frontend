@@ -25,6 +25,7 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
     activo: apiProd.activo ?? false,
     precioBase: apiProd.precio_base != null ? Number(apiProd.precio_base) : null,
     costoReposicionBase: apiProd.costo_reposicion_base != null ? Number(apiProd.costo_reposicion_base) : null,
+    descuentoBase: apiProd.descuento_base != null ? Number(apiProd.descuento_base) : null,
     codigoQr: apiProd.codigo_qr ?? '',
   };
 }

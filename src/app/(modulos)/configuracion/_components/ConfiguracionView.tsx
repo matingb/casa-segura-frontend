@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import CategoriasConfiguracion from './CategoriasConfiguracion';
+import SucursalesConfiguracion from './SucursalesConfiguracion';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
+import { useSucursales } from '../../../../context/SucursalContext';
 import styles from '../configuracion.module.css';
 
-type TabType = 'categorias';
+type TabType = 'categorias' | 'sucursales';
 
 export default function ConfiguracionView() {
   const [activeTab, setActiveTab] = useState<TabType>('categorias');
   const { tipos } = useClasificacion();
+  const { sucursales } = useSucursales();
 
   return (
     <div className={styles.page}>
@@ -36,11 +39,33 @@ export default function ConfiguracionView() {
           <span>Categorías</span>
           <span className={styles.tabBadge}>{tipos.length}</span>
         </button>
+
+        <button
+          type="button"
+          className={`${styles.tabButton} ${activeTab === 'sucursales' ? styles.active : ''}`}
+          onClick={() => setActiveTab('sucursales')}
+          role="tab"
+          aria-selected={activeTab === 'sucursales'}
+          id="tab-sucursales"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 21h18" />
+            <path d="M5 21V7l7-4 7 4v14" />
+            <path d="M10 21v-6h4v6" />
+          </svg>
+          <span>Sucursales</span>
+          <span className={styles.tabBadge}>{sucursales.length}</span>
+        </button>
       </nav>
 
       {/* Contenido de la subpestaña */}
-      <main className={styles.tabContent} role="tabpanel" aria-labelledby="tab-categorias">
+      <main
+        className={styles.tabContent}
+        role="tabpanel"
+        aria-labelledby={activeTab === 'categorias' ? 'tab-categorias' : 'tab-sucursales'}
+      >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
+        {activeTab === 'sucursales' && <SucursalesConfiguracion />}
       </main>
     </div>
   );
