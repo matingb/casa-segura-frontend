@@ -75,18 +75,18 @@
 .tabla td {
   padding: 0.35rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .colProducto {
-  width: 31%;
+  width: 29%;
 }
 
 /* Las columnas numéricas y sus encabezados van alineados a la derecha. */
 .colNumero {
   text-align: right;
   white-space: nowrap;
-  width: 16%;
+  width: 17%;
 }
 
 .colAccion {

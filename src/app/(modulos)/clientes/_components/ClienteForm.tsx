@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, FileDown } from 'lucide-react';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
 import Input from '../../../../components/ui/Input/Input';
@@ -24,6 +24,8 @@ import { useClienteDetalle } from '../_hooks/useClienteDetalle';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
 import { formatPorcentaje, parseNum } from '../../../../lib/utils/formatters';
+import ClienteDescuentos from './ClienteDescuentos/ClienteDescuentos';
+import ClienteListaPreciosModal from './ClienteListaPreciosModal/ClienteListaPreciosModal';
 import styles from './ClienteForm.module.css';
 
 interface ClienteFormProps {
@@ -91,6 +93,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showListaPreciosModal, setShowListaPreciosModal] = useState(false);
   const isReadOnlyView = readOnly && !inlineEditing;
 
   const serializeForm = (): string => {
@@ -359,6 +362,14 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             <Button type="button" variant="secondary" onClick={() => router.push('/clientes')}>
               Volver
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowListaPreciosModal(true)}
+            >
+              <FileDown size={16} style={{ marginRight: '0.4rem' }} />
+              Lista de precios
+            </Button>
             <Button type="button" onClick={() => setInlineEditing(true)}>
               Editar
             </Button>
@@ -369,6 +380,13 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             )}
           </div>
         </Card>
+
+        <ClienteDescuentos
+          clienteId={cliente.id}
+          sucursales={cliente.sucursales}
+          descuentoHabitual={cliente.descuentoPorcentaje}
+          onGenerarListaPrecios={() => setShowListaPreciosModal(true)}
+        />
         {showDeleteConfirmation && (
           <ConfirmActionModal
             title="Dar de baja el cliente"
@@ -377,6 +395,18 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             isConfirming={isDeleting}
             onConfirm={handleDelete}
             onClose={() => setShowDeleteConfirmation(false)}
+          />
+        )}
+        {showListaPreciosModal && (
+          <ClienteListaPreciosModal
+            isOpen={showListaPreciosModal}
+            onClose={() => setShowListaPreciosModal(false)}
+            clienteId={cliente.id}
+            clienteNombre={cliente.nombre}
+            clienteRazonSocial={cliente.razonSocial}
+            clienteNroDocumento={cliente.nroDocumento}
+            descuentoHabitual={cliente.descuentoPorcentaje}
+            sucursales={cliente.sucursales}
           />
         )}
       </div>
@@ -629,6 +659,29 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
           {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
         </form>
       </Card>
+
+      {cliente && (
+        <>
+          <ClienteDescuentos
+            clienteId={cliente.id}
+            sucursales={cliente.sucursales}
+            descuentoHabitual={cliente.descuentoPorcentaje}
+            onGenerarListaPrecios={() => setShowListaPreciosModal(true)}
+          />
+          {showListaPreciosModal && (
+            <ClienteListaPreciosModal
+              isOpen={showListaPreciosModal}
+              onClose={() => setShowListaPreciosModal(false)}
+              clienteId={cliente.id}
+              clienteNombre={cliente.nombre}
+              clienteRazonSocial={cliente.razonSocial}
+              clienteNroDocumento={cliente.nroDocumento}
+              descuentoHabitual={cliente.descuentoPorcentaje}
+              sucursales={cliente.sucursales}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

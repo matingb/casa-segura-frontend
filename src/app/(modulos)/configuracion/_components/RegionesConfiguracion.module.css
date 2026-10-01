@@ -1,0 +1,336 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Encabezado y barra de acciones ─────────────── */
+.headerToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-card);
+  flex-wrap: wrap;
+}
+
+.toolbarInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.toolbarTitle {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.toolbarDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.sucursalSelectorWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+}
+
+.sucursalSelectorLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.sucursalSelect {
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  outline: none;
+}
+
+.sucursalSelect option {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 6px -1px rgba(29, 78, 216, 0.2);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: 0.6rem 1rem;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+/* ── Formulario ─────────────── */
+.formCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-primary);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-card);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.75rem 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.field input {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-input-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:hover:not(:disabled) {
+  border-color: var(--color-input-border-hover);
+}
+
+.field input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.fieldLabel {
+  display: block;
+  line-height: 1.2;
+}
+
+.required {
+  color: var(--color-primary);
+  margin-left: 0.15rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Listado ─────────────── */
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.9rem 1.25rem;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.12s ease;
+}
+
+.fila:hover {
+  border-color: var(--color-border-strong);
+}
+
+.filaInactiva {
+  opacity: 0.65;
+  background: var(--color-bg);
+}
+
+.filaInfo {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.filaNombre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.descuentoBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.badgeInactiva {
+  display: inline-flex;
+  align-items: center;
+  height: 1.4rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+}
+
+.filaAcciones {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.btnLink,
+.btnLinkDanger {
+  border: none;
+  background: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btnLink {
+  color: var(--color-primary);
+}
+
+.btnLinkDanger {
+  color: var(--color-danger);
+}
+
+.btnLink:hover:not(:disabled),
+.btnLinkDanger:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.btnLink:disabled,
+.btnLinkDanger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* ── Estados ─────────────── */
+.loadingState,
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2.5rem 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 10px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.emptyTitle {
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .headerToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  .fila {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

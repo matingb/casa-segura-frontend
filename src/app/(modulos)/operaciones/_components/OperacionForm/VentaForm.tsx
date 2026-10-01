@@ -1,11 +1,18 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Input from '../../../../../components/ui/Input/Input';
 import Select from '../../../../../components/ui/Select/Select';
 import { useSucursales } from '../../../../../context/SucursalContext';
 import { OperacionItemInput } from '../../../../../lib/types/OperacionCrear';
 import { useOperacionCrear } from '../../_hooks/useOperacionCrear';
+import { clienteClient } from '../../../../../lib/api/cliente.client';
+import { Cliente } from '../../../../../lib/types/Cliente';
+import {
+  descuentoEngineClient,
+  EvaluacionOperacionResultado,
+} from '../../../../../lib/api/descuento-engine.client';
+import { formatARS } from '../../../../../lib/utils/formatters';
 import ItemsEditor, { importeItem } from './ItemsEditor';
 import PagoEditor from './PagoEditor';
 import ResumenOperacion from './ResumenOperacion';
@@ -18,6 +25,9 @@ export default function VentaForm() {
   const { submitting, error, crear } = useOperacionCrear();
 
   const [sucursalElegida, setSucursalElegida] = useState('');
+  const [clienteId, setClienteId] = useState('');
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [evaluacionDescuentos, setEvaluacionDescuentos] = useState<EvaluacionOperacionResultado | null>(null);
   const [numeroComprobante, setNumeroComprobante] = useState('');
   const [descuentoArs, setDescuentoArs] = useState('');
   const [items, setItems] = useState<OperacionItemInput[]>([
@@ -32,8 +42,106 @@ export default function VentaForm() {
   const handleTasasChange = useCallback((t: Map<string, number>) => setTasas(t), []);
   const handleMargenInvalidoChange = useCallback((v: boolean) => setMargenInvalido(v), []);
 
+  // Carga de clientes para selector
+  useEffect(() => {
+    clienteClient
+      .obtenerTodos({ operativo: true })
+      .then((data) => setClientes(data))
+      .catch((err) => {
+        console.warn('[VentaForm] No se pudieron cargar los clientes:', err);
+        setClientes([]);
+      });
+  }, []);
+
   // Si hay sucursales disponibles, se selecciona la primera por defecto.
   const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
+
+  // Evaluación centralizada de descuentos y margen de ganancia
+  useEffect(() => {
+    if (!sucursalId) {
+      setEvaluacionDescuentos(null);
+      return;
+    }
+
+    const itemsValidos = items
+      .filter((it) => Boolean(it.productoSucursalId))
+      .map((it) => ({
+        productoSucursalId: it.productoSucursalId,
+        cantidad: it.cantidad || 1,
+        precioManual: it.precioUnitArs,
+      }));
+
+    if (itemsValidos.length === 0) {
+      setEvaluacionDescuentos(null);
+      return;
+    }
+
+    let activo = true;
+    const timer = setTimeout(() => {
+      descuentoEngineClient
+        .evaluarOperacion(sucursalId, itemsValidos, clienteId || null)
+        .then((res) => {
+          if (activo) {
+            setEvaluacionDescuentos(res);
+          }
+        })
+        .catch((err) => {
+          console.warn('[VentaForm] Error evaluando descuentos centralizados:', err);
+        });
+    }, 150);
+
+    return () => {
+      activo = false;
+      clearTimeout(timer);
+    };
+  }, [sucursalId, clienteId, items]);
+
+  // Actualiza margenInvalido según el análisis centralizado
+  useEffect(() => {
+    if (evaluacionDescuentos?.resumen) {
+      setMargenInvalido(
+        evaluacionDescuentos.resumen.hayMargenPerforado ||
+        evaluacionDescuentos.resumen.hayVentaEnPerdida
+      );
+    }
+  }, [evaluacionDescuentos]);
+
+  // Aplica los precios sugeridos calculados en cascada para el cliente seleccionado
+  const aplicarPreciosSugeridos = useCallback(() => {
+    if (!evaluacionDescuentos?.items) return;
+    setItems((prev) =>
+      prev.map((it) => {
+        const match = evaluacionDescuentos.items.find(
+          (e) => e.productoSucursalId === it.productoSucursalId
+        );
+        if (match && match.precioSugerido > 0) {
+          return { ...it, precioUnitArs: match.precioSugerido };
+        }
+        return it;
+      })
+    );
+  }, [evaluacionDescuentos]);
+
+  const hayPreciosSugeridosDiferentes = useMemo(() => {
+    if (!evaluacionDescuentos?.items) return false;
+    return items.some((it) => {
+      const match = evaluacionDescuentos.items.find(
+        (e) => e.productoSucursalId === it.productoSucursalId
+      );
+      return match && it.precioUnitArs !== undefined && match.precioSugerido < it.precioUnitArs;
+    });
+  }, [items, evaluacionDescuentos]);
+
+  const analisisMargenItems = useMemo(() => {
+    if (!evaluacionDescuentos?.items) return undefined;
+    return items.map((it) => {
+      if (!it.productoSucursalId) return null;
+      const match = evaluacionDescuentos.items.find(
+        (e) => e.productoSucursalId === it.productoSucursalId
+      );
+      return match ? match.analisisMargen : null;
+    });
+  }, [items, evaluacionDescuentos]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + importeItem(item, 'venta'), 0),
@@ -183,6 +291,37 @@ export default function VentaForm() {
             {errores.sucursalId && <span className={styles.errorCampo}>{errores.sucursalId}</span>}
           </div>
 
+          <div>
+            <Select
+              id="cliente"
+              label="Cliente (opcional)"
+              value={clienteId}
+              onChange={(e) => setClienteId(e.target.value)}
+            >
+              <option value="">Consumidor Final (Sin cliente)</option>
+              {clientes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.razonSocial ? `${c.razonSocial} (${c.nombre})` : c.nombre}
+                  {c.descuentoPorcentaje ? ` [${c.descuentoPorcentaje}% desc.]` : ''}
+                </option>
+              ))}
+            </Select>
+            {evaluacionDescuentos?.cliente && (
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                {evaluacionDescuentos.cliente.regionNombre && (
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(99, 102, 241, 0.08)', color: '#4338ca', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                    📍 Región: {evaluacionDescuentos.cliente.regionNombre} (-{evaluacionDescuentos.cliente.regionDescuento}%)
+                  </span>
+                )}
+                {evaluacionDescuentos.cliente.descuentoHabitual != null && evaluacionDescuentos.cliente.descuentoHabitual > 0 && (
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.08)', color: '#047857', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    ⭐ Habitual: -{evaluacionDescuentos.cliente.descuentoHabitual}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <Input
             label={<>Número de comprobante <span className={styles.campoOpcional}>(opcional)</span></>}
             value={numeroComprobante}
@@ -207,18 +346,135 @@ export default function VentaForm() {
         </>
       }
       resumen={
-        <ResumenOperacion
-          mercaderia={subtotal}
-          recargos={pago.recargos}
-          total={totalOperacion}
-          etiquetaTotal="Total a cobrar"
-          lineasExtra={descuento > 0 ? [{ etiqueta: 'Descuento', valor: descuento, negativo: true }] : []}
-          etiquetaAccion="Registrar venta"
-          submitting={submitting}
-        />
+        <>
+          <ResumenOperacion
+            mercaderia={subtotal}
+            recargos={pago.recargos}
+            total={totalOperacion}
+            etiquetaTotal="Total a cobrar"
+            lineasExtra={descuento > 0 ? [{ etiqueta: 'Descuento adicional', valor: descuento, negativo: true }] : []}
+            etiquetaAccion="Registrar venta"
+            submitting={submitting}
+          />
+          {evaluacionDescuentos?.resumen.gananciaTotalEstimada != null && (
+            <div
+              style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.35rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                <span>Ganancia estimada:</span>
+                <strong style={{ color: evaluacionDescuentos.resumen.gananciaTotalEstimada >= 0 ? '#16a34a' : '#dc2626' }}>
+                  {formatARS(evaluacionDescuentos.resumen.gananciaTotalEstimada)}
+                </strong>
+              </div>
+              {evaluacionDescuentos.resumen.margenEfectivoPromedio != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                  <span>Margen prom. efectivo:</span>
+                  <strong style={{ color: evaluacionDescuentos.resumen.margenEfectivoPromedio >= 0 ? '#16a34a' : '#dc2626' }}>
+                    +{evaluacionDescuentos.resumen.margenEfectivoPromedio}%
+                  </strong>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       }
     >
       <div>
+        {/* Banner: Descuentos disponibles para aplicar */}
+        {hayPreciosSugeridosDiferentes && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              padding: '0.6rem 0.85rem',
+              marginBottom: '0.75rem',
+              borderRadius: '8px',
+              background: 'rgba(99, 102, 241, 0.08)',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              color: '#3730a3',
+              fontSize: '0.84rem',
+            }}
+          >
+            <span>
+              🏷️ <strong>Descuentos disponibles:</strong> El cliente tiene descuentos configurados para los productos cargados.
+            </span>
+            <button
+              type="button"
+              onClick={aplicarPreciosSugeridos}
+              style={{
+                padding: '0.3rem 0.75rem',
+                borderRadius: '6px',
+                background: '#4f46e5',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Aplicar precios con descuento
+            </button>
+          </div>
+        )}
+
+        {/* Banner: Tope de margen aplicado */}
+        {evaluacionDescuentos?.resumen.hayTopeAplicado && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 0.85rem',
+              marginBottom: '0.75rem',
+              borderRadius: '8px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              color: '#b45309',
+              fontSize: '0.84rem',
+            }}
+          >
+            <span>🛡️</span>
+            <span>
+              <strong>Tope de margen aplicado:</strong> Uno o más productos alcanzaron el precio mínimo permitido (costo + margen). Los descuentos se limitaron para proteger la rentabilidad.
+            </span>
+          </div>
+        )}
+
+        {/* Banner: Margen perforado o venta en pérdida */}
+        {(evaluacionDescuentos?.resumen.hayMargenPerforado || evaluacionDescuentos?.resumen.hayVentaEnPerdida) && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 0.85rem',
+              marginBottom: '0.75rem',
+              borderRadius: '8px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#b91c1c',
+              fontSize: '0.84rem',
+            }}
+          >
+            <span>🚨</span>
+            <span>
+              <strong>Margen no alcanzado:</strong> Hay productos por debajo del margen mínimo permitido o a pérdida. Ajustá los precios unitarios para continuar.
+            </span>
+          </div>
+        )}
+
         <ItemsEditor
           sucursalId={sucursalId}
           items={items}
@@ -229,6 +485,7 @@ export default function VentaForm() {
           onCampoEditado={limpiarError}
           unidades={-unidades}
           sucursalNombre={sucursalNombre}
+          analisisMargenItems={analisisMargenItems}
         />
         {errores.items && <span className={styles.errorCampo}>{errores.items}</span>}
         {errores.margen && <div className={styles.errorBanner}>{errores.margen}</div>}

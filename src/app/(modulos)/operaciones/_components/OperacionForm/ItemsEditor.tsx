@@ -10,6 +10,8 @@ import { stockClient } from '../../../../../lib/api/stock.client';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { OperacionItemInput } from '../../../../../lib/types/OperacionCrear';
 import { formatARS } from '../../../../../lib/utils/formatters';
+import { calcularCascada, AnalisisMargen } from '../../../../../lib/utils/cascada-descuentos';
+import MargenStatusBadge from './MargenStatusBadge';
 import styles from './ItemsEditor.module.css';
 
 interface ItemsEditorProps {
@@ -26,6 +28,8 @@ interface ItemsEditorProps {
   /** Impacto en stock, que se muestra al pie: positivo entra, negativo sale. */
   unidades?: number;
   sucursalNombre?: string;
+  /** Análisis de margen por ítem proporcionado por el motor centralizado de descuentos */
+  analisisMargenItems?: (AnalisisMargen | null)[];
 }
 
 /** Importe de la fila: cantidad × precio unitario, sin redondear. */
@@ -81,6 +85,7 @@ export default function ItemsEditor({
   onCampoEditado,
   unidades,
   sucursalNombre,
+  analisisMargenItems,
 }: ItemsEditorProps) {
   const [productos, setProductos] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -102,9 +107,15 @@ export default function ItemsEditor({
     if (!onMargenInvalidoChange) return;
     const hayViolacion =
       modo === 'venta' &&
-      items.some((item) => violaMargenMinimo(item, productos.find((p) => p.id === item.productoSucursalId)));
+      items.some((item, idx) => {
+        const itemAnalisis = analisisMargenItems?.[idx];
+        if (itemAnalisis) {
+          return itemAnalisis.estado === 'perforado' || itemAnalisis.estado === 'en_perdida';
+        }
+        return violaMargenMinimo(item, productos.find((p) => p.id === item.productoSucursalId));
+      });
     onMargenInvalidoChange(hayViolacion);
-  }, [items, productos, modo, onMargenInvalidoChange]);
+  }, [items, productos, modo, onMargenInvalidoChange, analisisMargenItems]);
 
   const agregarItem = () => {
     onChange([...items, { productoSucursalId: '', cantidad: 1, cantidadImpactadaStock: 1 }]);
@@ -169,6 +180,20 @@ export default function ItemsEditor({
           <tbody>
             {items.map((item, index) => {
               const stockItem = productos.find((p) => p.id === item.productoSucursalId);
+              const analisisMargen =
+                analisisMargenItems?.[index] ??
+                (modo === 'venta' && stockItem
+                  ? calcularCascada({
+                      precioBase: stockItem.precioVentaArs || stockItem.precioBase || 0,
+                      costoReposicion: stockItem.costoReposicion ?? stockItem.costoReposicionBase,
+                      margenMinimo: stockItem.margenMinimo,
+                      precioManual: item.precioUnitArs,
+                      descuentoSucursal: stockItem.descuento,
+                      descuentoProducto: stockItem.descuentoBase,
+                      permitirPerforacion: true,
+                    }).analisisMargen
+                  : null);
+
               const productoOptions = productos.map((p) => ({
                 value: p.id,
                 label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre} (disp: ${p.cantidadDisponible})`,
@@ -254,10 +279,8 @@ export default function ItemsEditor({
                       }}
                     />
                     {errorUnitario && <span className={styles.errorCampo}>{errorUnitario}</span>}
-                    {modo === 'venta' && violaMargenMinimo(item, stockItem) && (
-                      <span className={styles.errorCampo}>
-                        Mínimo {formatARS(calcularPrecioMinimo(stockItem)!)} (margen {stockItem!.margenMinimo}%)
-                      </span>
+                    {modo === 'venta' && analisisMargen && (
+                      <MargenStatusBadge analisis={analisisMargen} showDescuentoTag />
                     )}
                   </td>
 

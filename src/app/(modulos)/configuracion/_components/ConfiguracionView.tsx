@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import CategoriasConfiguracion from './CategoriasConfiguracion';
 import SucursalesConfiguracion from './SucursalesConfiguracion';
+import RegionesConfiguracion from './RegionesConfiguracion';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useSucursales } from '../../../../context/SucursalContext';
 import styles from '../configuracion.module.css';
 
-type TabType = 'categorias' | 'sucursales';
+type TabType = 'categorias' | 'sucursales' | 'regiones';
 
 export default function ConfiguracionView() {
   const [activeTab, setActiveTab] = useState<TabType>('categorias');
@@ -56,16 +57,33 @@ export default function ConfiguracionView() {
           <span>Sucursales</span>
           <span className={styles.tabBadge}>{sucursales.length}</span>
         </button>
+
+        <button
+          type="button"
+          className={`${styles.tabButton} ${activeTab === 'regiones' ? styles.active : ''}`}
+          onClick={() => setActiveTab('regiones')}
+          role="tab"
+          aria-selected={activeTab === 'regiones'}
+          id="tab-regiones"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span>Regiones</span>
+        </button>
       </nav>
 
       {/* Contenido de la subpestaña */}
       <main
         className={styles.tabContent}
         role="tabpanel"
-        aria-labelledby={activeTab === 'categorias' ? 'tab-categorias' : 'tab-sucursales'}
+        aria-labelledby={activeTab === 'categorias' ? 'tab-categorias' : activeTab === 'sucursales' ? 'tab-sucursales' : 'tab-regiones'}
       >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
         {activeTab === 'sucursales' && <SucursalesConfiguracion />}
+        {activeTab === 'regiones' && <RegionesConfiguracion />}
       </main>
     </div>
   );
