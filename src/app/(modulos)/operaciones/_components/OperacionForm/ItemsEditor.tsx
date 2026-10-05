@@ -13,6 +13,7 @@ import { formatARS } from '../../../../../lib/utils/formatters';
 import { calcularCascada, AnalisisMargen } from '../../../../../lib/utils/cascada-descuentos';
 import MargenStatusBadge from './MargenStatusBadge';
 import styles from './ItemsEditor.module.css';
+import { useCotizacion } from '../../../../../context/CotizacionContext';
 
 interface ItemsEditorProps {
   sucursalId: string;
@@ -88,6 +89,7 @@ export default function ItemsEditor({
   analisisMargenItems,
 }: ItemsEditorProps) {
   const [productos, setProductos] = useState<StockItem[]>([]);
+  const { revision } = useCotizacion();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export default function ItemsEditor({
       .then((res) => setProductos(res.data))
       .catch((err) => console.error('[ItemsEditor] Error cargando productos:', err))
       .finally(() => setLoading(false));
-  }, [sucursalId]);
+  }, [sucursalId, revision]);
 
   useEffect(() => {
     if (!onMargenInvalidoChange) return;
@@ -132,7 +134,7 @@ export default function ItemsEditor({
   const seleccionarProducto = (index: number, productoSucursalId: string) => {
     const productoSeleccionado = productos.find((producto) => producto.id === productoSucursalId);
     const precioPorDefecto = modo === 'venta'
-      ? { precioUnitArs: productoSeleccionado?.precioVentaArs }
+      ? { precioUnitArs: productoSeleccionado?.precioVentaArs ?? undefined, cotizacionVersionCatalogo: productoSeleccionado?.contextoMonetario?.cotizacion_version }
       : modo === 'compra'
         ? { costoUnitArs: productoSeleccionado?.costoReposicion }
         : {};
@@ -184,7 +186,7 @@ export default function ItemsEditor({
                 analisisMargenItems?.[index] ??
                 (modo === 'venta' && stockItem
                   ? calcularCascada({
-                      precioBase: stockItem.precioVentaArs || stockItem.precioBase || 0,
+                      precioBase: stockItem.precioVentaArs ?? stockItem.precioBase ?? 0,
                       costoReposicion: stockItem.costoReposicion ?? stockItem.costoReposicionBase,
                       margenMinimo: stockItem.margenMinimo,
                       precioManual: item.precioUnitArs,

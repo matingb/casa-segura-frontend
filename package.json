@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "up" : "npm run build && npm run start"
+    "up": "npm run build && npm run start"
   },
   "dependencies": {
+    "decimal.js": "10.6.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.33.0",

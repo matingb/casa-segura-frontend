@@ -41,7 +41,7 @@ export interface ClienteDescuentoProducto {
   productoId: string;
   productoCodigo: string;
   productoNombre: string;
-  productoPrecioBase: number;
+  productoPrecioBase: number | null;
   porcentaje: number;
   nota: string | null;
   createdAt?: string;

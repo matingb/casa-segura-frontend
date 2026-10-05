@@ -13,7 +13,9 @@ import { Producto } from '../../../../../lib/types/Producto';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { productoClient } from '../../../../../lib/api/producto.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
-import { formatARS } from '../../../../../lib/utils/formatters';
+import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
+import ContextoPrecios from '../../../../../components/ContextoPrecios';
+import { useCotizacion } from '../../../../../context/CotizacionContext';
 import styles from './ProductosCatalogo.module.css';
 
 const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'estado'] as const;
@@ -27,10 +29,12 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] 
 
 export default function ProductosCatalogo() {
   const router = useRouter();
+  const { revision, datos, error: errorCotizacion } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
   const {
     items: productos,
     loading,
+    error,
     page,
     totalPages,
     setPage,
@@ -42,7 +46,7 @@ export default function ProductosCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS);
+  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
 
   const columns: TableColumn<Producto>[] = [
     {
@@ -71,12 +75,16 @@ export default function ProductosCatalogo() {
     { key: 'subtipo', header: 'Subtipo', render: (producto) => getSubtipoNombre(producto.subtipoId), sortable: true },
     {
       key: 'precioBase',
-      header: 'Precio base',
-      render: (producto) => (producto.precioBase ? formatARS(producto.precioBase) : '—'),
+      header: 'Base ARS',
+      render: (producto) => formatARS(producto.precio?.ars ?? producto.precioBase),
       sortable: true,
       align: 'right',
       width: '1%',
     },
+    {
+      key: 'precioBaseUsd', header: 'Base USD', render: producto => formatUSD(producto.precio?.usd ?? producto.precioBaseUsd), sortable: true, align: 'right',
+    },
+    { key: 'referencia', header: 'Referencia', render: producto => producto.precio?.moneda_referencia ?? 'ARS' },
     {
       key: 'estado',
       header: 'Estado',
@@ -137,6 +145,7 @@ export default function ProductosCatalogo() {
         />
       </div>
 
+      <ContextoPrecios contexto={productos[0]?.contextoMonetario ?? datos} error={error ?? errorCotizacion} />
       <Table
         columns={columns}
         data={productos}

@@ -7,6 +7,8 @@ import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './SucursalesConfiguracion.module.css';
+import { useCotizacion } from '../../../../context/CotizacionContext';
+import ContextoPrecios from '../../../../components/ContextoPrecios';
 
 interface FormState {
   nombre: string;
@@ -29,6 +31,8 @@ function aFormState(s: Sucursal): FormState {
 export default function SucursalesConfiguracion() {
   const { showSuccess, showError } = useToast();
   const { recargarSucursales } = useSucursales();
+  const { datos: cotizacion } = useCotizacion();
+  const usaCentral = cotizacion?.cotizacion_usd_ars != null;
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +98,7 @@ export default function SucursalesConfiguracion() {
 
     const body = {
       nombre,
-      valor_dolar: valorDolar,
+      ...(!usaCentral ? { valor_dolar: valorDolar } : {}),
       descuento,
       es_central: form.esCentral,
     };
@@ -173,7 +177,7 @@ export default function SucursalesConfiguracion() {
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Valor del dólar</span>
+          <span className={styles.fieldLabel}>{usaCentral ? 'Dólar anterior de sucursal (solo lectura)' : 'Valor del dólar anterior de sucursal'}</span>
           <input
             type="number"
             min="0"
@@ -181,7 +185,7 @@ export default function SucursalesConfiguracion() {
             value={form.valorDolar}
             onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
             placeholder="Ej: 1200"
-            disabled={guardando}
+            disabled={guardando || usaCentral}
           />
         </label>
         <label className={styles.field}>
@@ -223,11 +227,12 @@ export default function SucursalesConfiguracion() {
 
   return (
     <div className={styles.container}>
+      <ContextoPrecios contexto={cotizacion} />
       <div className={styles.headerToolbar}>
         <div className={styles.toolbarInfo}>
           <h2 className={styles.toolbarTitle}>Sucursales</h2>
           <p className={styles.toolbarDescription}>
-            Administra las sucursales del sistema, su valor del dólar y su descuento.
+            Administra las sucursales y sus descuentos. La referencia del dólar se configura para toda la empresa.
           </p>
         </div>
         <button type="button" className={styles.btnPrimary} onClick={abrirCreacion} disabled={creando}>
@@ -262,7 +267,7 @@ export default function SucursalesConfiguracion() {
                     {!s.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
                   </div>
                   <div className={styles.filaDatos}>
-                    <span>Dólar: {s.valorDolar ? formatARS(s.valorDolar) : '—'}</span>
+                    <span>Dólar anterior: {s.valorDolar ? formatARS(s.valorDolar) : '—'}</span>
                     <span>
                       Descuento: {s.descuento !== null ? formatPorcentaje(s.descuento) : '—'}
                     </span>

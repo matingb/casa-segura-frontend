@@ -1,302 +1,88 @@
 'use client';
-
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Search, X } from 'lucide-react';
-import { StockItem } from '../../../../../lib/types/Stock';
-import { DescuentosClienteResumen } from '../../../../../lib/types/Region';
-import { stockClient } from '../../../../../lib/api/stock.client';
-import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
-import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
-import { calcularCascada, redondear } from '../../../../../lib/utils/cascada-descuentos';
+import { descuentoEngineClient } from '../../../../../lib/api/descuento-engine.client';
+import { ListaPreciosCliente } from '../../../../../lib/types/ListaPreciosCliente';
 import { formatARS, formatUSD, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
-import {
-  exportarListaPreciosClientePdf,
-  ItemListaCliente,
-  DatosClienteExport,
-} from './exportPdfCliente';
+import { useCotizacion } from '../../../../../context/CotizacionContext';
+import ContextoPrecios from '../../../../../components/ContextoPrecios';
+import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
+import { exportarListaPreciosClientePdf, DatosClienteExport } from './exportPdfCliente';
 import { exportarListaPreciosClienteExcel } from './exportExcelCliente';
-import {
-  ItemConMargenCalculado,
-  evaluarAlcanzaMargen,
-  validarMargenListaPrecios,
-} from './validarMargenListaPrecios';
+import { validarMargenListaPrecios } from './validarMargenListaPrecios';
 import styles from './ClienteListaPreciosModal.module.css';
-
-interface SucursalBasic {
-  id: string;
-  nombre: string;
-}
-
+export type { ItemConMargenCalculado } from './validarMargenListaPrecios';
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  clienteId: string;
-  clienteNombre: string;
-  clienteRazonSocial?: string | null;
-  clienteNroDocumento?: string | null;
-  descuentoHabitual?: number | null;
-  sucursales: SucursalBasic[];
+  isOpen: boolean; onClose: () => void; clienteId: string; clienteNombre: string;
+  clienteRazonSocial?: string | null; clienteNroDocumento?: string | null;
+  descuentoHabitual?: number | null; sucursales: Array<{ id: string; nombre: string }>;
 }
-
-export type { ItemConMargenCalculado };
-
-export default function ClienteListaPreciosModal({
-  isOpen,
-  onClose,
-  clienteId,
-  clienteNombre,
-  clienteRazonSocial,
-  clienteNroDocumento,
-  descuentoHabitual,
-  sucursales,
-}: Props) {
+export default function ClienteListaPreciosModal({ isOpen, onClose, clienteId, clienteNombre, clienteRazonSocial, clienteNroDocumento, sucursales }: Props) {
   const { showError, showSuccess } = useToast();
-  const { getSubtipoNombre, getTipoIdDeSubtipo } = useClasificacion();
-
-  const [selectedSucursalId, setSelectedSucursalId] = useState<string>(
-    sucursales[0]?.id ?? ''
-  );
-  const [stockTotal, setStockTotal] = useState<StockItem[]>([]);
-  const [resumen, setResumen] = useState<DescuentosClienteResumen | null>(null);
+  const { revision, datos: cotizacion } = useCotizacion();
+  const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
+  const [sucursalElegida, setSelectedSucursalId] = useState('');
+  const selectedSucursalId = sucursalElegida || sucursales[0]?.id || '';
+  const [datos, setDatos] = useState<ListaPreciosCliente | null>(null);
   const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-
-  // Sincronizar sucursal inicial si cambia la lista
+  const request = useRef(0);
+  const recargar = useCallback(async () => {
+    const id = ++request.current; setLoadingData(true);
+    setDatos(prev => prev?.sucursal.id === selectedSucursalId && prev.cliente.id === clienteId ? prev : null);
+    try {
+      const data = await descuentoEngineClient.listaCliente(selectedSucursalId, clienteId);
+      if (id === request.current) { setDatos(data); setError(null); }
+      return data;
+    } catch (err) {
+      if (id === request.current) setError(err instanceof Error ? err.message : 'No se pudo actualizar la lista.');
+      throw err;
+    } finally { if (id === request.current) setLoadingData(false); }
+  }, [selectedSucursalId, clienteId]);
   useEffect(() => {
-    if (sucursales.length > 0 && !selectedSucursalId) {
-      setSelectedSucursalId(sucursales[0].id);
-    }
-  }, [sucursales, selectedSucursalId]);
-
-  // Cargar stock y estructura de descuentos del cliente cuando abre el modal
+    if (!isOpen || !clienteId || !selectedSucursalId) return;
+    let activo = true;
+    const contador = request;
+    void Promise.resolve().then(() => activo ? recargar() : undefined).catch(() => {});
+    return () => { activo = false; contador.current++; };
+  }, [isOpen, clienteId, selectedSucursalId, revision, recargar]);
   useEffect(() => {
-    if (!isOpen || !clienteId) return;
-
-    let cancel = false;
-    async function cargar() {
-      setLoadingData(true);
-      try {
-        const [stockData, descuentosData] = await Promise.all([
-          stockClient.obtenerTodos(),
-          clienteDescuentoClient.obtenerDescuentos(clienteId),
-        ]);
-        if (!cancel) {
-          setStockTotal(stockData);
-          setResumen(descuentosData);
-        }
-      } catch (err) {
-        if (!cancel) {
-          showError('Error al cargar datos para la lista de precios.');
-        }
-      } finally {
-        if (!cancel) setLoadingData(false);
-      }
-    }
-
-    cargar();
-    return () => {
-      cancel = true;
-    };
-  }, [isOpen, clienteId, showError]);
-
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-    }
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    const cerrar = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    if (isOpen) document.addEventListener('keydown', cerrar);
+    return () => document.removeEventListener('keydown', cerrar);
   }, [isOpen, onClose]);
-
-  // Sucursal seleccionada
-  const sucursalActual = useMemo(
-    () => sucursales.find((s) => s.id === selectedSucursalId) ?? sucursales[0],
-    [sucursales, selectedSucursalId]
-  );
-
-  // Región de esta sucursal asignada al cliente
-  const regionAsignada = useMemo(
-    () => resumen?.regiones.find((r) => r.sucursalId === selectedSucursalId) ?? null,
-    [resumen, selectedSucursalId]
-  );
-
-  // Calcular precios para cada artículo de stock disponible en esta sucursal
-  const itemsCalculados: ItemConMargenCalculado[] = useMemo(() => {
-    if (!selectedSucursalId || stockTotal.length === 0) return [];
-
-    const itemsSucursal = stockTotal.filter(
-      (item) => item.sucursalId === selectedSucursalId && item.activo
-    );
-
-    return itemsSucursal.map((item) => {
-      const precioBase = Number(item.precioVentaArs) || 0;
-      const subtipoNombre = getSubtipoNombre(item.subtipoId);
-      const tipoId = getTipoIdDeSubtipo(item.subtipoId);
-
-      // Descuento de categoría para este cliente
-      const catCliente =
-        resumen?.categorias.find((c) => c.subtipoId === item.subtipoId) ??
-        resumen?.categorias.find((c) => c.tipoId === tipoId) ??
-        null;
-
-      // Descuento de producto para este cliente
-      const prodCliente =
-        resumen?.productos.find((p) => p.productoId === item.productoId) ?? null;
-
-      // Cascada completa con análisis
-      const resCascada = calcularCascada({
-        precioBase,
-        descuentoProducto: item.descuento,
-        descuentoRegionCliente: regionAsignada?.descuento,
-        descuentoCategoriaCliente: catCliente?.porcentaje,
-        descuentoProductoCliente: prodCliente?.porcentaje,
-        descuentoCliente: resumen?.descuentoGeneral ?? descuentoHabitual,
-        costoReposicion: item.costoReposicion,
-        margenMinimo: item.margenMinimo,
-      });
-
-      const descuentoTotal = resCascada.descuentoEfectivo;
-      const precioFinalArs = resCascada.precioFinal;
-
-      // Calcular precio USD si el producto tiene cotización base
-      const precioUsd =
-        item.precioVentaUsd && Number(item.precioVentaUsd) > 0
-          ? redondear(Number(item.precioVentaUsd) * (1 - descuentoTotal / 100))
-          : null;
-
-      // Etiquetas descriptivas de los descuentos aplicados
-      const descuentosDetalle: string[] = [];
-      if (regionAsignada?.descuento) {
-        descuentosDetalle.push(`Región: -${regionAsignada.descuento}%`);
-      }
-      if (catCliente?.porcentaje) {
-        descuentosDetalle.push(`Cat: -${catCliente.porcentaje}%`);
-      }
-      if (prodCliente?.porcentaje) {
-        descuentosDetalle.push(`Prod: -${prodCliente.porcentaje}%`);
-      }
-      if (descuentoHabitual && descuentoHabitual > 0) {
-        descuentosDetalle.push(`Habitual: -${descuentoHabitual}%`);
-      }
-
-      const { noAlcanzaMargen, motivo: motivoMargen } = evaluarAlcanzaMargen({
-        precioSinTope: resCascada.precioSinTope,
-        costoReposicion: item.costoReposicion,
-        margenMinimo: item.margenMinimo,
-        precioMinimo: resCascada.precioMinimo,
-      });
-
-      return {
-        id: item.id,
-        productoId: item.productoId,
-        codigo: item.codigo || '—',
-        nombre: item.nombre,
-        marca: item.marca,
-        modelo: item.modelo,
-        subtipoNombre,
-        precioListaArs: precioBase,
-        descuentoTotalPorcentaje: descuentoTotal,
-        precioFinalArs,
-        precioFinalUsd: precioUsd,
-        iva: item.iva,
-        descuentosDetalle,
-        precioSinTope: resCascada.precioSinTope,
-        precioMinimo: resCascada.precioMinimo,
-        costoReposicion: item.costoReposicion,
-        margenMinimo: item.margenMinimo,
-        noAlcanzaMargen,
-        motivoMargen,
-      };
-    });
-  }, [
-    stockTotal,
-    selectedSucursalId,
-    resumen,
-    regionAsignada,
-    descuentoHabitual,
-    getSubtipoNombre,
-    getTipoIdDeSubtipo,
-  ]);
-
-  // Validación de margen de utilidad para toda la lista de precios
-  const validacionMargen = useMemo(
-    () => validarMargenListaPrecios(itemsCalculados),
-    [itemsCalculados]
-  );
-
-  // Filtrado por buscador
-  const itemsFiltrados = useMemo(() => {
-    if (!search.trim()) return itemsCalculados;
+  const sucursalActual = datos?.sucursal ?? sucursales.find(s => s.id === selectedSucursalId);
+  const regionAsignada = datos?.cliente.regionNombre ? { regionNombre: datos.cliente.regionNombre, descuento: Number(datos.cliente.regionDescuento ?? 0) } : null;
+  const habitual = datos?.cliente.descuento_porcentaje == null ? null : Number(datos.cliente.descuento_porcentaje);
+  const itemsCalculados = useMemo(() => datos?.sucursal.id === selectedSucursalId && datos.cliente.id === clienteId ? datos.items : [], [datos, selectedSucursalId, clienteId]);
+  const validacionMargen = useMemo(() => validarMargenListaPrecios(itemsCalculados), [itemsCalculados]);
+  const filtrar = (items: ListaPreciosCliente['items']) => {
     const q = search.trim().toLowerCase();
-    return itemsCalculados.filter(
-      (item) =>
-        item.codigo.toLowerCase().includes(q) ||
-        item.nombre.toLowerCase().includes(q) ||
-        (item.marca && item.marca.toLowerCase().includes(q)) ||
-        (item.modelo && item.modelo.toLowerCase().includes(q)) ||
-        item.subtipoNombre.toLowerCase().includes(q)
-    );
-  }, [itemsCalculados, search]);
-
-  const datosClienteExport: DatosClienteExport = {
-    nombre: clienteNombre,
-    razonSocial: clienteRazonSocial,
-    nroDocumento: clienteNroDocumento,
-    descuentoHabitual,
-    regionNombre: regionAsignada?.regionNombre,
-    regionDescuento: regionAsignada?.descuento,
+    return items.filter(item => !q || [item.codigo, item.nombre, item.marca, item.modelo, item.subtipoNombre].some(valor => valor?.toLowerCase().includes(q)));
   };
-
-  const handleExportPdf = () => {
-    if (itemsFiltrados.length === 0) {
-      showError('No hay productos en la lista para exportar.');
-      return;
-    }
-    if (!validacionMargen.puedeGenerar) {
-      showError(
-        validacionMargen.mensajeError ||
-          'No se puede generar la lista de precios: hay productos con margen insuficiente.'
-      );
-      return;
-    }
-    try {
-      exportarListaPreciosClientePdf({
-        items: itemsFiltrados,
-        cliente: datosClienteExport,
-        sucursalNombre: sucursalActual?.nombre ?? 'Sucursal',
-      });
-      showSuccess('PDF generado y descargado correctamente.');
-    } catch (err) {
-      showError('Error al generar PDF de lista de precios.');
-    }
+  const itemsFiltrados = filtrar(itemsCalculados);
+  const datosCliente = (data: ListaPreciosCliente): DatosClienteExport => ({
+    nombre: data.cliente.nombre ?? clienteNombre, razonSocial: clienteRazonSocial, nroDocumento: clienteNroDocumento,
+    descuentoHabitual: data.cliente.descuento_porcentaje == null ? null : Number(data.cliente.descuento_porcentaje),
+    regionNombre: data.cliente.regionNombre, regionDescuento: data.cliente.regionDescuento == null ? null : Number(data.cliente.regionDescuento),
+  });
+  const exportar = (formato: 'pdf' | 'excel', data: ListaPreciosCliente) => {
+    const validacion = validarMargenListaPrecios(data.items);
+    if (!validacion.puedeGenerar) throw new Error(validacion.mensajeError);
+    const items = filtrar(data.items);
+    if (!items.length) throw new Error('No hay productos en la selección para exportar.');
+    const params = { items, cliente: datosCliente(data), sucursalNombre: data.sucursal.nombre, contexto: data.contexto_monetario };
+    if (formato === 'pdf') exportarListaPreciosClientePdf(params); else exportarListaPreciosClienteExcel(params);
+    showSuccess('Lista generada y descargada correctamente.');
   };
-
-  const handleExportExcel = () => {
-    if (itemsFiltrados.length === 0) {
-      showError('No hay productos en la lista para exportar.');
-      return;
-    }
-    if (!validacionMargen.puedeGenerar) {
-      showError(
-        validacionMargen.mensajeError ||
-          'No se puede generar la lista de precios: hay productos con margen insuficiente.'
-      );
-      return;
-    }
-    try {
-      exportarListaPreciosClienteExcel({
-        items: itemsFiltrados,
-        cliente: datosClienteExport,
-        sucursalNombre: sucursalActual?.nombre ?? 'Sucursal',
-      });
-      showSuccess('Excel generado y descargado correctamente.');
-    } catch (err) {
-      showError('Error al generar Excel de lista de precios.');
-    }
+  const prepararExportacion = (formato: 'pdf' | 'excel') => {
+    if (!datos) { showError('Cargá la lista antes de exportar.'); return; }
+    void comprobar({ contexto: datos.contexto_monetario, conservar: () => exportar(formato, datos), actualizar: async () => exportar(formato, await recargar()) });
   };
+  const handleExportPdf = () => prepararExportacion('pdf');
+  const handleExportExcel = () => prepararExportacion('excel');
 
   if (!isOpen) return null;
 
@@ -362,6 +148,8 @@ export default function ClienteListaPreciosModal({
             </div>
           </div>
 
+          <ContextoPrecios contexto={datos?.contexto_monetario ?? cotizacion} error={error} legado={itemsCalculados.some(item => item.estadoPrecio === 'LEGADO_PENDIENTE_REVISION')} />
+          {dialogo}
           {/* Alerta de bloqueo si algún producto no alcanza el margen mínimo */}
           {!validacionMargen.puedeGenerar && (
             <div className={styles.alertBanner} role="alert">
@@ -391,9 +179,9 @@ export default function ClienteListaPreciosModal({
 
             <div className={styles.badgeItem}>
               <span>Desc. habitual:</span>
-              {descuentoHabitual != null && descuentoHabitual > 0 ? (
+              {habitual != null && habitual > 0 ? (
                 <span className={styles.badgeHighlight}>
-                  -{formatPorcentaje(descuentoHabitual)}
+                  -{formatPorcentaje(habitual)}
                 </span>
               ) : (
                 <span className={styles.badgeValue}>0%</span>
@@ -415,7 +203,8 @@ export default function ClienteListaPreciosModal({
                     <th style={{ width: '110px' }}>Código</th>
                     <th>Producto</th>
                     <th>Categoría</th>
-                    <th style={{ textAlign: 'right' }}>Precio Lista</th>
+                    <th>Referencia</th>
+                    <th style={{ textAlign: 'right' }}>Precio Lista ARS</th>
                     <th style={{ textAlign: 'center' }}>% Descuento</th>
                     <th style={{ textAlign: 'right' }}>Precio Cliente (ARS)</th>
                     <th style={{ textAlign: 'right' }}>Precio USD</th>
@@ -424,14 +213,14 @@ export default function ClienteListaPreciosModal({
                 <tbody>
                   {loadingData ? (
                     <tr>
-                      <td colSpan={7} className={styles.emptyState}>
+                      <td colSpan={8} className={styles.emptyState}>
                         Cargando y calculando lista de precios...
                       </td>
                     </tr>
                   ) : itemsFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className={styles.emptyState}>
-                        {search.trim()
+                      <td colSpan={8} className={styles.emptyState}>
+                        {!selectedSucursalId ? 'Asigná una sucursal al cliente para consultar su lista de precios.' : search.trim()
                           ? 'No se encontraron productos que coincidan con la búsqueda.'
                           : 'No hay productos disponibles en esta sucursal.'}
                       </td>
@@ -460,6 +249,7 @@ export default function ClienteListaPreciosModal({
                         <td style={{ color: 'var(--color-text-muted)' }}>
                           {item.subtipoNombre}
                         </td>
+                        <td>{item.monedaReferencia ?? 'ARS'}{item.estadoPrecio === 'LEGADO_PENDIENTE_REVISION' ? ' · revisar' : ''}</td>
                         <td className={`${styles.tdNum} ${item.descuentoTotalPorcentaje > 0 ? styles.priceBase : ''}`}>
                           {formatARS(item.precioListaArs)}
                         </td>
@@ -509,7 +299,7 @@ export default function ClienteListaPreciosModal({
               type="button"
               className={`${styles.btnExcel} ${!validacionMargen.puedeGenerar ? styles.btnBlockedMargin : ''}`}
               onClick={handleExportExcel}
-              disabled={loadingData || itemsFiltrados.length === 0 || !validacionMargen.puedeGenerar}
+              disabled={loadingData || ocupado || itemsFiltrados.length === 0 || !validacionMargen.puedeGenerar}
               title={!validacionMargen.puedeGenerar ? 'Generación bloqueada: hay productos que no alcanzan el margen mínimo' : undefined}
             >
               <FileSpreadsheet size={15} />
@@ -520,7 +310,7 @@ export default function ClienteListaPreciosModal({
               type="button"
               className={`${styles.btnPdf} ${!validacionMargen.puedeGenerar ? styles.btnBlockedMargin : ''}`}
               onClick={handleExportPdf}
-              disabled={loadingData || itemsFiltrados.length === 0 || !validacionMargen.puedeGenerar}
+              disabled={loadingData || ocupado || itemsFiltrados.length === 0 || !validacionMargen.puedeGenerar}
               title={!validacionMargen.puedeGenerar ? 'Generación bloqueada: hay productos que no alcanzan el margen mínimo' : undefined}
             >
               <FileDown size={15} />

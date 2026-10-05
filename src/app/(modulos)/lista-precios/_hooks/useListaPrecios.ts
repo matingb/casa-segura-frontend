@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StockItem } from '../../../../lib/types/Stock';
 import { stockClient } from '../../../../lib/api/stock.client';
 import { useSucursales, SucursalOption } from '../../../../context/SucursalContext';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useTableQuery } from '../../../../lib/hooks/useTableQuery';
 
+import { useCotizacion } from '../../../../context/CotizacionContext';
 export type { SucursalOption };
 
 const PAGE_SIZE = 10;
 const FILTER_FIELDS = ['marca', 'modelo', 'subtipo'] as const;
 
-function getValor(item: StockItem, key: string, getSubtipoNombre: (id: string) => string): string | number {
+function getValor(item: StockItem, key: string, getSubtipoNombre: (id: string) => string): string | number | null {
   if (key === 'subtipo') return getSubtipoNombre(item.subtipoId);
   if (key === 'precioArs') return item.precioVentaArs;
   if (key === 'precioUsd') return item.precioVentaUsd;
@@ -23,6 +24,9 @@ export function useListaPrecios() {
   const [stockTotal, setStockTotal] = useState<StockItem[]>([]);
   const { sucursales } = useSucursales();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { revision, datos, error: errorCotizacion } = useCotizacion();
+  const request = useRef(0);
 
   const query = useTableQuery();
   const { getSubtipoNombre } = useClasificacion();
@@ -35,14 +39,19 @@ export function useListaPrecios() {
     }
   }, [sucursales, sucursalId, query.setFilters]);
 
-  useEffect(() => {
+  const recargar = useCallback(async () => {
+    const id = ++request.current;
     setIsLoading(true);
-    stockClient
-      .obtenerTodos()
-      .then(setStockTotal)
-      .catch((err) => console.error('[useListaPrecios] Error al cargar datos:', err))
-      .finally(() => setIsLoading(false));
+    try {
+      const stock = await stockClient.obtenerTodos();
+      if (id === request.current) { setStockTotal(stock); setError(null); }
+      return stock;
+    } catch (err) {
+      if (id === request.current) setError(err instanceof Error ? err.message : 'No se pudo actualizar la lista.');
+      throw err;
+    } finally { if (id === request.current) setIsLoading(false); }
   }, []);
+  useEffect(() => { void recargar().catch(() => {}); return () => { request.current++; }; }, [recargar, revision]);
 
   const sucursalOptions: SucursalOption[] = useMemo(
     () => sucursales.map((s) => ({ value: s.id, label: s.nombre })),
@@ -70,35 +79,23 @@ export function useListaPrecios() {
     return options;
   }, [itemsSucursal, getSubtipoNombre, sucursalOptions]);
 
-  const itemsFiltrados = useMemo(() => {
-    const searchLower = query.search.trim().toLowerCase();
-
-    return itemsSucursal.filter((item) => {
-      if (searchLower) {
-        const matchesCodigo = item.codigo?.toLowerCase().includes(searchLower);
-        const matchesNombre = item.nombre?.toLowerCase().includes(searchLower);
-        if (!matchesCodigo && !matchesNombre) return false;
-      }
-      for (const campo of FILTER_FIELDS) {
-        const filtro = query.filters[campo];
-        if (filtro && String(getValor(item, campo, getSubtipoNombre)) !== filtro) return false;
-      }
-      return true;
-    });
-  }, [itemsSucursal, query.filters, query.search, getSubtipoNombre]);
-
-  const items = useMemo(() => {
-    if (query.sort.length === 0) return itemsFiltrados;
-    return [...itemsFiltrados].sort((a, b) => {
+  const aplicarSeleccion = useCallback((stock: StockItem[]) => {
+    const q = query.search.trim().toLowerCase();
+    const filtrados = stock.filter(item => item.sucursalId === sucursalId && item.activo &&
+      (!q || item.codigo.toLowerCase().includes(q) || item.nombre.toLowerCase().includes(q)) &&
+      FILTER_FIELDS.every(campo => !query.filters[campo] || String(getValor(item, campo, getSubtipoNombre)) === query.filters[campo]));
+    return filtrados.sort((a, b) => {
       for (const { sortBy, sortDir } of query.sort) {
-        const va = getValor(a, sortBy, getSubtipoNombre);
-        const vb = getValor(b, sortBy, getSubtipoNombre);
+        const va = getValor(a, sortBy, getSubtipoNombre), vb = getValor(b, sortBy, getSubtipoNombre);
+        if (va == null || vb == null) { if (va !== vb) return va == null ? 1 : -1; continue; }
         const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
-        if (cmp !== 0) return sortDir === 'asc' ? cmp : -cmp;
+        if (cmp) return sortDir === 'asc' ? cmp : -cmp;
       }
-      return 0;
+      return a.id.localeCompare(b.id);
     });
-  }, [itemsFiltrados, query.sort, getSubtipoNombre]);
+  }, [query.search, query.filters, query.sort, sucursalId, getSubtipoNombre]);
+  const items = useMemo(() => aplicarSeleccion(stockTotal), [aplicarSeleccion, stockTotal]);
+  const actualizarSeleccion = async () => aplicarSeleccion(await recargar());
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
 
@@ -109,6 +106,9 @@ export function useListaPrecios() {
 
   return {
     sucursalId,
+    actualizarSeleccion,
+    contexto: stockTotal[0]?.contextoMonetario ?? datos,
+    error: error ?? errorCotizacion,
     sucursalOptions,
     items,
     pageItems,

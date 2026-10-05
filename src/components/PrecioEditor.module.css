@@ -1,0 +1,9 @@
+.editor { border: 1px solid var(--border-color, #d8dee8); border-radius: 8px; padding: 16px; min-width: 0; }
+.editor legend { font-weight: 600; padding: 0 6px; }
+.campos { display: flex; flex-wrap: wrap; gap: 16px; }
+.campos label { display: flex; flex: 1; min-width: 180px; flex-direction: column; gap: 6px; }
+.campos input, .campos select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font: inherit; background: var(--bg-surface, white); color: inherit; }
+.editor p { margin: 10px 0 0; line-height: 1.5; }
+.secundario { font-size: 0.85rem; color: var(--text-secondary, #526071); }
+.aviso { background: #fff8e5; color: #735014; border-radius: 6px; padding: 10px; margin-top: 10px; }
+.editor button { border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-top: 8px; }

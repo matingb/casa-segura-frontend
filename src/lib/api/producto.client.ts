@@ -1,5 +1,6 @@
 import { Producto } from '../types/Producto';
 import { apiFetch } from '../apiFetch';
+import { errorCatalogo } from './cotizacion.client';
 
 export function mapApiProductoToProducto(apiProd: any): Producto {
   return {
@@ -23,7 +24,10 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
     imagenUrl: apiProd.imagen_url ?? '',
     descripcion: apiProd.descripcion ?? '',
     activo: apiProd.activo ?? false,
-    precioBase: apiProd.precio_base != null ? Number(apiProd.precio_base) : null,
+    precioBase: (apiProd.precio_resuelto ? apiProd.precio_resuelto.ars : apiProd.precio_base) != null ? Number(apiProd.precio_resuelto ? apiProd.precio_resuelto.ars : apiProd.precio_base) : null,
+    precioBaseUsd: apiProd.precio_resuelto?.usd != null ? Number(apiProd.precio_resuelto.usd) : null,
+    precio: apiProd.precio_resuelto,
+    contextoMonetario: apiProd.contexto_monetario,
     costoReposicionBase: apiProd.costo_reposicion_base != null ? Number(apiProd.costo_reposicion_base) : null,
     descuentoBase: apiProd.descuento_base != null ? Number(apiProd.descuento_base) : null,
     codigoQr: apiProd.codigo_qr ?? '',
@@ -121,8 +125,7 @@ export const productoClient = {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'Error al crear producto');
+      return errorCatalogo(res, 'Error al crear producto');
     }
     const json = await res.json();
     return mapApiProductoToProducto(json.data);
@@ -135,8 +138,7 @@ export const productoClient = {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'Error al actualizar producto');
+      return errorCatalogo(res, 'Error al actualizar producto');
     }
     const json = await res.json();
     return mapApiProductoToProducto(json.data);
@@ -145,8 +147,7 @@ export const productoClient = {
   eliminar: async (id: string): Promise<void> => {
     const res = await apiFetch(`/api/productos/${id}`, { method: 'DELETE' });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'No se pudo eliminar el producto');
+      return errorCatalogo(res, 'No se pudo eliminar el producto');
     }
   },
 };

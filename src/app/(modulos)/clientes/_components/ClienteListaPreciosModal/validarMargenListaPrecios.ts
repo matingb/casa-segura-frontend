@@ -1,16 +1,5 @@
-import { ItemListaCliente } from './exportPdfCliente';
-
-export interface ItemConMargenCalculado extends ItemListaCliente {
-  id: string;
-  productoId: string;
-  descuentosDetalle: string[];
-  precioSinTope: number;
-  precioMinimo: number | null;
-  costoReposicion: number | null;
-  margenMinimo: number | null;
-  noAlcanzaMargen: boolean;
-  motivoMargen?: string;
-}
+import { ItemConMargenCalculado } from '../../../../../lib/types/ListaPreciosCliente';
+export type { ItemConMargenCalculado } from '../../../../../lib/types/ListaPreciosCliente';
 
 export interface ResultadoValidacionMargen {
   puedeGenerar: boolean;

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import CotizacionConfiguracion from './CotizacionConfiguracion';
 import CategoriasConfiguracion from './CategoriasConfiguracion';
 import SucursalesConfiguracion from './SucursalesConfiguracion';
 import RegionesConfiguracion from './RegionesConfiguracion';
@@ -8,10 +9,11 @@ import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useSucursales } from '../../../../context/SucursalContext';
 import styles from '../configuracion.module.css';
 
-type TabType = 'categorias' | 'sucursales' | 'regiones';
+type TabType = 'categorias' | 'sucursales' | 'regiones' | 'cotizacion';
 
 export default function ConfiguracionView() {
   const [activeTab, setActiveTab] = useState<TabType>('categorias');
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'cotizacion') setActiveTab('cotizacion'); }, []);
   const { tipos } = useClasificacion();
   const { sucursales } = useSucursales();
 
@@ -26,6 +28,7 @@ export default function ConfiguracionView() {
 
       {/* Subpestañas */}
       <nav className={styles.tabsContainer} aria-label="Pestañas de configuración">
+        <button type="button" className={`${styles.tabButton} ${activeTab === 'cotizacion' ? styles.active : ''}`} onClick={() => setActiveTab('cotizacion')} role="tab" aria-selected={activeTab === 'cotizacion'} id="tab-cotizacion">Cotización ARS/USD</button>
         <button
           type="button"
           className={`${styles.tabButton} ${activeTab === 'categorias' ? styles.active : ''}`}
@@ -79,11 +82,12 @@ export default function ConfiguracionView() {
       <main
         className={styles.tabContent}
         role="tabpanel"
-        aria-labelledby={activeTab === 'categorias' ? 'tab-categorias' : activeTab === 'sucursales' ? 'tab-sucursales' : 'tab-regiones'}
+        aria-labelledby={`tab-${activeTab}`}
       >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
         {activeTab === 'sucursales' && <SucursalesConfiguracion />}
         {activeTab === 'regiones' && <RegionesConfiguracion />}
+        {activeTab === 'cotizacion' && <CotizacionConfiguracion />}
       </main>
     </div>
   );

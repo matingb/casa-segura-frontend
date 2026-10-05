@@ -19,10 +19,18 @@ import ResumenOperacion from './ResumenOperacion';
 import OperacionFormLayout from './OperacionFormLayout';
 import { aCuentasInput, calcularPago, validarPago, FilaPago, ModoPagoElegido } from './pago';
 import styles from './OperacionFormLayout.module.css';
+import { useCotizacion } from '../../../../../context/CotizacionContext';
+import { stockClient } from '../../../../../lib/api/stock.client';
+import Button from '../../../../../components/ui/Button/Button';
 
 export default function VentaForm() {
   const { sucursales } = useSucursales();
   const { submitting, error, crear } = useOperacionCrear();
+  const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
+  const [versionCatalogo, setVersionCatalogo] = useState<string | undefined>(undefined);
+  const [errorEvaluacion, setErrorEvaluacion] = useState<string | null>(null);
+  const [evaluando, setEvaluando] = useState(false);
+  const cotizacionCambio = versionCatalogo !== undefined && cotizacion != null && versionCatalogo !== cotizacion.cotizacion_version;
 
   const [sucursalElegida, setSucursalElegida] = useState('');
   const [clienteId, setClienteId] = useState('');
@@ -77,24 +85,28 @@ export default function VentaForm() {
     }
 
     let activo = true;
+    setEvaluando(true);
     const timer = setTimeout(() => {
       descuentoEngineClient
-        .evaluarOperacion(sucursalId, itemsValidos, clienteId || null)
+        .evaluarOperacion(sucursalId, itemsValidos, clienteId || null, versionCatalogo ?? items.find(it => it.cotizacionVersionCatalogo)?.cotizacionVersionCatalogo)
         .then((res) => {
           if (activo) {
             setEvaluacionDescuentos(res);
+            setErrorEvaluacion(null);
+            setVersionCatalogo(res.contexto_monetario?.cotizacion_version);
           }
         })
         .catch((err) => {
+          if (activo) { setErrorEvaluacion(err instanceof Error ? err.message : 'No se pudo evaluar los precios.'); void recargarCotizacion(); }
           console.warn('[VentaForm] Error evaluando descuentos centralizados:', err);
-        });
+        }).finally(() => { if (activo) setEvaluando(false); });
     }, 150);
 
     return () => {
       activo = false;
       clearTimeout(timer);
     };
-  }, [sucursalId, clienteId, items]);
+  }, [sucursalId, clienteId, items, versionCatalogo, recargarCotizacion]);
 
   // Actualiza margenInvalido según el análisis centralizado
   useEffect(() => {
@@ -189,6 +201,7 @@ export default function VentaForm() {
 
   const validar = (): Record<string, string> => {
     const nuevos: Record<string, string> = {};
+    if (cotizacionCambio || errorEvaluacion || evaluando) nuevos.cotizacion = errorEvaluacion ?? 'Revisá la cotización y esperá la evaluación de los precios antes de confirmar.';
 
     if (!sucursalId) nuevos.sucursalId = 'Elegí una sucursal.';
 
@@ -249,6 +262,7 @@ export default function VentaForm() {
     await crear({
       tipo: 'venta',
       sucursalId,
+      cotizacionVersionCatalogo: versionCatalogo,
       registrarFinanzasAhora,
       modoReparto: 'monto',
       items,
@@ -273,6 +287,21 @@ export default function VentaForm() {
       onSubmit={handleSubmit}
       cabecera={
         <>
+          {(cotizacionCambio || errorEvaluacion) && <div role="alert" style={{ gridColumn: '1 / -1' }}>
+            <p>{errorEvaluacion ?? 'Cambió la cotización del catálogo. Los importes cargados se conservaron.'}</p>
+            <Button type="button" variant="secondary" onClick={async () => {
+              try {
+                const actual = await recargarCotizacion();
+                if (!actual) return;
+                const stock = await stockClient.obtenerTodos({ operativo: true });
+                const precios = new Map(stock.filter(p => p.sucursalId === sucursalId).map(p => [p.id, p]));
+                setItems(prev => prev.map(item => ({ ...item, precioUnitArs: precios.get(item.productoSucursalId)?.precioVentaArs ?? item.precioUnitArs, cotizacionVersionCatalogo: actual.cotizacion_version })));
+                setVersionCatalogo(actual.cotizacion_version); setErrorEvaluacion(null);
+              } catch (err) { setErrorEvaluacion(err instanceof Error ? err.message : 'No se pudieron actualizar los precios.'); }
+            }}>Actualizar precios de catálogo y revisar</Button>
+            <p>Esta acción reemplaza los unitarios cargados con los precios actuales de sucursal. Revisalos antes de registrar.</p>
+          </div>}
+          {errores.cotizacion && <p role="alert">{errores.cotizacion}</p>}
           <div>
             <Select
               id="sucursal"

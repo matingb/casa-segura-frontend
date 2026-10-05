@@ -43,7 +43,7 @@ function mapClienteDescuentoProducto(p: any): ClienteDescuentoProducto {
     productoId: p.producto_id,
     productoCodigo: p.producto_codigo ?? '',
     productoNombre: p.producto_nombre ?? '',
-    productoPrecioBase: Number(p.producto_precio_base ?? 0),
+    productoPrecioBase: p.producto_precio_base == null ? null : Number(p.producto_precio_base),
     porcentaje: Number(p.porcentaje ?? 0),
     nota: p.nota ?? null,
     createdAt: p.created_at,

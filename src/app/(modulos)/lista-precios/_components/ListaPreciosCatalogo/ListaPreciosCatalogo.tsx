@@ -16,6 +16,8 @@ import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportExcelModal from '../ExportExcelModal/ExportExcelModal';
 import styles from './ListaPreciosCatalogo.module.css';
+import ContextoPrecios from '../../../../../components/ContextoPrecios';
+import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
 
 const FILTER_FIELDS: FilterField[] = [
   { key: 'sucursal', label: 'Sucursal', required: true },
@@ -27,6 +29,7 @@ const FILTER_FIELDS: FilterField[] = [
 export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
+    contexto, error, actualizarSeleccion,
     items,
     pageItems,
     page,
@@ -45,14 +48,15 @@ export default function ListaPreciosCatalogo() {
   const { getSubtipoNombre } = useClasificacion();
 
   const [showExportModal, setShowExportModal] = useState(false);
+  const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
 
   const handleConfirmExport = (selectedKeys: string[]) => {
-    exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre);
     setShowExportModal(false);
+    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos[0]?.contextoMonetario); } });
   };
 
   const handleExportPdf = () => {
-    exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre);
+    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos, sucursalNombre, getSubtipoNombre, nuevos[0]?.contextoMonetario); } });
   };
 
   const columns: TableColumn<StockItem>[] = [
@@ -101,6 +105,9 @@ export default function ListaPreciosCatalogo() {
       width: '1%',
     },
     {
+      key: 'referencia', header: 'Referencia', render: item => `${item.precio?.moneda_referencia ?? 'ARS'}${item.precio?.estado === 'LEGADO_PENDIENTE_REVISION' ? ' · revisar' : ''}`,
+    },
+    {
       key: 'iva',
       header: 'IVA',
       render: (item) => (
@@ -117,7 +124,7 @@ export default function ListaPreciosCatalogo() {
     },
   ];
 
-  const canExport = sucursalId && items.length > 0;
+  const canExport = sucursalId && items.length > 0 && !isLoading && !ocupado;
 
   return (
     <Card
@@ -159,6 +166,8 @@ export default function ListaPreciosCatalogo() {
         />
       </div>
 
+      <ContextoPrecios contexto={contexto} error={error} legado={items.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />
+      {dialogo}
       {isLoading ? (
         <p className={styles.loadingText}>Cargando lista de precios…</p>
       ) : !sucursalId ? (

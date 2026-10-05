@@ -1,9 +1,10 @@
 import { StockItem } from '../../../../lib/types/Stock';
+import { numeroExcel } from '../../../../lib/utils/exportacion-precios';
 
 export interface ExportColumn {
   key: string;
   label: string;
-  getValue: (item: StockItem, subtipoNombre: string) => string | number | boolean;
+  getValue: (item: StockItem, subtipoNombre: string) => string | number | boolean | null;
 }
 
 export const EXPORT_COLUMNS: ExportColumn[] = [
@@ -15,8 +16,8 @@ export const EXPORT_COLUMNS: ExportColumn[] = [
   { key: 'sucursalNombre', label: 'Sucursal', getValue: (item) => item.sucursalNombre },
   { key: 'activo', label: 'Estado', getValue: (item) => (item.activo ? 'Habilitado' : 'Deshabilitado') },
   { key: 'costoReposicion', label: 'Costo de reposición', getValue: (item) => item.costoReposicion },
-  { key: 'precioVentaArs', label: 'Precio venta ARS', getValue: (item) => item.precioVentaArs },
-  { key: 'precioVentaUsd', label: 'Precio venta USD', getValue: (item) => item.precioVentaUsd },
+  { key: 'precioVentaArs', label: 'Precio venta ARS', getValue: (item) => numeroExcel(item.precio?.ars ?? item.precioVentaArs) },
+  { key: 'precioVentaUsd', label: 'Precio venta USD', getValue: (item) => numeroExcel(item.precio?.usd ?? item.precioVentaUsd) },
   { key: 'iva', label: 'IVA (%)', getValue: (item) => item.iva },
   { key: 'margenMinimo', label: 'Margen mínimo (%)', getValue: (item) => item.margenMinimo },
   { key: 'stockMinimo', label: 'Stock mínimo', getValue: (item) => item.stockMinimo },

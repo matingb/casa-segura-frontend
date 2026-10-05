@@ -69,6 +69,7 @@ export interface CatalogoClient<T> {
 }
 
 export interface CatalogoPaginadoOptions {
+  refreshKey?: number | string;
   pageSize?: number;
   searchField?: string;
   initialFilters?: Record<string, string>;
@@ -86,10 +87,11 @@ export function useCatalogoPaginado<T>(
   filterFields: readonly string[] = [],
   options: CatalogoPaginadoOptions = {}
 ) {
-  const { pageSize = 10, searchField, initialFilters, transformParams } = options;
+  const { pageSize = 10, searchField, initialFilters, refreshKey } = options;
   const [items, setItems] = useState<T[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
   const [filtersLoading, setFiltersLoading] = useState(filterFields.length > 0);
 
@@ -157,9 +159,10 @@ export function useCatalogoPaginado<T>(
         if (active) {
           setItems(result.data);
           setTotalPages(result.totalPages);
+          setError(null);
         }
       })
-      .catch((err) => console.error('[useCatalogoPaginado] Error fetching:', err))
+      .catch((err) => { if (active) setError(err instanceof Error ? err.message : 'No se pudo recargar la lista.'); })
       .finally(() => {
         if (active) setLoading(false);
       });
@@ -167,11 +170,12 @@ export function useCatalogoPaginado<T>(
     return () => {
       active = false;
     };
-  }, [query.page, query.sort, query.filters, query.search, pageSize, searchField]);
+  }, [query.page, query.sort, query.filters, query.search, pageSize, searchField, refreshKey]);
 
   return {
     items,
     loading,
+    error,
     totalPages,
     ...query,
     filterOptions,

@@ -14,6 +14,9 @@ import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { stockClient } from '../../../../../lib/api/stock.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import styles from './StockCatalogo.module.css';
+import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
+import ContextoPrecios from '../../../../../components/ContextoPrecios';
+import { useCotizacion } from '../../../../../context/CotizacionContext';
 
 const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const;
 
@@ -33,10 +36,12 @@ function getDisponibleVariant(neto: number, minimo: number): 'warning' | 'danger
 
 export default function StockCatalogo() {
   const router = useRouter();
+  const { revision, datos, error: errorCotizacion } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
   const {
     items: stock,
     loading,
+    error,
     page,
     totalPages,
     setPage,
@@ -48,7 +53,7 @@ export default function StockCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS);
+  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
 
   const columns: TableColumn<StockItem>[] = [
     {
@@ -76,6 +81,9 @@ export default function StockCatalogo() {
     { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
     { key: 'subtipo', header: 'Subtipo', render: (item) => getSubtipoNombre(item.subtipoId), sortable: true },
     { key: 'sucursal', header: 'Sucursal', render: (item) => item.sucursalNombre, sortable: true },
+    { key: 'precioVentaArs', header: 'Venta ARS', render: item => formatARS(item.precio?.ars ?? item.precioVentaArs), sortable: true, align: 'right' },
+    { key: 'precioVentaUsd', header: 'Venta USD', render: item => formatUSD(item.precio?.usd ?? item.precioVentaUsd), sortable: true, align: 'right' },
+    { key: 'referencia', header: 'Referencia', render: item => <span>{item.precio?.moneda_referencia ?? 'ARS'}{item.precio?.estado === 'LEGADO_PENDIENTE_REVISION' ? ' · revisar' : ''}</span> },
     {
       key: 'cantidadDisponible',
       header: 'Disponible',
@@ -168,6 +176,7 @@ export default function StockCatalogo() {
         />
       </div>
 
+      <ContextoPrecios contexto={stock[0]?.contextoMonetario ?? datos} error={error ?? errorCotizacion} legado={stock.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />
       <Table
         columns={columns}
         data={stock}

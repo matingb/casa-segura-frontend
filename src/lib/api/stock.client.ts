@@ -1,5 +1,6 @@
 import { StockItem } from '../types/Stock';
 import { apiFetch } from '../apiFetch';
+import { errorCatalogo } from './cotizacion.client';
 
 export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
   return {
@@ -18,11 +19,15 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
     costoReposicionBase: apiData.producto_costo_reposicion_base != null ? Number(apiData.producto_costo_reposicion_base) : null,
     descuentoBase: apiData.producto_descuento_base != null ? Number(apiData.producto_descuento_base) : null,
 
-    activo: apiData.habilitado ?? apiData.producto_activo ?? false,
+    activo: (apiData.habilitado ?? true) && (apiData.producto_activo ?? true),
     costoReposicion: apiData.costo_reposicion ? Number(apiData.costo_reposicion) : 0,
-    precioVentaArs: apiData.precio_venta_ars ? Number(apiData.precio_venta_ars) : 0,
-    precioVentaUsd: apiData.precio_venta_usd ? Number(apiData.precio_venta_usd) : 0,
-    iva: apiData.iva ? Number(apiData.iva) : 21,
+    precioVentaArs: (apiData.precio_resuelto ? apiData.precio_resuelto.ars : apiData.precio_venta_ars) != null ? Number(apiData.precio_resuelto ? apiData.precio_resuelto.ars : apiData.precio_venta_ars) : null,
+    precioVentaUsd: (apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) != null ? Number(apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) : null,
+    precio: apiData.precio_resuelto,
+    precioGlobal: apiData.producto_precio_resuelto,
+    contextoMonetario: apiData.contexto_monetario,
+    precioHeredado: { ars: apiData.precio_venta_ars_heredado ?? null, usd: apiData.precio_venta_usd_heredado ?? null },
+    iva: apiData.iva != null ? Number(apiData.iva) : 21,
     margenMinimo: apiData.margen_minimo ? Number(apiData.margen_minimo) : 0,
     descuento: apiData.descuento != null ? Number(apiData.descuento) : null,
     stockMinimo: apiData.stock_minimo ?? 0,
@@ -128,8 +133,7 @@ export const stockClient = {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'Error al crear stock');
+      return errorCatalogo(res, 'Error al crear stock');
     }
     const json = await res.json();
     return mapApiProductoSucursalToStockItem(json.data);
@@ -142,8 +146,7 @@ export const stockClient = {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'Error al actualizar stock');
+      return errorCatalogo(res, 'Error al actualizar stock');
     }
     const json = await res.json();
     return mapApiProductoSucursalToStockItem(json.data);
@@ -152,8 +155,7 @@ export const stockClient = {
   eliminar: async (id: string): Promise<void> => {
     const res = await apiFetch(`/api/producto-sucursal/${id}`, { method: 'DELETE' });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'No se pudo eliminar la configuración de stock');
+      return errorCatalogo(res, 'No se pudo eliminar la configuración de stock');
     }
   },
 };

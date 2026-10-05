@@ -1,3 +1,4 @@
+import { ContextoMonetario, PrecioResuelto } from './Moneda';
 export type UnidadDimension = 'mm' | 'cm' | 'm';
 export type UnidadPeso = 'g' | 'kg';
 
@@ -23,6 +24,9 @@ export interface Producto {
   descripcion: string;
   activo: boolean;
   precioBase: number | null;
+  precioBaseUsd?: number | null;
+  precio?: PrecioResuelto;
+  contextoMonetario?: ContextoMonetario;
   costoReposicionBase?: number | null;
   /** Descuento del producto para todas las sucursales (nivel 3 de la lista de precios). */
   descuentoBase: number | null;

@@ -2,6 +2,7 @@ import { Operacion } from '../types/Operacion';
 import { OperacionDetalle } from '../types/OperacionDetalle';
 import { OperacionCrearInput, OperacionItemInput, OperacionCuentaInput } from '../types/OperacionCrear';
 import { apiFetch } from '../apiFetch';
+import { errorCatalogo } from './cotizacion.client';
 
 function mapItemInputToApi(item: OperacionItemInput) {
   return {
@@ -32,6 +33,7 @@ export function mapOperacionCrearInputToApiBody(input: OperacionCrearInput): Rec
   const base = {
     tipo: input.tipo,
     sucursal_id: input.sucursalId,
+    ...(input.tipo === 'venta' ? { cotizacion_version_catalogo: input.cotizacionVersionCatalogo } : {}),
     fecha: input.fecha,
     registrar_finanzas_ahora:
       input.tipo === 'compra' || input.tipo === 'venta'
@@ -298,8 +300,7 @@ export const operacionesClient = {
       body: JSON.stringify(mapOperacionCrearInputToApiBody(input)),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message ?? 'Error al crear la operación');
+      return errorCatalogo(res, 'Error al crear la operación');
     }
     const json = await res.json();
     return mapApiOperacionDetalleToOperacionDetalle(json.data);

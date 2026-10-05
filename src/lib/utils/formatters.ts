@@ -7,6 +7,7 @@ export function formatFecha(isoString: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'America/Buenos_Aires',
   }).format(date);
 }
 
@@ -18,16 +19,18 @@ export function formatMonto(monto: number): string {
   }).format(monto);
 }
 
-export function formatARS(value: number): string {
-  return formatMonto(value);
+export function formatARS(value: number | string | null | undefined): string {
+  return value == null ? '—' : formatMonto(Number(value));
 }
 
-export function formatUSD(value: number): string {
+export function formatUSD(value: number | string | null | undefined): string {
+  if (value == null) return '—';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
-  }).format(value);
+    maximumFractionDigits: 4,
+  }).format(Number(value));
 }
 
 export function formatPorcentaje(valor: number): string {

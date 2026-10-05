@@ -1,3 +1,4 @@
+import { ContextoMonetario, PrecioResuelto } from './Moneda';
 export interface StockItem {
   id: string; // ID de producto_sucursal
   productoId: string;
@@ -19,8 +20,12 @@ export interface StockItem {
   // Datos específicos del stock (mezclados)
   activo: boolean; // Mezcla entre habilitado y producto_activo
   costoReposicion: number;
-  precioVentaArs: number;
-  precioVentaUsd: number;
+  precioVentaArs: number | null;
+  precioVentaUsd: number | null;
+  precio?: PrecioResuelto;
+  precioGlobal?: PrecioResuelto;
+  contextoMonetario?: ContextoMonetario;
+  precioHeredado?: { ars: string | null; usd: string | null };
   iva: number;
   margenMinimo: number;
   /** Descuento del producto en esta sucursal (nivel 3 de la lista de precios). */

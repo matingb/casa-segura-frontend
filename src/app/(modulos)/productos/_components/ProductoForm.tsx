@@ -19,6 +19,11 @@ import { useProductoDetalle } from '../_hooks/useProductoDetalle';
 import { useToast } from '../../../../context/ToastContext';
 import { formatARS, formatMedida, parseNum } from '../../../../lib/utils/formatters';
 import styles from './ProductoForm.module.css';
+import PrecioEditor from '../../../../components/PrecioEditor';
+import { usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
+import { precioParaGuardar } from '../../../../lib/utils/precio';
+import { useCotizacion } from '../../../../context/CotizacionContext';
+import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
 
 interface ProductoFormProps {
   title: string;
@@ -49,6 +54,8 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const { showError, showSuccess } = useToast();
   const { producto: productoCargado, isLoading, error, reload } = useProductoDetalle(productoId ?? '');
   const producto = productoId ? productoCargado ?? undefined : productoProp;
+  const { precio, setPrecio, resetPrecio } = usePrecioEdicion(producto);
+  const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
 
   const { tipos, loading: loadingClasificacion, getSubtiposPorTipo, getTipoIdDeSubtipo, getTipoNombre, getSubtipoNombre } = useClasificacion();
   const [tipoId, setTipoId] = useState('');
@@ -153,7 +160,6 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       descripcion:            formData.get('descripcion'),
       activo:                 formData.get('activo') === 'true',
       imagen_url:             imagenUrl ?? null,
-      precio_base:            parseNum(formData.get('precioBase'), 2),
       costo_reposicion_base:  parseNum(formData.get('costoReposicionBase'), 2),
       descuento_base:         parseNum(formData.get('descuentoBase'), 2),
       codigo_qr:              codigoQr || null,
@@ -163,8 +169,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       savingRef.current = true;
       setIsSaving(true);
       setSubmitError(null);
+      const precioInput = precioParaGuardar(precio, cotizacion);
+      const payload = { ...body, ...(precioInput !== undefined ? { precio: precioInput } : {}) };
       if (isEditing) {
-        await productoClient.actualizar(producto!.id, body);
+        await productoClient.actualizar(producto!.id, payload);
         if (readOnly) {
           await reload();
           setInlineEditing(false);
@@ -173,12 +181,13 @@ export default function ProductoForm({ title, producto: productoProp, productoId
         }
         showSuccess('Producto actualizado correctamente.');
       } else {
-        await productoClient.crear(body);
+        await productoClient.crear(payload);
         router.push('/productos');
         showSuccess('Producto creado correctamente.');
       }
     } catch (err) {
-      console.error('Error al guardar producto:', err);
+      if (err instanceof CatalogoApiError && err.code === 'COTIZACION_CAMBIO') await recargarCotizacion();
+      if (!(err instanceof CatalogoApiError)) console.error('Error al guardar producto:', err);
       const message = err instanceof Error ? err.message : 'No se pudo guardar el producto. Intenta nuevamente.';
       setSubmitError(message);
       showError(message);
@@ -190,6 +199,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
 
   const cancelInlineEdit = () => {
     if (!producto) return;
+    resetPrecio();
     setTipoId(getTipoIdDeSubtipo(producto.subtipoId) ?? '');
     setSubtipoId(producto.subtipoId ?? '');
     setImagenUrl(producto.imagenUrl);
@@ -246,7 +256,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const subtipoOptions = subtipos.map((s) => ({ value: s.id, label: s.nombre }));
 
   if (isReadOnlyView && producto) {
-    const money = (value?: number) => (value ? formatARS(value) : '—');
+    const money = (value?: number) => formatARS(value);
     const text = (value?: string) => value || '—';
 
     return (
@@ -268,9 +278,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 <DetailField label="Código">{text(producto.codigo)}</DetailField>
                 <DetailField label="Código de barra proveedor">{text(producto.codigoBarraProveedor)}</DetailField>
                 <DetailField label="Nombre">{text(producto.nombre)}</DetailField>
-                <DetailField label="Precio base">
-                  {producto.precioBase != null ? money(producto.precioBase) : '—'}
-                </DetailField>
+                <div style={{ gridColumn: '1 / -1' }}><PrecioEditor value={precio} onChange={setPrecio} original={producto.precio} readOnly label="Precio base global" /></div>
                 <DetailField label="Costo de reposicion base">
                   {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : '—'}
                 </DetailField>
@@ -404,16 +412,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 tabIndex={3}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
-              <Input
-                label="Precio base ($)"
-                name="precioBase"
-                type="number"
-                step="0.01"
-                defaultValue={producto?.precioBase || undefined}
-                placeholder="Ej: 15000"
-                tabIndex={4}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
+              <div style={{ gridColumn: '1 / -1' }}><PrecioEditor value={precio} onChange={setPrecio} original={producto?.precio} label="Precio base global" /></div>
               <Input
                 label="Costo de reposicion base ($)"
                 name="costoReposicionBase"
@@ -663,7 +662,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges)} tabIndex={21}>
+            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges && !precio.cambiado)} tabIndex={21}>
               {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>

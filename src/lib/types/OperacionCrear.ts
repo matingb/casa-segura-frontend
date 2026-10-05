@@ -1,5 +1,7 @@
 export interface OperacionItemInput {
   productoSucursalId: string;
+  /** Contexto de la sugerencia de catálogo mientras la venta está abierta. */
+  cotizacionVersionCatalogo?: string;
   cantidad: number;
   /** Unidades que modifican el stock físico al registrar la operación. */
   cantidadImpactadaStock?: number;
@@ -50,6 +52,7 @@ export type OperacionCrearInput =
   | {
       tipo: 'venta';
       sucursalId: string;
+      cotizacionVersionCatalogo?: string;
       fecha?: string;
       registrarFinanzasAhora?: boolean;
       modoReparto?: ModoReparto;
