@@ -45,3 +45,14 @@
 .danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
 }
+
+.dangerOutline {
+  background: var(--color-bg-elevated);
+  color: var(--color-danger);
+  border-color: rgba(185, 28, 28, 0.45);
+}
+
+.dangerOutline:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}

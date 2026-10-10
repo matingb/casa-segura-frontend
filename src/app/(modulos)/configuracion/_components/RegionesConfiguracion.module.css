@@ -37,36 +37,15 @@
   margin: 0;
 }
 
-.sucursalSelectorWrapper {
+.toolbarActions {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.75rem;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.5rem 0.85rem;
-}
-
-.sucursalSelectorLabel {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 
 .sucursalSelect {
-  background: transparent;
-  border: none;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text);
-  cursor: pointer;
-  outline: none;
-}
-
-.sucursalSelect option {
-  background: var(--color-bg-elevated);
-  color: var(--color-text);
+  min-width: 14rem;
 }
 
 .btnPrimary {
@@ -84,6 +63,7 @@
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   white-space: nowrap;
+  height: 2.25rem;
 }
 
 .btnPrimary:hover:not(:disabled) {
@@ -114,6 +94,13 @@
 }
 
 /* ── Formulario ─────────────── */
+.formTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
 .formCard {
   display: flex;
   flex-direction: column;
@@ -234,17 +221,26 @@
   color: var(--color-text);
 }
 
-.descuentoBadge {
+.descuentoBadge,
+.sinDescuento {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.65rem;
+  height: 1.5rem;
+  padding: 0 0.6rem;
   border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: rgba(34, 197, 94, 0.12);
-  color: #16a34a;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.descuentoBadge {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.sinDescuento {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
 }
 
 .badgeInactiva {
@@ -325,6 +321,16 @@
   .headerToolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+  .toolbarActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .sucursalSelect {
+    min-width: 0;
+  }
+  .btnPrimary {
+    justify-content: center;
   }
   .formGrid {
     grid-template-columns: 1fr;

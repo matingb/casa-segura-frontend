@@ -5,6 +5,7 @@ import { Region, regionClient } from '../../../../lib/api/region.client';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
+import Select from '../../../../components/ui/Select/Select';
 import { formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './RegionesConfiguracion.module.css';
 
@@ -39,18 +40,21 @@ export default function RegionesConfiguracion() {
     }
   }, [sucursales, selectedSucursalId]);
 
-  const cargar = useCallback(async (sucId: string) => {
-    if (!sucId) return;
-    setLoading(true);
-    try {
-      const data = await regionClient.obtenerPorSucursal(sucId);
-      setRegiones(data);
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Error al cargar regiones');
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
+  const cargar = useCallback(
+    async (sucId: string) => {
+      if (!sucId) return;
+      setLoading(true);
+      try {
+        const data = await regionClient.obtenerPorSucursal(sucId);
+        setRegiones(data);
+      } catch (err) {
+        showError(err instanceof Error ? err.message : 'Error al cargar regiones');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [showError],
+  );
 
   useEffect(() => {
     if (selectedSucursalId) {
@@ -88,9 +92,9 @@ export default function RegionesConfiguracion() {
       showError('El nombre de la región es obligatorio.');
       return;
     }
-    const descuento = form.descuento.trim() === '' ? 0 : Number(form.descuento);
-    if (!Number.isFinite(descuento) || descuento < 0 || descuento > 100) {
-      showError('El descuento debe ser un porcentaje entre 0 y 100.');
+    const descuento = Number(form.descuento);
+    if (form.descuento.trim() === '' || !Number.isFinite(descuento) || descuento <= 0 || descuento > 100) {
+      showError('El descuento debe ser mayor a 0% y como máximo 100%.');
       return;
     }
 
@@ -131,6 +135,53 @@ export default function RegionesConfiguracion() {
     }
   };
 
+  const formulario = (
+    <div className={styles.formCard} role="region" aria-label="Formulario de región">
+      <h3 className={styles.formTitle}>{creando ? 'Nueva región' : 'Editar región'}</h3>
+
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>
+            Nombre de la región<span className={styles.required}>*</span>
+          </span>
+          <input
+            type="text"
+            value={form.nombre}
+            onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
+            placeholder="Ej: Interior Buenos Aires, Cuyo, Litoral"
+            autoFocus
+            maxLength={100}
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>
+            Descuento (%)<span className={styles.required}>*</span>
+          </span>
+          <input
+            type="number"
+            min="0.01"
+            max="100"
+            step="0.01"
+            value={form.descuento}
+            onChange={(e) => setForm((prev) => ({ ...prev, descuento: e.target.value }))}
+            placeholder="Ej: 5"
+          />
+          <span className={styles.hint}>% sobre el saldo tras descuentos de producto</span>
+        </label>
+      </div>
+
+      <div className={styles.formActions}>
+        <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
+          Cancelar
+        </button>
+        <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando}>
+          {guardando ? 'Guardando...' : 'Guardar región'}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.headerToolbar}>
@@ -141,23 +192,21 @@ export default function RegionesConfiguracion() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <div className={styles.sucursalSelectorWrapper}>
-            <label htmlFor="select-sucursal-regiones" className={styles.sucursalSelectorLabel}>
-              Punto de venta:
-            </label>
-            <select
+        <div className={styles.toolbarActions}>
+          <div className={styles.sucursalSelect}>
+            <Select
               id="select-sucursal-regiones"
-              className={styles.sucursalSelect}
+              label="Punto de venta"
               value={selectedSucursalId}
               onChange={(e) => setSelectedSucursalId(e.target.value)}
+              disabled={sucursales.length === 0}
             >
               {sucursales.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nombre} {s.esCentral ? '(Central)' : ''}
+                  {s.esCentral ? `${s.nombre} (Casa central)` : s.nombre}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <button
@@ -166,7 +215,16 @@ export default function RegionesConfiguracion() {
             onClick={abrirCreacion}
             disabled={creando || loading || !selectedSucursalId}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -175,63 +233,7 @@ export default function RegionesConfiguracion() {
         </div>
       </div>
 
-      {/* Formulario de creación / edición */}
-      {(creando || editandoId) && (
-        <div className={styles.formCard} role="region" aria-label="Formulario de región">
-          <h3 className={styles.toolbarTitle} style={{ fontSize: '1rem' }}>
-            {creando ? 'Nueva región' : 'Editar región'}
-          </h3>
-
-          <div className={styles.formGrid}>
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>
-                Nombre de la región<span className={styles.required}>*</span>
-              </span>
-              <input
-                type="text"
-                value={form.nombre}
-                onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
-                placeholder="Ej: Interior Buenos Aires, Cuyo, Litoral"
-                autoFocus
-                maxLength={100}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>Descuento (%)</span>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={form.descuento}
-                onChange={(e) => setForm((prev) => ({ ...prev, descuento: e.target.value }))}
-                placeholder="0.00"
-              />
-              <span className={styles.hint}>% sobre el saldo tras descuentos de producto</span>
-            </label>
-          </div>
-
-          <div className={styles.formActions}>
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              onClick={cerrarForm}
-              disabled={guardando}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={guardar}
-              disabled={guardando}
-            >
-              {guardando ? 'Guardando...' : 'Guardar región'}
-            </button>
-          </div>
-        </div>
-      )}
+      {creando && formulario}
 
       {/* Lista de regiones */}
       {loading ? (
@@ -245,42 +247,46 @@ export default function RegionesConfiguracion() {
         </div>
       ) : (
         <div className={styles.lista}>
-          {regiones.map((r) => (
-            <div key={r.id} className={`${styles.fila} ${!r.activo ? styles.filaInactiva : ''}`}>
-              <div className={styles.filaInfo}>
-                <div className={styles.filaNombre}>
-                  <span className={styles.nombre}>{r.nombre}</span>
-                  {!r.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
+          {regiones.map((r) =>
+            editandoId === r.id ? (
+              <div key={r.id}>{formulario}</div>
+            ) : (
+              <div key={r.id} className={`${styles.fila} ${!r.activo ? styles.filaInactiva : ''}`}>
+                <div className={styles.filaInfo}>
+                  <div className={styles.filaNombre}>
+                    <span className={styles.nombre}>{r.nombre}</span>
+                    {!r.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
+                  </div>
+                  {r.descuento > 0 ? (
+                    <span className={styles.descuentoBadge}>{formatPorcentaje(r.descuento)} de descuento</span>
+                  ) : (
+                    <span className={styles.sinDescuento}>Sin descuento</span>
+                  )}
                 </div>
-                <div>
-                  <span className={styles.descuentoBadge}>
-                    {r.descuento > 0 ? `-${formatPorcentaje(r.descuento)}` : '0%'}
-                  </span>
-                </div>
-              </div>
 
-              <div className={styles.filaAcciones}>
-                <button
-                  type="button"
-                  className={styles.btnLink}
-                  onClick={() => abrirEdicion(r)}
-                  disabled={guardando || eliminando}
-                >
-                  Editar
-                </button>
-                {r.activo && (
+                <div className={styles.filaAcciones}>
                   <button
                     type="button"
-                    className={styles.btnLinkDanger}
-                    onClick={() => setEliminarTarget(r)}
+                    className={styles.btnLink}
+                    onClick={() => abrirEdicion(r)}
                     disabled={guardando || eliminando}
                   >
-                    Dar de baja
+                    Editar
                   </button>
-                )}
+                  {r.activo && (
+                    <button
+                      type="button"
+                      className={styles.btnLinkDanger}
+                      onClick={() => setEliminarTarget(r)}
+                      disabled={guardando || eliminando}
+                    >
+                      Dar de baja
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       )}
 

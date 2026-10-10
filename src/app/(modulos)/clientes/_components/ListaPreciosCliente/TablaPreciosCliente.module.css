@@ -1,0 +1,272 @@
+.vista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+/* ── Barra superior ─────────────── */
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.sucursal {
+  min-width: 12rem;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  justify-content: flex-end;
+}
+
+.datoLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.datoValor {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 2.25rem;
+  height: 2.25rem;
+  white-space: nowrap;
+}
+
+.link {
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+.buscador {
+  position: relative;
+  flex: 1;
+  min-width: 14rem;
+  max-width: 26rem;
+  margin-left: auto;
+}
+
+.buscador input {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 0.75rem 0 2.2rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-input-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.buscador input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.buscadorIcono {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* ── Avisos ─────────────── */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.5rem 0.45rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: 0.82rem;
+}
+
+.banner > svg {
+  flex-shrink: 0;
+}
+
+.bannerTexto {
+  flex: 1;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.bannerError {
+  background: var(--color-danger-bg);
+  border-color: rgba(185, 28, 28, 0.25);
+  color: var(--color-danger);
+}
+
+.bannerInfo {
+  background: var(--color-primary-soft);
+  border-color: rgba(29, 78, 216, 0.2);
+  color: var(--color-primary);
+}
+
+.bannerBoton {
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  background: var(--color-bg-elevated);
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bannerBoton:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Tabla ─────────────── */
+.tablaScroll {
+  flex: 1;
+  min-height: 12rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-elevated);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.84rem;
+}
+
+.tabla th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg);
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.tabla td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:hover td {
+  background: var(--color-bg);
+}
+
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.codigo {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.producto {
+  max-width: 26rem;
+}
+
+.nombre {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.secundario {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.tachado {
+  color: var(--color-text-muted);
+}
+
+.descuento {
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.ceroDescuento {
+  color: var(--color-border-strong);
+}
+
+.precioDestacado {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.pendiente {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 0.35rem;
+  color: var(--color-warning);
+  cursor: help;
+}
+
+.ajustado {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-warning);
+  cursor: help;
+}
+
+.vacio {
+  padding: 2.5rem 1rem !important;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.pie {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .buscador {
+    max-width: none;
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}

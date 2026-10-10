@@ -1,400 +1,507 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  margin-top: 1rem;
 }
 
-.panelCard {
+.cargando {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ── Introducción ─────────────── */
+.intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.explicacion {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  max-width: 48rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.explicacion svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.sucursalPrecios {
+  min-width: 13rem;
+}
+
+/* ── Secciones apiladas ─────────────── */
+.seccion {
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--shadow-card);
-  overflow: hidden;
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.15rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.panelTitleGroup {
+.seccionHeader {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.iconBadge {
-  display: flex;
+.seccionHeader:hover {
+  background: var(--color-bg);
+}
+
+.seccionHeader:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.seccionAbierta .seccionHeader {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.seccionPaso {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 8px;
-  background: var(--color-primary-soft);
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.seccionIcono {
+  display: inline-flex;
   color: var(--color-primary);
   flex-shrink: 0;
 }
 
-.panelTitle {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0;
+.seccionTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.panelSubtitle {
+.seccionTitulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.seccionSubtitulo {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  margin: 0.15rem 0 0 0;
 }
 
-.chainFlowPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.85rem;
-  background: rgba(29, 78, 216, 0.06);
-  border: 1px solid rgba(29, 78, 216, 0.15);
+.seccionResumen {
+  flex-shrink: 0;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  background: var(--color-primary-soft);
   color: var(--color-primary);
-  flex-wrap: wrap;
-}
-
-.flowStep {
-  font-weight: 600;
-}
-
-.flowArrow {
-  color: var(--color-text-muted);
   font-size: 0.75rem;
-}
-
-.flowCompoundNotice {
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  margin-left: 0.2rem;
-  font-style: italic;
-}
-
-/* ── Barra de subpestañas por nivel ─────────────── */
-.subtabsBar {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
-  padding: 0.35rem 0.75rem 0;
-  overflow-x: auto;
-}
-
-.subtabBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.75rem 1.15rem;
-  border: none;
-  background: transparent;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: 8px 8px 0 0;
-  transition: all 0.15s ease;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.subtabBtn:hover {
-  color: var(--color-text);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.subtabBtnActive {
-  color: var(--color-primary);
-  background: var(--color-bg-elevated);
-  font-weight: 600;
-  border-bottom-color: var(--color-primary);
-}
-
-.stepNum {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  background: var(--color-neutral-bg);
+.seccionChevron {
+  flex-shrink: 0;
   color: var(--color-text-muted);
-  font-size: 0.725rem;
-  font-weight: 700;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
-.subtabBtnActive .stepNum {
-  background: var(--color-primary);
-  color: #ffffff;
+.seccionChevronAbierto {
+  transform: rotate(180deg);
 }
 
-.countBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: var(--color-neutral-bg);
-  color: var(--color-text-muted);
-  font-size: 0.725rem;
-  font-weight: 600;
+.seccionContenido {
+  padding: 1rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--color-border);
 }
 
-.countBadgeHighlight {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+/* Línea con flecha entre secciones: muestra que el orden importa. */
+.conector {
+  position: relative;
+  width: 2px;
+  height: 1.4rem;
+  margin-left: calc(1.1rem + 0.75rem - 1px);
+  background: var(--color-border-strong);
 }
 
-.subtabContent {
-  padding: 1.5rem;
+.conector::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--color-border-strong);
 }
 
-.levelPane {
-  animation: fadeIn 0.18s ease-in-out;
+/* ── Formularios de asignación ─────────────── */
+.nivel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.levelDescription {
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  line-height: 1.45;
 }
 
-.levelDescription strong {
-  color: var(--color-text);
+.formGrid {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2.2fr) minmax(7rem, 0.7fr) minmax(10rem, 1.3fr) auto;
+  align-items: start;
+  gap: 0.75rem;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.campoAncho {
+  min-width: 0;
 }
 
-/* ── Formularios y tablas internas ─────────────── */
-.addForm {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.addFormGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-end;
-}
-
-.fieldProducto {
-  flex: 3 1 280px;
-  min-width: 240px;
-}
-
-.fieldCategoria {
-  flex: 2 1 220px;
-  min-width: 180px;
-}
-
-.fieldDescuento {
-  flex: 0 0 130px;
-  width: 130px;
-}
-
-.fieldNota {
-  flex: 2 1 200px;
-  min-width: 180px;
-}
-
-.fieldAction {
-  flex: 0 0 auto;
-}
-
-.field {
+.campo {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.4rem;
+}
+
+.campoLabel {
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--color-text-muted);
 }
 
-.fieldLabel {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.input,
-.select {
+.input {
   height: 2.25rem;
   padding: 0 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--color-input-border);
   background: var(--color-bg-elevated);
   color: var(--color-text);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+  font-family: inherit;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
-.input:focus,
-.select:focus {
+.input:hover:not(:disabled) {
+  border-color: var(--color-input-border-hover);
+}
+
+.input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
-.btnAction {
+.btnAsignar {
+  align-self: start;
+  margin-top: calc(0.8rem * 1.2 + 0.4rem);
   height: 2.25rem;
-  padding: 0 1rem;
-  background: var(--color-primary);
-  color: var(--color-primary-contrast);
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0 1.25rem;
   border: none;
   border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
   white-space: nowrap;
-  transition: background-color 0.15s ease;
 }
 
-.btnAction:hover:not(:disabled) {
+.btnAsignar:hover:not(:disabled) {
   background: var(--color-primary-hover);
 }
 
-.btnAction:disabled {
-  opacity: 0.55;
+.btnAsignar:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btnDangerOutline {
-  height: 1.9rem;
-  padding: 0 0.65rem;
-  background: transparent;
-  color: var(--color-danger);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
+.modoGrupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.modoOpcion {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 
-.btnDangerOutline:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: var(--color-danger);
+.modoOpcion input {
+  accent-color: var(--color-primary);
 }
 
-/* ── Filas de items asignados ─────────────── */
-.itemsList {
+/* Contexto y vista previa del precio */
+.contexto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.84rem;
+  color: var(--color-text);
+}
+
+.contexto p {
+  margin: 0;
+}
+
+.vistaPrevia strong {
+  color: var(--color-primary);
+}
+
+.avisoReemplazo {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.avisoMargen {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* ── Regiones por punto de venta ─────────────── */
+.regiones {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
-.itemCard {
-  display: flex;
+.regionFila {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.6rem 1rem;
   padding: 0.75rem 1rem;
-  background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  gap: 1rem;
-  transition: border-color 0.15s ease;
 }
 
-.itemCard:hover {
-  border-color: var(--color-border-strong);
+.regionFila .contexto {
+  grid-column: 1 / -1;
 }
 
-.itemInfo {
+.regionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.82rem;
+}
+
+.regionActual {
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.regionForm {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  min-width: 0;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
-.itemName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text);
+.regionForm .btnAsignar {
+  margin-top: 0;
 }
 
-.itemSub {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
+.regionSelect {
+  min-width: 14rem;
 }
 
-.itemNote {
-  font-size: 0.78rem;
-  font-style: italic;
-  color: var(--color-text-muted);
-}
-
-.discountBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: rgba(34, 197, 94, 0.12);
-  color: #16a34a;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  white-space: nowrap;
-}
-
-.emptyBlock {
-  padding: 1.5rem 1rem;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  background: var(--color-bg-elevated);
-  border: 1px dashed var(--color-border);
+/* ── Tablas de descuentos asignados ─────────────── */
+.tablaScroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
 
-@media (max-width: 768px) {
-  .panelHeader {
-    flex-direction: column;
-    align-items: flex-start;
+.tabla th {
+  padding: 0.55rem 0.75rem;
+  background: var(--color-bg);
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.tabla td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+
+.tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.num > div {
+  display: inline-flex;
+}
+
+.nombre {
+  font-weight: 500;
+}
+
+.secundario {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+}
+
+.precio {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.nota {
+  max-width: 16rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.acciones {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btnQuitar {
+  height: 1.9rem;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  background: var(--color-bg-elevated);
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnQuitar:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+}
+
+.btnQuitar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.porcentajeBoton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-success);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.porcentajeBoton svg {
+  color: var(--color-text-muted);
+}
+
+.porcentajeBoton:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg);
+}
+
+/* ── Estado vacío ─────────────── */
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.75rem 1rem;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.vacio p {
+  margin: 0;
+  max-width: 32rem;
+}
+
+@media (max-width: 900px) {
+  .formGrid {
+    grid-template-columns: 1fr 1fr;
   }
-  .itemCard {
-    flex-direction: column;
-    align-items: flex-start;
+  .campoAncho {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .formGrid,
+  .regionFila {
+    grid-template-columns: 1fr;
+  }
+  .btnAsignar {
+    margin-top: 0;
+  }
+  .seccionResumen {
+    display: none;
   }
 }

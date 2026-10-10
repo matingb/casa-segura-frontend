@@ -8,9 +8,8 @@ export interface ResultadoValidacionMargen {
 }
 
 /**
- * Valida si la lista de precios cumple con la política de margen de ganancia.
- * Regla de negocio: No se puede generar una lista de precios si algún producto
- * con los descuentos aplicados no permite llegar al margen mínimo configurado.
+ * Detecta los productos cuyos descuentos no permiten llegar al margen mínimo.
+ * No bloquea la exportación: el backend ya cobra el precio mínimo en esos casos.
  */
 export function validarMargenListaPrecios(
   items: ItemConMargenCalculado[]

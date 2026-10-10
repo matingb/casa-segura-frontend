@@ -1,214 +1,130 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Percent, MapPin, Tag, Package } from 'lucide-react';
+import { Info, MapPin, Package, Tag } from 'lucide-react';
 import { DescuentosClienteResumen } from '../../../../../lib/types/Region';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
+import { formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
+import Select from '../../../../../components/ui/Select/Select';
+import { useListaPreciosCliente } from '../ListaPreciosCliente/useListaPreciosCliente';
+import SeccionDescuento from './SeccionDescuento';
 import RegionSelector from './RegionSelector';
 import DescuentoCategoriaEditor from './DescuentoCategoriaEditor';
 import DescuentoProductoEditor from './DescuentoProductoEditor';
 import styles from './ClienteDescuentos.module.css';
 
-interface SucursalBasic {
-  id: string;
-  nombre: string;
-}
+type Seccion = 'region' | 'categoria' | 'producto';
 
 interface Props {
   clienteId: string;
-  sucursales: SucursalBasic[];
+  sucursales: Array<{ id: string; nombre: string }>;
   descuentoHabitual?: number | null;
-  onGenerarListaPrecios?: () => void;
   onTotalDescuentosChange?: (count: number) => void;
+  /** La pestaña está a la vista: recién ahí se calcula la lista de precios. */
+  visible?: boolean;
+  /** Cada cambio de valor abre la sección de región y la trae a la vista. */
+  focoRegion?: number;
 }
 
-type SubTabLevel = 'region' | 'categoria' | 'producto';
+const plural = (n: number, uno: string, varios: string) => (n === 1 ? `1 ${uno}` : `${n} ${varios}`);
 
-export default function ClienteDescuentos({
-  clienteId,
-  sucursales,
-  descuentoHabitual,
-  onTotalDescuentosChange,
-}: Props) {
+export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabitual, onTotalDescuentosChange, visible = true, focoRegion = 0 }: Props) {
   const { showError } = useToast();
   const [resumen, setResumen] = useState<DescuentosClienteResumen | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeSubTab, setActiveSubTab] = useState<SubTabLevel>('region');
+  const [abiertas, setAbiertas] = useState<Set<Seccion>>(new Set());
+  const [focoAnterior, setFocoAnterior] = useState(focoRegion);
+  const lista = useListaPreciosCliente({ clienteId, sucursales, activo: visible });
+
+  // Pedido de "Asignar región" desde otra parte de la pantalla.
+  if (focoRegion !== focoAnterior) {
+    setFocoAnterior(focoRegion);
+    setAbiertas(prev => new Set(prev).add('region'));
+  }
+  useEffect(() => {
+    if (focoRegion) document.getElementById('descuento-region')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [focoRegion]);
 
   const cargar = useCallback(async () => {
-    if (!clienteId) return;
-    setLoading(true);
     try {
       const data = await clienteDescuentoClient.obtenerDescuentos(clienteId);
       setResumen(data);
-      const total =
-        (data.regiones?.length ?? 0) +
-        (data.categorias?.length ?? 0) +
-        (data.productos?.length ?? 0);
-      onTotalDescuentosChange?.(total);
+      onTotalDescuentosChange?.(data.regiones.length + data.categorias.length + data.productos.length);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Error al cargar descuentos del cliente.');
-    } finally {
-      setLoading(false);
+      showError(err instanceof Error ? err.message : 'No se pudieron cargar los descuentos del cliente.');
     }
   }, [clienteId, showError, onTotalDescuentosChange]);
 
   useEffect(() => {
-    cargar();
-  }, [cargar]);
+    if (!clienteId) return;
+    let vigente = true;
+    void Promise.resolve().then(() => (vigente ? cargar() : undefined));
+    return () => { vigente = false; };
+  }, [clienteId, cargar]);
 
-  if (loading && !resumen) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.panelCard} style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>
-            Cargando descuentos del cliente...
-          </p>
-        </div>
-      </div>
-    );
+  const alCambiar = useCallback(async () => {
+    await Promise.all([cargar(), lista.recargar().catch(() => undefined)]);
+  }, [cargar, lista]);
+
+  const alternar = (seccion: Seccion) => setAbiertas(prev => {
+    const next = new Set(prev);
+    if (next.has(seccion)) next.delete(seccion); else next.add(seccion);
+    return next;
+  });
+
+  if (!resumen) {
+    return <div className={styles.cargando}>Cargando descuentos del cliente…</div>;
   }
 
-  const resumenActual: DescuentosClienteResumen = resumen ?? {
-    clienteId,
-    descuentoGeneral: descuentoHabitual ?? null,
-    regiones: [],
-    categorias: [],
-    productos: [],
-  };
-
-  const totalRegiones = resumenActual.regiones.length;
-  const totalCategorias = resumenActual.categorias.length;
-  const totalProductos = resumenActual.productos.length;
+  const { regiones, categorias, productos } = resumen;
+  const habitual = Number(descuentoHabitual ?? resumen.descuentoGeneral ?? 0);
+  const resumenRegion = regiones.length === 0 ? null
+    : sucursales.length === 1 ? `${regiones[0].regionNombre} · ${formatPorcentaje(Number(regiones[0].descuento))}`
+    : `${regiones.length} de ${sucursales.length} puntos de venta con región`;
 
   return (
     <div className={styles.container}>
-      <div className={styles.panelCard}>
-        {/* Cabecera general */}
-        <div className={styles.panelHeader}>
-          <div className={styles.panelTitleGroup}>
-            <div className={styles.iconBadge}>
-              <Percent size={18} />
-            </div>
-            <div>
-              <h3 className={styles.panelTitle}>Descuentos en Cadena</h3>
-              <p className={styles.panelSubtitle}>
-                Estructura de descuentos de 3 niveles para este cliente
-              </p>
-            </div>
+      <div className={styles.intro}>
+        <p className={styles.explicacion}>
+          <Info size={14} aria-hidden />
+          Los descuentos se aplican uno después del otro: 10% + 5% no es 15%, es 14,5%.
+          {habitual > 0 && ` Además, el descuento habitual de ${formatPorcentaje(habitual)} se suma al final (se cambia en Información del cliente).`}
+        </p>
+        {sucursales.length > 1 && (
+          <div className={styles.sucursalPrecios}>
+            <Select id="descuentos-sucursal" label="Ver precios de" value={lista.sucursalId} onChange={(e) => lista.setSucursalId(e.target.value)}>
+              {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+            </Select>
           </div>
-
-          <div className={styles.chainFlowPill}>
-            <span className={styles.flowStep}>1. Región</span>
-            <span className={styles.flowArrow}>➔</span>
-            <span className={styles.flowStep}>2. Categoría</span>
-            <span className={styles.flowArrow}>➔</span>
-            <span className={styles.flowStep}>3. Producto</span>
-            <span className={styles.flowCompoundNotice}>(Cálculo compuesto en cascada)</span>
-          </div>
-        </div>
-
-        {/* Subpestañas por Nivel */}
-        <nav className={styles.subtabsBar} role="tablist" aria-label="Niveles de descuento">
-          <button
-            type="button"
-            className={`${styles.subtabBtn} ${activeSubTab === 'region' ? styles.subtabBtnActive : ''}`}
-            onClick={() => setActiveSubTab('region')}
-            role="tab"
-            aria-selected={activeSubTab === 'region'}
-            id="subtab-region"
-          >
-            <span className={styles.stepNum}>1</span>
-            <MapPin size={14} />
-            <span>Regiones por Sucursal</span>
-            <span className={`${styles.countBadge} ${totalRegiones > 0 ? styles.countBadgeHighlight : ''}`}>
-              {totalRegiones}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.subtabBtn} ${activeSubTab === 'categoria' ? styles.subtabBtnActive : ''}`}
-            onClick={() => setActiveSubTab('categoria')}
-            role="tab"
-            aria-selected={activeSubTab === 'categoria'}
-            id="subtab-categoria"
-          >
-            <span className={styles.stepNum}>2</span>
-            <Tag size={14} />
-            <span>Categorías / Subcategorías</span>
-            <span className={`${styles.countBadge} ${totalCategorias > 0 ? styles.countBadgeHighlight : ''}`}>
-              {totalCategorias}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.subtabBtn} ${activeSubTab === 'producto' ? styles.subtabBtnActive : ''}`}
-            onClick={() => setActiveSubTab('producto')}
-            role="tab"
-            aria-selected={activeSubTab === 'producto'}
-            id="subtab-producto"
-          >
-            <span className={styles.stepNum}>3</span>
-            <Package size={14} />
-            <span>Productos Específicos</span>
-            <span className={`${styles.countBadge} ${totalProductos > 0 ? styles.countBadgeHighlight : ''}`}>
-              {totalProductos}
-            </span>
-          </button>
-        </nav>
-
-        {/* Contenido de la subpestaña activa */}
-        <div className={styles.subtabContent}>
-          {activeSubTab === 'region' && (
-            <div className={styles.levelPane} role="tabpanel" aria-labelledby="subtab-region">
-              <div className={styles.levelDescription}>
-                <p>
-                  <strong>Primer escalón:</strong> Asigná una región comercial a este cliente por cada punto de venta en el que opera. Este porcentaje base se aplica primero en la cadena comercial.
-                </p>
-              </div>
-              <RegionSelector
-                clienteId={clienteId}
-                sucursales={sucursales}
-                regionesAsignadas={resumenActual.regiones}
-                onChanged={cargar}
-              />
-            </div>
-          )}
-
-          {activeSubTab === 'categoria' && (
-            <div className={styles.levelPane} role="tabpanel" aria-labelledby="subtab-categoria">
-              <div className={styles.levelDescription}>
-                <p>
-                  <strong>Segundo escalón:</strong> Configurá porcentajes especiales de descuento para categorías completas o subcategorías específicas para este cliente. Se aplica sobre el saldo que deja el descuento de región.
-                </p>
-              </div>
-              <DescuentoCategoriaEditor
-                clienteId={clienteId}
-                categorias={resumenActual.categorias}
-                onChanged={cargar}
-              />
-            </div>
-          )}
-
-          {activeSubTab === 'producto' && (
-            <div className={styles.levelPane} role="tabpanel" aria-labelledby="subtab-producto">
-              <div className={styles.levelDescription}>
-                <p>
-                  <strong>Tercer escalón:</strong> Asigná descuentos puntuales para productos específicos (por ejemplo licitaciones o acuerdos de gran volumen). Es el descuento más granular del cliente y se aplica al final de la cadena.
-                </p>
-              </div>
-              <DescuentoProductoEditor
-                clienteId={clienteId}
-                productos={resumenActual.productos}
-                onChanged={cargar}
-              />
-            </div>
-          )}
-        </div>
+        )}
       </div>
+
+      <SeccionDescuento
+        id="descuento-region" paso={1} icono={<MapPin size={16} />} titulo="Descuento por región"
+        subtitulo="Un descuento para todos los productos de cada punto de venta, según dónde está el cliente."
+        resumen={resumenRegion} abierta={abiertas.has('region')} onToggle={() => alternar('region')} conConector
+      >
+        <RegionSelector clienteId={clienteId} sucursales={sucursales} regionesAsignadas={regiones} lista={lista} onChanged={alCambiar} />
+      </SeccionDescuento>
+
+      <SeccionDescuento
+        id="descuento-categoria" paso={2} icono={<Tag size={16} />} titulo="Descuento por categoría"
+        subtitulo="Para rubros completos, por ejemplo todas las cámaras."
+        resumen={categorias.length ? plural(categorias.length, 'descuento asignado', 'descuentos asignados') : null}
+        abierta={abiertas.has('categoria')} onToggle={() => alternar('categoria')} conConector
+      >
+        <DescuentoCategoriaEditor clienteId={clienteId} categorias={categorias} lista={lista} onChanged={alCambiar} />
+      </SeccionDescuento>
+
+      <SeccionDescuento
+        id="descuento-producto" paso={3} icono={<Package size={16} />} titulo="Descuento por producto"
+        subtitulo="Para precios especiales en productos puntuales."
+        resumen={productos.length ? plural(productos.length, 'descuento asignado', 'descuentos asignados') : null}
+        abierta={abiertas.has('producto')} onToggle={() => alternar('producto')}
+      >
+        <DescuentoProductoEditor clienteId={clienteId} productos={productos} lista={lista} onChanged={alCambiar} />
+      </SeccionDescuento>
+
     </div>
   );
 }

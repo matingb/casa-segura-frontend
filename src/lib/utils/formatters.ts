@@ -25,7 +25,7 @@ export function formatARS(value: number | string | null | undefined): string {
 
 export function formatUSD(value: number | string | null | undefined): string {
   if (value == null) return '—';
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
@@ -33,8 +33,8 @@ export function formatUSD(value: number | string | null | undefined): string {
   }).format(Number(value));
 }
 
-export function formatPorcentaje(valor: number): string {
-  return `${valor.toFixed(2)}%`;
+export function formatPorcentaje(valor: number | string): string {
+  return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(Number(valor))}%`;
 }
 
 export function formatMedida(value: number | undefined | null, unidad: string): string {

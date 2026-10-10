@@ -45,3 +45,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+.grupo {
+  border: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.grupo:last-child {
+  margin-bottom: 0;
+}
+
+.grupoTitulo {
+  margin-bottom: 0.5rem;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.columnItem span {
+  display: flex;
+  flex-direction: column;
+}
+
+.columnItemBloqueada {
+  cursor: default;
+}
+
+.columnItemBloqueada input {
+  cursor: default;
+}
+
+.ayuda {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.resumen {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.footerBotones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

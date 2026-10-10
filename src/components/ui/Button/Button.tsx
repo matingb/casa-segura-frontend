@@ -3,7 +3,7 @@ import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'dangerOutline';
 }
 
 export default function Button({ children, variant = 'primary', className, ...rest }: ButtonProps) {

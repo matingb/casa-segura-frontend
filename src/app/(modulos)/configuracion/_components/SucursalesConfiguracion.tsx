@@ -8,7 +8,6 @@ import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/Con
 import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './SucursalesConfiguracion.module.css';
 import { useCotizacion } from '../../../../context/CotizacionContext';
-import ContextoPrecios from '../../../../components/ContextoPrecios';
 
 interface FormState {
   nombre: string;
@@ -227,7 +226,6 @@ export default function SucursalesConfiguracion() {
 
   return (
     <div className={styles.container}>
-      <ContextoPrecios contexto={cotizacion} />
       <div className={styles.headerToolbar}>
         <div className={styles.toolbarInfo}>
           <h2 className={styles.toolbarTitle}>Sucursales</h2>

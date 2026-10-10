@@ -11,8 +11,11 @@ export interface ItemListaCliente {
   importeFinalReferencia?: string | null;
   estadoPrecio?: PrecioResuelto['estado'];
 }
+export type NivelDescuentoLista = 'sucursal' | 'categoria' | 'producto' | 'region-cliente' | 'categoria-cliente' | 'producto-cliente' | 'cliente';
+export interface AporteDescuentoLista { nivel: NivelDescuentoLista; porcentaje: number }
 export interface ItemConMargenCalculado extends ItemListaCliente {
-  id: string; productoId: string; descuentosDetalle: string[];
+  id: string; productoId: string; descuentosDetalle: string[]; descuentosAportes?: AporteDescuentoLista[];
+  tipoId?: string | null; subtipoId?: string | null;
   precioSinTope: number | string | null; precioMinimo: number | string | null;
   costoReposicion: number | string | null; margenMinimo: number | string | null;
   noAlcanzaMargen: boolean; motivoMargen?: string;

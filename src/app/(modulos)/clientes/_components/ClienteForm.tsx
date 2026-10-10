@@ -96,6 +96,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const [showListaPreciosModal, setShowListaPreciosModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'descuentos'>('info');
   const [totalDescuentos, setTotalDescuentos] = useState<number>(0);
+  const [focoRegion, setFocoRegion] = useState(0);
   const isDetailView = Boolean(readOnly && cliente);
 
   const serializeForm = (): string => {
@@ -580,15 +581,15 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
               type="button"
               variant="secondary"
               onClick={() => setShowListaPreciosModal(true)}
-              title="Generar lista de precios personalizada en PDF o Excel"
+              title="Ver los precios finales del cliente y exportarlos en PDF o Excel"
             >
               <FileDown size={16} style={{ marginRight: '0.4rem' }} />
-              Lista de precios
+              Ver lista de precios
             </Button>
             {cliente.activo && (
               <Button
                 type="button"
-                variant="danger"
+                variant="dangerOutline"
                 onClick={() => setShowDeleteConfirmation(true)}
               >
                 Dar de baja
@@ -620,10 +621,10 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             id="tab-descuentos"
           >
             <Percent size={16} />
-            <span>Descuentos en Cadena</span>
-            <span className={`${styles.tabBadge} ${totalDescuentos > 0 ? styles.tabBadgeHighlight : ''}`}>
-              {totalDescuentos}
-            </span>
+            <span>Descuentos del cliente</span>
+            {totalDescuentos > 0 && (
+              <span className={`${styles.tabBadge} ${styles.tabBadgeHighlight}`}>{totalDescuentos}</span>
+            )}
           </button>
         </nav>
 
@@ -747,7 +748,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
           </div>
         )}
 
-        {/* Tab 2: Descuentos en Cadena */}
+        {/* Tab 2: Descuentos del cliente */}
         <div
           style={{ display: activeTab === 'descuentos' ? 'block' : 'none' }}
           role="tabpanel"
@@ -758,14 +759,16 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             sucursales={cliente.sucursales}
             descuentoHabitual={cliente.descuentoPorcentaje}
             onTotalDescuentosChange={setTotalDescuentos}
+            visible={activeTab === 'descuentos'}
+            focoRegion={focoRegion}
           />
         </div>
 
         {/* Modales */}
         {showDeleteConfirmation && (
           <ConfirmActionModal
-            title="Dar de baja el cliente"
-            description="El cliente queda inactivo y deja de aparecer entre los operativos. No se borra: podés reactivarlo editándolo."
+            title={`¿Dar de baja a ${cliente.nombre}?`}
+            description="El cliente queda inactivo: no va a aparecer para cargar ventas ni para armar su lista de precios. No se borra nada: sus datos, descuentos e historial se conservan. Podés reactivarlo cuando quieras con Editar → Estado: Activo."
             confirmLabel="Dar de baja"
             isConfirming={isDeleting}
             onConfirm={handleDelete}
@@ -782,6 +785,11 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             clienteNroDocumento={cliente.nroDocumento}
             descuentoHabitual={cliente.descuentoPorcentaje}
             sucursales={cliente.sucursales}
+            onAsignarRegion={() => {
+              setShowListaPreciosModal(false);
+              setActiveTab('descuentos');
+              setFocoRegion((n) => n + 1);
+            }}
           />
         )}
       </div>

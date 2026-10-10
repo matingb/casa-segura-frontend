@@ -14,7 +14,8 @@ import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
-import ExportExcelModal from '../ExportExcelModal/ExportExcelModal';
+import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
+import { EXPORT_COLUMNS, DEFAULT_EXPORT_COLUMN_KEYS } from '../../_lib/exportColumns';
 import styles from './ListaPreciosCatalogo.module.css';
 import ContextoPrecios from '../../../../../components/ContextoPrecios';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
@@ -200,7 +201,13 @@ export default function ListaPreciosCatalogo() {
       )}
 
       {showExportModal && (
-        <ExportExcelModal onClose={() => setShowExportModal(false)} onConfirm={handleConfirmExport} />
+        <ExportarColumnasModal
+          title="Exportar a Excel"
+          columnas={EXPORT_COLUMNS}
+          seleccionInicial={DEFAULT_EXPORT_COLUMN_KEYS}
+          onClose={() => setShowExportModal(false)}
+          onConfirm={handleConfirmExport}
+        />
       )}
     </Card>
   );
