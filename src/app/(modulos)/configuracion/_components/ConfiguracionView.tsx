@@ -28,7 +28,20 @@ export default function ConfiguracionView() {
 
       {/* Subpestañas */}
       <nav className={styles.tabsContainer} aria-label="Pestañas de configuración">
-        <button type="button" className={`${styles.tabButton} ${activeTab === 'cotizacion' ? styles.active : ''}`} onClick={() => setActiveTab('cotizacion')} role="tab" aria-selected={activeTab === 'cotizacion'} id="tab-cotizacion">Cotización ARS/USD</button>
+        <button
+          type="button"
+          className={`${styles.tabButton} ${activeTab === 'cotizacion' ? styles.active : ''}`}
+          onClick={() => setActiveTab('cotizacion')}
+          role="tab"
+          aria-selected={activeTab === 'cotizacion'}
+          id="tab-cotizacion"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          <span>Cotización</span>
+        </button>
         <button
           type="button"
           className={`${styles.tabButton} ${activeTab === 'categorias' ? styles.active : ''}`}

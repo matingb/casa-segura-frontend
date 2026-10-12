@@ -17,11 +17,11 @@ import { useSucursales } from '../../../../context/SucursalContext';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useStockDetalle } from '../_hooks/useStockDetalle';
 import { useToast } from '../../../../context/ToastContext';
-import { formatARS, formatUSD } from '../../../../lib/utils/formatters';
 import styles from './StockForm.module.css';
 import PrecioEditor from '../../../../components/PrecioEditor';
-import { usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
-import { precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
+import PrecioDetalle from '../../../../components/PrecioDetalle';
+import { useMontoEdicion, usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
+import { costoParaGuardar, PrecioEdicion, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
 import { PrecioResuelto } from '../../../../lib/types/Moneda';
@@ -33,6 +33,7 @@ interface ProductoOption {
   precioBase: number | null;
   precio?: PrecioResuelto;
   costoReposicionBase?: number | null;
+  costo?: PrecioResuelto;
 }
 
 interface StockFormProps {
@@ -51,13 +52,14 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const { precio, setPrecio, resetPrecio } = usePrecioEdicion(stockItem);
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
   const precioVista = resolverPrecioVista(precio.moneda, precio.importe || null, precio.cambiado ? precio.contexto : cotizacion ?? precio.contexto);
+  const { monto: costoEdicion, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(stockItem, stockItem?.costo, stockItem?.costoReposicion, stockItem?.contextoMonetario);
+  const costoVista = resolverPrecioVista(costoEdicion.moneda, costoEdicion.importe || null, cotizacion ?? costoEdicion.contexto);
 
   const { sucursales } = useSucursales();
   const { getSubtipoNombre } = useClasificacion();
   const [productos, setProductos] = useState<ProductoOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(!isEditing);
   const [productoSeleccionadoId, setProductoSeleccionadoId] = useState('');
-  const [costoReposicion, setCostoReposicion] = useState('');
   const [margenMinimo, setMargenMinimo] = useState('');
   const [descuento, setDescuento] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             precioBase: p.precioBase,
             precio: p.precio,
             costoReposicionBase: p.costoReposicionBase,
+            costo: p.costo,
           }))
         );
       } catch (err) {
@@ -95,31 +98,37 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   }, [isEditing]);
 
   const productoSeleccionado = productos.find((p) => p.id === productoSeleccionadoId);
+  const costoInicial = (producto?: ProductoOption): PrecioEdicion => {
+    const importe = producto?.costo ? producto.costo.importe_referencia ?? '' : producto?.costoReposicionBase?.toString() ?? '';
+    return { moneda: producto?.costo?.moneda_referencia ?? 'ARS', importe, contexto: cotizacion, cambiado: importe !== '' };
+  };
 
   useEffect(() => {
     if (isEditing) {
-      setCostoReposicion(stockItem?.costoReposicion != null ? String(stockItem.costoReposicion) : '');
       setMargenMinimo(stockItem?.margenMinimo != null ? String(stockItem.margenMinimo) : '');
       setDescuento(stockItem?.descuento != null ? String(stockItem.descuento) : '');
     } else {
-      setCostoReposicion(productoSeleccionado?.costoReposicionBase != null ? String(productoSeleccionado.costoReposicionBase) : '');
       setMargenMinimo('');
     }
     setSubmitError(null);
   }, [
     isEditing,
     stockItem?.id,
-    stockItem?.costoReposicion,
     stockItem?.precioVentaArs,
     stockItem?.margenMinimo,
     productoSeleccionado?.id,
-    productoSeleccionado?.costoReposicionBase,
     stockItem?.descuento,
   ]);
 
   const numeroDeCampo = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
-  const costo = numeroDeCampo(costoReposicion);
-  const precioVenta = precioVista.ars === null ? null : Number(precioVista.ars);
+  // Con costo y precio en USD el margen se compara en USD; si no, en ARS con la
+  // cotización vigente (igual que el backend).
+  const margenEnUsd = precio.moneda === 'USD' && costoEdicion.moneda === 'USD';
+  const simbolo = margenEnUsd ? 'US$' : '$';
+  const costoComparable = margenEnUsd ? costoVista.usd : costoVista.ars;
+  const precioComparable = margenEnUsd ? precioVista.usd : precioVista.ars;
+  const costo = costoComparable === null ? null : Number(costoComparable);
+  const precioVenta = precioComparable === null ? null : Number(precioComparable);
   const margen = numeroDeCampo(margenMinimo);
   const hayValorInvalido = [costo, precioVenta, margen].some((valor) => valor !== null && (!Number.isFinite(valor) || valor < 0));
   const precioMinimo = costo !== null && margen !== null && costo > 0 ? costo * (1 + margen / 100) : null;
@@ -147,7 +156,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     e.preventDefault();
     if (savingRef.current) return;
     if (margenInvalido) {
-      setSubmitError('El precio de venta ARS debe respetar el margen minimo configurado.');
+      setSubmitError('El precio de venta debe respetar el margen minimo configurado.');
       return;
     }
     setSubmitError(null);
@@ -160,7 +169,6 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
 
     const body = isEditing
       ? {
-          costo_reposicion: parseNum('costoReposicion'),
           iva: parseNum('iva'),
           margen_minimo: parseNum('margenMinimo'),
           descuento: parseNum('descuento'),
@@ -174,7 +182,6 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       : {
           producto_id: formData.get('productoId'),
           sucursal_id: formData.get('sucursalId'),
-          costo_reposicion: parseNum('costoReposicion'),
           iva: parseNum('iva'),
           margen_minimo: parseNum('margenMinimo'),
           descuento: parseNum('descuento'),
@@ -186,7 +193,12 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       savingRef.current = true;
       setIsSaving(true);
       const precioInput = precioParaGuardar(precio, cotizacion);
-      const payload = { ...body, ...(precioInput !== undefined ? { precio: precioInput } : {}) };
+      const costoInput = costoParaGuardar(costoEdicion, cotizacion);
+      const payload = {
+        ...body,
+        ...(precioInput !== undefined ? { precio: precioInput } : {}),
+        ...(costoInput !== undefined ? { costo: costoInput } : {}),
+      };
       if (isEditing) {
         await stockClient.actualizar(stockItem!.id, payload);
         if (readOnly) {
@@ -215,8 +227,8 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
 
   const cancelInlineEdit = () => {
     if (!stockItem) return;
-    setCostoReposicion(stockItem.costoReposicion != null ? String(stockItem.costoReposicion) : '');
     resetPrecio();
+    resetCosto();
     setMargenMinimo(stockItem.margenMinimo != null ? String(stockItem.margenMinimo) : '');
     setDescuento(stockItem.descuento != null ? String(stockItem.descuento) : '');
     setSubmitError(null);
@@ -262,7 +274,6 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     );
   }
 
-  const money = (value?: number | null) => formatARS(value);
 
   if (isReadOnlyView && stockItem) {
     return (
@@ -307,12 +318,23 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             <div className={`${styles.section} ${styles.sectionDetail}`}>
               <h2 className={styles.sectionTitle}>Precios y costos</h2>
               <div className={styles.detailGrid}>
-                <DetailField label="Precio base (referencia)">
-                  {money(stockItem.precioBase ?? undefined)}
-                </DetailField>
-                <DetailField label="Costo de reposición">
-                  {money(stockItem.costoReposicion)}
-                </DetailField>
+                <PrecioDetalle
+                  label="Precio de sucursal"
+                  precio={stockItem.precio ?? resolverPrecioVista('ARS', stockItem.precioVentaArs?.toString() ?? null, stockItem.contextoMonetario ?? null)}
+                  contexto={stockItem.contextoMonetario ?? cotizacion}
+                  heredado={stockItem.precioHeredado}
+                />
+                <PrecioDetalle
+                  label="Precio base global (referencia)"
+                  precio={stockItem.precioGlobal ?? resolverPrecioVista('ARS', stockItem.precioBase?.toString() ?? null, stockItem.contextoMonetario ?? null)}
+                  compacto
+                />
+                <PrecioDetalle
+                  label="Costo de reposición"
+                  precio={stockItem.costo ?? resolverPrecioVista('ARS', stockItem.costoReposicion?.toString() ?? null, stockItem.contextoMonetario ?? null)}
+                  contexto={stockItem.contextoMonetario ?? cotizacion}
+                  compacto
+                />
                 <DetailField label="Margen mínimo">
                   {stockItem.margenMinimo ? `${stockItem.margenMinimo}%` : '—'}
                 </DetailField>
@@ -323,7 +345,6 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                     ? `${stockItem.descuentoBase}% (del producto)`
                     : '—'}
                 </DetailField>
-                <div style={{ gridColumn: '1 / -1' }}><PrecioEditor value={precio} onChange={setPrecio} original={stockItem.precio} heredado={stockItem.precioHeredado} readOnly label="Precio de sucursal" /></div>
                 <DetailField label="IVA">
                   {stockItem.iva ? `${stockItem.iva}%` : '—'}
                 </DetailField>
@@ -408,7 +429,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                       label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre}`,
                     }))}
                     value={productoSeleccionadoId}
-                    onChange={id => { setProductoSeleccionadoId(id); setPrecio({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false }); }}
+                    onChange={id => {
+                      setProductoSeleccionadoId(id);
+                      setPrecio({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false });
+                      setCosto(costoInicial(productos.find((p) => p.id === id)));
+                    }}
                     placeholder="Buscar producto..."
                     disabled={loadingOptions}
                     loading={loadingOptions}
@@ -429,35 +454,23 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           {/* ── Precios y costos ───────────────────────────────────────── */}
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Precios y costos</h2>
-            <PrecioEditor value={precio} onChange={setPrecio} original={stockItem?.precio} heredado={stockItem?.precioHeredado} label="Precio de sucursal" />
-            {!isEditing && productoSeleccionado && <div style={{ margin: '12px 0' }}>
-              <p>Sugerencia global: referencia {productoSeleccionado.precio?.moneda_referencia ?? 'ARS'}, ARS {formatARS(productoSeleccionado.precio?.ars ?? productoSeleccionado.precioBase)} · USD {formatUSD(productoSeleccionado.precio?.usd)}.</p>
-              <Button type="button" variant="secondary" disabled={productoSeleccionado.precio?.importe_referencia == null && productoSeleccionado.precioBase == null} onClick={() => setPrecio({ moneda: productoSeleccionado.precio?.moneda_referencia ?? 'ARS', importe: productoSeleccionado.precio?.importe_referencia ?? String(productoSeleccionado.precioBase), contexto: cotizacion, cambiado: true })}>Copiar sugerencia global</Button>
-              <p>El precio de esta sucursal será independiente.</p>
-            </div>}
             <div className={styles.grid}>
-              {/*
-                <div className={styles.readonlyField}>
-                  <span className={styles.readonlyLabel}>Precio base (referencia)</span>
-                  <span className={styles.readonlyValue}>
-                    {precioBaseReferencia ? formatARS(precioBaseReferencia) : '—'}
-                  </span>
-                </div>
-              */}
-              <Input
-                label="Costo de reposición ($)"
-                name="costoReposicion"
-                type="number"
-                min="0"
-                step="0.01"
-                value={costoReposicion}
-                onChange={(event) => {
-                  setCostoReposicion(event.target.value);
-                  setSubmitError(null);
-                }}
-                aria-invalid={margenInvalido || undefined}
-                className={margenInvalido ? styles.invalidInput : undefined}
-                placeholder="Ej: 15000"
+              <PrecioEditor
+                value={precio}
+                onChange={setPrecio}
+                original={stockItem?.precio}
+                heredado={stockItem?.precioHeredado}
+                label="Precio de sucursal"
+                sugerencia={!isEditing && productoSeleccionado ? {
+                  etiqueta: 'Precio global del producto',
+                  precio: productoSeleccionado.precio ?? resolverPrecioVista('ARS', productoSeleccionado.precioBase?.toString() ?? null, cotizacion),
+                } : undefined}
+              />
+              <PrecioEditor
+                value={costoEdicion}
+                onChange={(nuevo) => { setCosto(nuevo); setSubmitError(null); }}
+                tipo="costo"
+                label="Costo de reposición"
               />
               <Input
                 label="IVA (%)"
@@ -494,6 +507,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 placeholder={heredaDescuento ? String(stockItem!.descuentoBase) : '—'}
               />
             </div>
+            {!isEditing && productoSeleccionado && (
+              <p className={styles.hintDescuento}>
+                El precio de la sucursal es independiente del global: copiarlo no los vincula.
+              </p>
+            )}
             {heredaDescuento && (
               <p className={styles.hintDescuento}>
                 Vacío: hereda el descuento general del producto ({stockItem!.descuentoBase}%).
@@ -508,7 +526,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             {margenInvalido && (
               <p className={styles.validationError} role="alert">
                 {precioMinimo !== null
-                  ? `El precio de venta ARS debe ser de al menos $${precioMinimo.toFixed(2)} para respetar el margen minimo de ${margen ?? 0}%.`
+                  ? `El precio de venta debe ser de al menos ${simbolo}${precioMinimo.toFixed(margenEnUsd ? 4 : 2)} para respetar el margen minimo de ${margen ?? 0}%.`
                   : 'Revisa los valores de costo, precio de venta y margen minimo.'}
               </p>
             )}

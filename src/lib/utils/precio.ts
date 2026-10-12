@@ -18,7 +18,26 @@ export function precioParaGuardar(edicion: PrecioEdicion, vigente: ContextoMonet
   if (edicion.importe.trim() === '') return null;
   if (!vigente?.cotizacion_usd_ars) throw new CatalogoApiError('Configurá el valor del dólar antes de guardar el precio.', 'COTIZACION_REQUERIDA');
   if (edicion.contexto?.cotizacion_version !== vigente.cotizacion_version) throw new CatalogoApiError('Cambió la cotización. Actualizá la previsualización y revisá el precio.', 'COTIZACION_CAMBIO', 409);
-  const escala = edicion.moneda === 'ARS' ? 2 : 4;
-  if (!/^\d+(?:\.\d+)?$/.test(edicion.importe) || new Dinero(edicion.importe).decimalPlaces() > escala) throw new Error(`El precio ${edicion.moneda} admite hasta ${escala} decimales y debe ser positivo o cero.`);
+  validarEscala(edicion, 'El precio');
   return { moneda_referencia: edicion.moneda, importe_referencia: edicion.importe, cotizacion_version: vigente.cotizacion_version };
+}
+
+/**
+ * Costo de reposición: un principal ARS no depende del dólar y se guarda sin
+ * cotización; un principal USD exige la cotización que se previsualizó.
+ */
+export function costoParaGuardar(edicion: PrecioEdicion, vigente: ContextoMonetario | null): PrecioInput | null | undefined {
+  if (!edicion.cambiado) return undefined;
+  if (edicion.importe.trim() === '') return null;
+  if (edicion.moneda === 'USD') {
+    if (!vigente?.cotizacion_usd_ars) throw new CatalogoApiError('Configurá el valor del dólar antes de guardar un costo en USD.', 'COTIZACION_REQUERIDA');
+    if (edicion.contexto?.cotizacion_version !== vigente.cotizacion_version) throw new CatalogoApiError('Cambió la cotización. Actualizá la previsualización y revisá el costo.', 'COTIZACION_CAMBIO', 409);
+  }
+  validarEscala(edicion, 'El costo de reposición');
+  return { moneda_referencia: edicion.moneda, importe_referencia: edicion.importe, cotizacion_version: vigente?.cotizacion_version ?? '0' };
+}
+
+function validarEscala(edicion: PrecioEdicion, campo: string) {
+  const escala = edicion.moneda === 'ARS' ? 2 : 4;
+  if (!/^\d+(?:\.\d+)?$/.test(edicion.importe) || new Dinero(edicion.importe).decimalPlaces() > escala) throw new Error(`${campo} ${edicion.moneda} admite hasta ${escala} decimales y debe ser positivo o cero.`);
 }

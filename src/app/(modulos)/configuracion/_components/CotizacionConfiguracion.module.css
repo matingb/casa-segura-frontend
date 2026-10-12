@@ -1,0 +1,172 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.intro {
+  margin: 0;
+  max-width: 46rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* Rótulo de sección: chico, en mayúsculas y apagado, para que el dato sea lo que resalte. */
+.etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ── Cotización vigente ─────────────── */
+.vigente {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.valor {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.valorUnidad {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.valorImporte {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.valorVacio {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-warning);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.metaItem {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.825rem;
+}
+
+.metaItem dt {
+  color: var(--color-text-muted);
+}
+
+.metaItem dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* ── Formulario ─────────────── */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 36rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.formularioEncabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.seccionTitulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.aviso {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-warning);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ayuda {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.sugerencias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sugerenciasLista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.alertaError,
+.alertaConflicto {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.alertaError {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.alertaConflicto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.alertaConflicto p {
+  margin: 0;
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-start;
+}

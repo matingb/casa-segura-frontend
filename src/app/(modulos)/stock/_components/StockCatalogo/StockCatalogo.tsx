@@ -15,7 +15,6 @@ import { stockClient } from '../../../../../lib/api/stock.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import styles from './StockCatalogo.module.css';
 import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
-import ContextoPrecios from '../../../../../components/ContextoPrecios';
 import { useCotizacion } from '../../../../../context/CotizacionContext';
 
 const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const;
@@ -36,12 +35,11 @@ function getDisponibleVariant(neto: number, minimo: number): 'warning' | 'danger
 
 export default function StockCatalogo() {
   const router = useRouter();
-  const { revision, datos, error: errorCotizacion } = useCotizacion();
+  const { revision } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
   const {
     items: stock,
     loading,
-    error,
     page,
     totalPages,
     setPage,
@@ -176,7 +174,6 @@ export default function StockCatalogo() {
         />
       </div>
 
-      <ContextoPrecios contexto={stock[0]?.contextoMonetario ?? datos} error={error ?? errorCotizacion} legado={stock.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />
       <Table
         columns={columns}
         data={stock}

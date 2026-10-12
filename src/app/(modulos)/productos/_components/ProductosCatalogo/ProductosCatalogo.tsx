@@ -14,7 +14,6 @@ import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { productoClient } from '../../../../../lib/api/producto.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
-import ContextoPrecios from '../../../../../components/ContextoPrecios';
 import { useCotizacion } from '../../../../../context/CotizacionContext';
 import styles from './ProductosCatalogo.module.css';
 
@@ -29,12 +28,11 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] 
 
 export default function ProductosCatalogo() {
   const router = useRouter();
-  const { revision, datos, error: errorCotizacion } = useCotizacion();
+  const { revision } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
   const {
     items: productos,
     loading,
-    error,
     page,
     totalPages,
     setPage,
@@ -145,7 +143,6 @@ export default function ProductosCatalogo() {
         />
       </div>
 
-      <ContextoPrecios contexto={productos[0]?.contextoMonetario ?? datos} error={error ?? errorCotizacion} />
       <Table
         columns={columns}
         data={productos}

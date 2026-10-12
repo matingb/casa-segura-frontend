@@ -33,6 +33,10 @@ export function formatUSD(value: number | string | null | undefined): string {
   }).format(Number(value));
 }
 
+export function formatPrecio(moneda: 'ARS' | 'USD', value: number | string | null | undefined): string {
+  return moneda === 'USD' ? formatUSD(value) : formatARS(value);
+}
+
 export function formatPorcentaje(valor: number | string): string {
   return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(Number(valor))}%`;
 }

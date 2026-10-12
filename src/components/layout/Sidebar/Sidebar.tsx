@@ -10,14 +10,15 @@ interface NavItem {
   href: string;
 }
 
+// Fuera del alcance de la próxima release (ocultos del menú, las rutas siguen existiendo):
+// { label: 'Operaciones', href: '/operaciones' }
+// { label: 'Cuentas financieras', href: '/cuentas-financieras' }
+// { label: 'Pedidos de reposición', href: '/pedidos-reposicion' }
 const navItems: NavItem[] = [
   { label: 'Productos', href: '/productos' },
   { label: 'Clientes', href: '/clientes' },
   { label: 'Stock por sucursal', href: '/stock' },
-  { label: 'Operaciones', href: '/operaciones' },
-  { label: 'Cuentas financieras', href: '/cuentas-financieras' },
   { label: 'Lista de precios', href: '/lista-precios' },
-  { label: 'Pedidos de reposición', href: '/pedidos-reposicion' },
 ];
 
 interface SidebarProps {

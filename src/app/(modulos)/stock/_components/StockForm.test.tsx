@@ -16,7 +16,7 @@ describe('Guardado del precio de sucursal', () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(stockClient.actualizar).mockResolvedValue(item); });
   it('manda un único principal preciso y omite cantidades sin editar', async () => {
     render(<StockForm title="Editar" stockItem={item} />);
-    fireEvent.change(screen.getByLabelText('Importe principal USD'), { target: { value: '0.1235' } });
+    fireEvent.change(screen.getByLabelText('Precio de sucursal'), { target: { value: '0.1235' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(stockClient.actualizar).toHaveBeenCalled());
     const payload = vi.mocked(stockClient.actualizar).mock.calls[0][1];
@@ -24,6 +24,17 @@ describe('Guardado del precio de sucursal', () => {
     expect(payload).not.toHaveProperty('cantidad_disponible');
     expect(payload).not.toHaveProperty('cantidad_reservada');
     expect(payload).not.toHaveProperty('precio_venta_ars');
+  });
+  it('manda el costo con su moneda solo cuando cambia', async () => {
+    render(<StockForm title="Editar" stockItem={item} />);
+    fireEvent.change(screen.getAllByLabelText('Moneda')[1], { target: { value: 'USD' } });
+    fireEvent.change(screen.getByLabelText('Costo de reposición'), { target: { value: '0.05' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(stockClient.actualizar).toHaveBeenCalled());
+    const payload = vi.mocked(stockClient.actualizar).mock.calls[0][1];
+    expect(payload.costo).toEqual({ moneda_referencia: 'USD', importe_referencia: '0.05', cotizacion_version: '3' });
+    expect(payload).not.toHaveProperty('costo_reposicion');
+    expect(payload).not.toHaveProperty('precio');
   });
   it('incluye solamente la cantidad que el usuario corrigió', async () => {
     render(<StockForm title="Editar" stockItem={item} />);
@@ -34,5 +45,6 @@ describe('Guardado del precio de sucursal', () => {
     expect(payload.cantidad_disponible).toBe(43);
     expect(payload).not.toHaveProperty('cantidad_reservada');
     expect(payload).not.toHaveProperty('precio');
+    expect(payload).not.toHaveProperty('costo');
   });
 });

@@ -16,7 +16,8 @@ Las tres etapas de catálogo del [plan](CAS-54-plan-implementacion-doble-moneda.
 
 - `1 USD = X ARS`, manual por tenant. La cotización admite seis decimales, debe ser positiva y tiene control de versión.
 - Principal ARS: dos decimales. Principal USD: cuatro. Cálculos con `decimal.js 10.6.0`, precisión 40 y `ROUND_HALF_UP`. El piso de margen USD se eleva a cuatro decimales para que su equivalente no perfore el mínimo ARS.
-- El costo de reposición conserva su referencia ARS. Cambiar el dólar modifica equivalentes calculados; no actualiza masivamente precios principales, stock ni saldos.
+- El costo de reposición (global y por sucursal) admite referencia ARS o USD, con el mismo modelo que el precio ([migración](../../casa-segura-backend/supabase/migrations/20261012120000_costo_reposicion_doble_moneda.sql), campo `costo` en POST/PATCH; `costo_reposicion(_base)` numérico se sigue aceptando como principal ARS). Un costo ARS se guarda sin cotización; uno USD exige la versión vigente. Los márgenes comparan en USD si costo y precio son USD y, si no, en ARS con la cotización vigente. Los costos existentes quedan en ARS.
+- Cambiar el dólar modifica equivalentes calculados; no actualiza masivamente precios principales, stock ni saldos.
 - El precio global y el de cada sucursal son independientes. La sugerencia global solo se copia mediante una acción explícita.
 - Un importe ausente permanece ausente; cero es un importe válido cuando cumple las reglas de margen. Sin cotización se puede consultar ARS y editar atributos no monetarios. El equivalente USD se muestra como no disponible.
 - Se preserva el perfil comercial anterior de la lista por cliente: precio y descuento del producto en esa sucursal, región, categoría/subcategoría del cliente, excepción por producto y descuento habitual. No se agrega una nueva herencia del descuento global.

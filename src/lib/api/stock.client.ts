@@ -17,10 +17,12 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
     subtipoId: apiData.producto_subtipo_id ?? '',
     precioBase: apiData.producto_precio_base != null ? Number(apiData.producto_precio_base) : null,
     costoReposicionBase: apiData.producto_costo_reposicion_base != null ? Number(apiData.producto_costo_reposicion_base) : null,
+    costoGlobal: apiData.producto_costo_reposicion_resuelto,
     descuentoBase: apiData.producto_descuento_base != null ? Number(apiData.producto_descuento_base) : null,
 
     activo: (apiData.habilitado ?? true) && (apiData.producto_activo ?? true),
-    costoReposicion: apiData.costo_reposicion ? Number(apiData.costo_reposicion) : 0,
+    costoReposicion: (apiData.costo_reposicion_ars_resuelto ?? apiData.costo_reposicion) ? Number(apiData.costo_reposicion_ars_resuelto ?? apiData.costo_reposicion) : 0,
+    costo: apiData.costo_reposicion_resuelto,
     precioVentaArs: (apiData.precio_resuelto ? apiData.precio_resuelto.ars : apiData.precio_venta_ars) != null ? Number(apiData.precio_resuelto ? apiData.precio_resuelto.ars : apiData.precio_venta_ars) : null,
     precioVentaUsd: (apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) != null ? Number(apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) : null,
     precio: apiData.precio_resuelto,

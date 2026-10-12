@@ -14,12 +14,15 @@ export interface StockItem {
   subtipoId: string;
   precioBase: number | null;
   costoReposicionBase?: number | null;
+  costoGlobal?: PrecioResuelto;
   /** Descuento general del producto, que el de la sucursal puede pisar. */
   descuentoBase?: number | null;
 
   // Datos específicos del stock (mezclados)
   activo: boolean; // Mezcla entre habilitado y producto_activo
+  /** Costo de reposición en ARS con la cotización vigente. */
   costoReposicion: number;
+  costo?: PrecioResuelto;
   precioVentaArs: number | null;
   precioVentaUsd: number | null;
   precio?: PrecioResuelto;

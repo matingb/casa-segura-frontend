@@ -1,9 +1,99 @@
-.editor { border: 1px solid var(--border-color, #d8dee8); border-radius: 8px; padding: 16px; min-width: 0; }
-.editor legend { font-weight: 600; padding: 0 6px; }
-.campos { display: flex; flex-wrap: wrap; gap: 16px; }
-.campos label { display: flex; flex: 1; min-width: 180px; flex-direction: column; gap: 6px; }
-.campos input, .campos select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font: inherit; background: var(--bg-surface, white); color: inherit; }
-.editor p { margin: 10px 0 0; line-height: 1.5; }
-.secundario { font-size: 0.85rem; color: var(--text-secondary, #526071); }
-.aviso { background: #fff8e5; color: #735014; border-radius: 6px; padding: 10px; margin-top: 10px; }
-.editor button { border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-top: 8px; }
+.celda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+/* Importe + moneda, mismo patrón que valor + unidad en Dimensiones. */
+.conMoneda {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.conMoneda select {
+  padding: 0 1.6rem 0 0.6rem;
+  background-position: right 0.5rem center;
+  font-weight: 500;
+}
+
+.celda input.calculado {
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  cursor: default;
+}
+
+.celda input.calculado:focus {
+  border-color: var(--color-input-border);
+  box-shadow: none;
+}
+
+.ayuda {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+.ayuda a,
+.accion {
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ayuda a:hover,
+.accion:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.accion:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.aviso {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--color-warning);
+  background: var(--color-warning-bg);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Detalle de solo lectura */
+.sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.subAviso {
+  color: var(--color-warning);
+  font-weight: 500;
+}

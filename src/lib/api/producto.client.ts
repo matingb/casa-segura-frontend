@@ -28,7 +28,8 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
     precioBaseUsd: apiProd.precio_resuelto?.usd != null ? Number(apiProd.precio_resuelto.usd) : null,
     precio: apiProd.precio_resuelto,
     contextoMonetario: apiProd.contexto_monetario,
-    costoReposicionBase: apiProd.costo_reposicion_base != null ? Number(apiProd.costo_reposicion_base) : null,
+    costoReposicionBase: (apiProd.costo_reposicion_base_ars_resuelto ?? apiProd.costo_reposicion_base) != null ? Number(apiProd.costo_reposicion_base_ars_resuelto ?? apiProd.costo_reposicion_base) : null,
+    costo: apiProd.costo_reposicion_base_resuelto,
     descuentoBase: apiProd.descuento_base != null ? Number(apiProd.descuento_base) : null,
     codigoQr: apiProd.codigo_qr ?? '',
   };

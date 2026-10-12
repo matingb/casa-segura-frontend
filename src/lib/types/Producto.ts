@@ -27,7 +27,9 @@ export interface Producto {
   precioBaseUsd?: number | null;
   precio?: PrecioResuelto;
   contextoMonetario?: ContextoMonetario;
+  /** Costo de reposición base en ARS con la cotización vigente. */
   costoReposicionBase?: number | null;
+  costo?: PrecioResuelto;
   /** Descuento del producto para todas las sucursales (nivel 3 de la lista de precios). */
   descuentoBase: number | null;
   codigoQr: string;

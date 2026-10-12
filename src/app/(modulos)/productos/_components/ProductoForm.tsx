@@ -17,11 +17,12 @@ import { productoClient } from '../../../../lib/api/producto.client';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useProductoDetalle } from '../_hooks/useProductoDetalle';
 import { useToast } from '../../../../context/ToastContext';
-import { formatARS, formatMedida, parseNum } from '../../../../lib/utils/formatters';
+import { formatMedida, parseNum } from '../../../../lib/utils/formatters';
 import styles from './ProductoForm.module.css';
 import PrecioEditor from '../../../../components/PrecioEditor';
-import { usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
-import { precioParaGuardar } from '../../../../lib/utils/precio';
+import PrecioDetalle from '../../../../components/PrecioDetalle';
+import { useMontoEdicion, usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
+import { costoParaGuardar, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
 
@@ -55,6 +56,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const { producto: productoCargado, isLoading, error, reload } = useProductoDetalle(productoId ?? '');
   const producto = productoId ? productoCargado ?? undefined : productoProp;
   const { precio, setPrecio, resetPrecio } = usePrecioEdicion(producto);
+  const { monto: costo, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(producto, producto?.costo, producto?.costoReposicionBase, producto?.contextoMonetario);
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
 
   const { tipos, loading: loadingClasificacion, getSubtiposPorTipo, getTipoIdDeSubtipo, getTipoNombre, getSubtipoNombre } = useClasificacion();
@@ -160,7 +162,6 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       descripcion:            formData.get('descripcion'),
       activo:                 formData.get('activo') === 'true',
       imagen_url:             imagenUrl ?? null,
-      costo_reposicion_base:  parseNum(formData.get('costoReposicionBase'), 2),
       descuento_base:         parseNum(formData.get('descuentoBase'), 2),
       codigo_qr:              codigoQr || null,
     };
@@ -170,7 +171,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       setIsSaving(true);
       setSubmitError(null);
       const precioInput = precioParaGuardar(precio, cotizacion);
-      const payload = { ...body, ...(precioInput !== undefined ? { precio: precioInput } : {}) };
+      const costoInput = costoParaGuardar(costo, cotizacion);
+      const payload = {
+        ...body,
+        ...(precioInput !== undefined ? { precio: precioInput } : {}),
+        ...(costoInput !== undefined ? { costo: costoInput } : {}),
+      };
       if (isEditing) {
         await productoClient.actualizar(producto!.id, payload);
         if (readOnly) {
@@ -200,6 +206,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const cancelInlineEdit = () => {
     if (!producto) return;
     resetPrecio();
+    resetCosto();
     setTipoId(getTipoIdDeSubtipo(producto.subtipoId) ?? '');
     setSubtipoId(producto.subtipoId ?? '');
     setImagenUrl(producto.imagenUrl);
@@ -256,7 +263,6 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const subtipoOptions = subtipos.map((s) => ({ value: s.id, label: s.nombre }));
 
   if (isReadOnlyView && producto) {
-    const money = (value?: number) => formatARS(value);
     const text = (value?: string) => value || '—';
 
     return (
@@ -278,10 +284,17 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 <DetailField label="Código">{text(producto.codigo)}</DetailField>
                 <DetailField label="Código de barra proveedor">{text(producto.codigoBarraProveedor)}</DetailField>
                 <DetailField label="Nombre">{text(producto.nombre)}</DetailField>
-                <div style={{ gridColumn: '1 / -1' }}><PrecioEditor value={precio} onChange={setPrecio} original={producto.precio} readOnly label="Precio base global" /></div>
-                <DetailField label="Costo de reposicion base">
-                  {producto.costoReposicionBase != null ? money(producto.costoReposicionBase) : '—'}
-                </DetailField>
+                <PrecioDetalle
+                  label="Precio base global"
+                  precio={producto.precio ?? resolverPrecioVista('ARS', producto.precioBase?.toString() ?? null, producto.contextoMonetario ?? null)}
+                  contexto={producto.contextoMonetario ?? cotizacion}
+                />
+                <PrecioDetalle
+                  label="Costo de reposición base"
+                  precio={producto.costo ?? resolverPrecioVista('ARS', producto.costoReposicionBase?.toString() ?? null, producto.contextoMonetario ?? null)}
+                  contexto={producto.contextoMonetario ?? cotizacion}
+                  compacto
+                />
                 <DetailField label="Descuento general">
                   {producto.descuentoBase != null ? `${producto.descuentoBase}%` : '—'}
                 </DetailField>
@@ -412,16 +425,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 tabIndex={3}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
-              <div style={{ gridColumn: '1 / -1' }}><PrecioEditor value={precio} onChange={setPrecio} original={producto?.precio} label="Precio base global" /></div>
-              <Input
-                label="Costo de reposicion base ($)"
-                name="costoReposicionBase"
-                type="number"
-                min="0"
-                step="0.01"
-                defaultValue={producto?.costoReposicionBase ?? undefined}
-                placeholder="Ej: 10000"
-                tabIndex={4}
+              <PrecioEditor
+                value={precio}
+                onChange={setPrecio}
+                original={producto?.precio}
+                label="Precio base global"
+                tabIndex={3}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
               <Input
@@ -433,6 +442,14 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 step="0.01"
                 defaultValue={producto?.descuentoBase ?? undefined}
                 placeholder="—"
+                tabIndex={4}
+                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+              />
+              <PrecioEditor
+                value={costo}
+                onChange={setCosto}
+                tipo="costo"
+                label="Costo de reposición base"
                 tabIndex={4}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
@@ -662,7 +679,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges && !precio.cambiado)} tabIndex={21}>
+            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
               {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
