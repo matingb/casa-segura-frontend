@@ -16,7 +16,9 @@ export function simularPrecio(item: ItemConMargenCalculado, cambios: Partial<Rec
   Object.assign(niveles, cambios);
   const resultado = calcularCascada({
     precioBase: Number(item.precioListaArs ?? 0),
-    descuentoProducto: niveles.producto,
+    descuentoSucursal: niveles.sucursal,
+    descuentoCategoria: item.descuentoCategoriaGeneral !== undefined ? item.descuentoCategoriaGeneral : niveles.categoria,
+    descuentoProducto: item.descuentoProductoGeneral !== undefined ? item.descuentoProductoGeneral : niveles.producto,
     descuentoRegionCliente: niveles['region-cliente'],
     descuentoCategoriaCliente: niveles['categoria-cliente'],
     descuentoProductoCliente: niveles['producto-cliente'],

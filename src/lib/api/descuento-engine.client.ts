@@ -1,7 +1,7 @@
 import { apiFetch } from '../apiFetch';
 import { errorCatalogo } from './cotizacion.client';
 import { ContextoMonetario } from '../types/Moneda';
-import { ListaPreciosCliente } from '../types/ListaPreciosCliente';
+import { ListaPreciosCliente, ListaPreciosSucursal } from '../types/ListaPreciosCliente';
 import { ResultadoCascada, AlertaMargen, AnalisisMargen } from '../utils/cascada-descuentos';
 
 export interface EvaluarItemInput {
@@ -63,6 +63,11 @@ export const descuentoEngineClient = {
   listaCliente: async (sucursalId: string, clienteId: string): Promise<ListaPreciosCliente> => {
     const query = new URLSearchParams({ sucursalId, clienteId });
     const res = await apiFetch(`/api/descuentos/lista-cliente?${query}`);
+    if (!res.ok) return errorCatalogo(res, 'No se pudo calcular la lista de precios.');
+    return (await res.json()).data;
+  },
+  listaSucursal: async (sucursalId: string): Promise<ListaPreciosSucursal> => {
+    const res = await apiFetch(`/api/descuentos/lista-sucursal?${new URLSearchParams({ sucursalId })}`);
     if (!res.ok) return errorCatalogo(res, 'No se pudo calcular la lista de precios.');
     return (await res.json()).data;
   },

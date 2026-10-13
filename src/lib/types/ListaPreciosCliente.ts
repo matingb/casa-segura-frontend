@@ -16,9 +16,18 @@ export interface AporteDescuentoLista { nivel: NivelDescuentoLista; porcentaje: 
 export interface ItemConMargenCalculado extends ItemListaCliente {
   id: string; productoId: string; descuentosDetalle: string[]; descuentosAportes?: AporteDescuentoLista[];
   tipoId?: string | null; subtipoId?: string | null;
+  /** Descuentos generales de categoría y de producto en la sucursal, se apliquen o no (los del cliente los reemplazan). */
+  descuentoCategoriaGeneral?: number | null;
+  descuentoProductoGeneral?: number | null;
   precioSinTope: number | string | null; precioMinimo: number | string | null;
   costoReposicion: number | string | null; margenMinimo: number | string | null;
   noAlcanzaMargen: boolean; motivoMargen?: string;
+}
+/** Lista general de una sucursal: solo los descuentos que valen para todos los clientes. */
+export interface ListaPreciosSucursal {
+  items: ItemConMargenCalculado[];
+  contexto_monetario: ContextoMonetario;
+  sucursal: { id: string; nombre: string };
 }
 export interface ListaPreciosCliente {
   items: ItemConMargenCalculado[];

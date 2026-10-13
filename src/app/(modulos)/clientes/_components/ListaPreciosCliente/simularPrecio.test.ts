@@ -20,10 +20,24 @@ describe('simularPrecio', () => {
     expect(simularPrecio(base, { 'producto-cliente': null }).precioFinal).toBe(90);
     expect(simularPrecio(base, { 'producto-cliente': 20 }).precioFinal).toBe(72);
   });
-  it('el habitual se suma al final y avisa si perfora el margen', () => {
-    expect(simularPrecio(item([{ nivel: 'region-cliente', porcentaje: 10 }, { nivel: 'cliente', porcentaje: 5 }])).descuentoTotal).toBe(15);
+  it('el habitual se encadena al final y avisa si perfora el margen', () => {
+    expect(simularPrecio(item([{ nivel: 'region-cliente', porcentaje: 10 }, { nivel: 'cliente', porcentaje: 5 }])).descuentoTotal).toBe(14.5);
     const conPiso = item([], { costoReposicion: '80', margenMinimo: '10' });
     expect(simularPrecio(conPiso, { 'producto-cliente': 30 })).toMatchObject({ precioFinal: 88, debajoDelMargen: true });
+  });
+  it('cuenta los descuentos generales de sucursal y categoría', () => {
+    const base = item([{ nivel: 'sucursal', porcentaje: 5 }, { nivel: 'categoria', porcentaje: 5 }]);
+    expect(simularPrecio(base, { 'region-cliente': 10 }).precioFinal).toBe(81.23);
+  });
+  it('el descuento del cliente en el producto reemplaza al general, y al quitarlo vuelve', () => {
+    const base = item([{ nivel: 'producto-cliente', porcentaje: 5 }], { descuentoProductoGeneral: 20 });
+    expect(simularPrecio(base).precioFinal).toBe(95);
+    expect(simularPrecio(base, { 'producto-cliente': null }).precioFinal).toBe(80);
+  });
+  it('el descuento de categoría del cliente reemplaza al general, y al quitarlo vuelve', () => {
+    const base = item([{ nivel: 'categoria-cliente', porcentaje: 10 }], { descuentoCategoriaGeneral: 5 });
+    expect(simularPrecio(base).precioFinal).toBe(90);
+    expect(simularPrecio(base, { 'categoria-cliente': null }).precioFinal).toBe(95);
   });
   it('describe de dónde salen los otros descuentos', () => {
     const base = item([{ nivel: 'region-cliente', porcentaje: 10 }, { nivel: 'categoria-cliente', porcentaje: 5 }, { nivel: 'producto-cliente', porcentaje: 1 }]);

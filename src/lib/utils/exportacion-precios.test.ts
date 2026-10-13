@@ -7,6 +7,8 @@ import { crearLibroListaPreciosCliente } from '../../app/(modulos)/clientes/_com
 import { crearPdfListaPreciosCliente } from '../../app/(modulos)/clientes/_components/ClienteListaPreciosModal/exportPdfCliente';
 import { aFilaExportCliente, COLUMNAS_EXPORT_CLIENTE } from '../../app/(modulos)/clientes/_components/ClienteListaPreciosModal/columnasExportCliente';
 import { StockItem } from '../types/Stock';
+import { ItemConMargenCalculado } from '../types/ListaPreciosCliente';
+import { DEFAULT_EXPORT_COLUMN_KEYS } from '../../app/(modulos)/lista-precios/_lib/exportColumns';
 const contexto = { cotizacion_usd_ars: '1200.000000', cotizacion_version: '3', actualizada_at: '2026-10-04T18:00:00Z' };
 const items = Array.from({ length: 25 }, (_, i) => ({ id: String(i), nombre: `Producto ${i}`, codigo: `COD-${i}`, marca: '', modelo: '', subtipoId: 'st', precioVentaArs: i, precioVentaUsd: i === 0 ? null : 0.1234, iva: 21, contextoMonetario: contexto, precio: { moneda_referencia: 'ARS', importe_referencia: String(i), ars: String(i), usd: i === 0 ? null : '0.1234', estado: i === 0 ? 'LEGADO_PENDIENTE_REVISION' : 'VINCULADO' } })) as StockItem[];
 describe('Archivos del catálogo', () => {
@@ -14,11 +16,19 @@ describe('Archivos del catálogo', () => {
     const libro = crearLibroListaPrecios(items, ['codigo', 'precioVentaArs', 'precioVentaUsd'], 'Centro', () => 'Subtipo', contexto);
     const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(libro.Sheets['Lista de precios']);
     expect(rows).toHaveLength(25);
-    expect(rows[0]['Precio venta USD']).toBe('');
-    expect(rows[1]['Precio venta USD']).toBe(0.1234);
+    expect(rows[0]['Precio de lista USD']).toBe('');
+    expect(rows[1]['Precio de lista USD']).toBe(0.1234);
     expect(libro.Sheets['Referencia']).toBeDefined();
     expect(JSON.stringify(libro.Sheets['Referencia'])).toContain('pendientes de confirmación');
     expect(crearPdfListaPrecios(items, 'Centro', () => 'Subtipo', contexto).getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+  it('la lista general exporta precio de lista y final, pero no el descuento', () => {
+    const precios = new Map([['1', { precioFinalArs: '0.90', precioFinalUsd: '0.0750', descuentoTotalPorcentaje: 10 } as ItemConMargenCalculado]]);
+    const libro = crearLibroListaPrecios(items.slice(0, 2), DEFAULT_EXPORT_COLUMN_KEYS, 'Centro', () => 'Subtipo', contexto, precios);
+    const fila = XLSX.utils.sheet_to_json<Record<string, unknown>>(libro.Sheets['Lista de precios'])[1];
+    expect(fila).toMatchObject({ 'Precio de lista ARS': 1, 'Precio final ARS': 0.9, 'Precio final USD': 0.075 });
+    expect(Object.keys(fila).some(k => k.toLowerCase().includes('descuento'))).toBe(false);
+    expect(crearPdfListaPrecios(items.slice(0, 2), 'Centro', () => 'Subtipo', contexto, precios).getNumberOfPages()).toBe(1);
   });
   it('rechaza mezclar versiones y usa la fecha de Buenos Aires', () => {
     expect(() => crearLibroListaPrecios([{ ...items[0], contextoMonetario: { ...contexto, cotizacion_version: '4' } }], ['codigo'], 'Centro', () => '', contexto)).toThrow('cotizaciones diferentes');

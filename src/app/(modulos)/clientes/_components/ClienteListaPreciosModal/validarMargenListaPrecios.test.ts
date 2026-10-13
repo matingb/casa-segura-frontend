@@ -163,15 +163,14 @@ describe('Cascada de descuentos y margen de utilidad', () => {
         descuentoRegionCliente: 5,
         descuentoCategoriaCliente: 5,
         descuentoProductoCliente: 5,
-        descuentoCliente: 5, // Habitual: se suma al efectivo
+        descuentoCliente: 5, // Habitual: también encadenado, sobre el saldo
       });
 
-      // Cascada de 6 niveles al 5%: 10000 * (0.95)^6 = 7350.92 (26.49% efectivo en cascada)
-      // + 5% habitual del cliente = 31.49% total
-      // 10000 * (1 - 0.3149) = 6851
-      expect(res.descuentoEfectivo).toBe(31.49);
-      expect(res.precioFinal).toBe(6850.92);
-      expect(res.aportes).toHaveLength(7);
+      // Los del cliente en categoría y producto reemplazan a los generales: quedan 5 niveles al 5%.
+      // 10000 * (0.95)^5 = 7737.81 (22.62% efectivo)
+      expect(res.descuentoEfectivo).toBe(22.62);
+      expect(res.precioFinal).toBe(7737.81);
+      expect(res.aportes).toHaveLength(5);
     });
   });
 

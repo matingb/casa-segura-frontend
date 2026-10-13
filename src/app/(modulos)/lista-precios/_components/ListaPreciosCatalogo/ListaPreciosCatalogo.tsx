@@ -11,7 +11,8 @@ import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { useListaPrecios } from '../../_hooks/useListaPrecios';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
-import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
+import { formatARS, formatPorcentaje, formatUSD } from '../../../../../lib/utils/formatters';
+import { detalleCorto, detalleLargo } from '../../../../../lib/utils/niveles-descuento';
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
@@ -30,7 +31,7 @@ const FILTER_FIELDS: FilterField[] = [
 export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
-    contexto, error, actualizarSeleccion,
+    contexto, error, actualizarSeleccion, precios,
     items,
     pageItems,
     page,
@@ -53,11 +54,11 @@ export default function ListaPreciosCatalogo() {
 
   const handleConfirmExport = (selectedKeys: string[]) => {
     setShowExportModal(false);
-    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos[0]?.contextoMonetario); } });
+    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.items[0]?.contextoMonetario, nuevos.precios); } });
   };
 
   const handleExportPdf = () => {
-    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos, sucursalNombre, getSubtipoNombre, nuevos[0]?.contextoMonetario); } });
+    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.items[0]?.contextoMonetario, nuevos.precios); } });
   };
 
   const columns: TableColumn<StockItem>[] = [
@@ -87,20 +88,55 @@ export default function ListaPreciosCatalogo() {
     },
     {
       key: 'precioArs',
-      header: 'Precio ARS',
+      header: 'Precio de lista',
       render: (item) => (
-        <span className={styles.priceArs}>{formatARS(item.precioVentaArs)}</span>
+        <span className={(precios.get(item.id)?.descuentoTotalPorcentaje ?? 0) > 0 ? styles.priceTachado : styles.priceArs}>
+          {formatARS(item.precioVentaArs)}
+        </span>
       ),
       sortable: true,
       align: 'right',
       width: '1%',
     },
     {
-      key: 'precioUsd',
-      header: 'Precio USD',
+      key: 'descuento',
+      header: 'Descuento',
+      render: (item) => {
+        const precio = precios.get(item.id);
+        if (!precio || !(precio.descuentoTotalPorcentaje > 0)) return <span className={styles.sinDescuento}>0%</span>;
+        return (
+          <div title={detalleLargo(precio.descuentosAportes)}>
+            <div className={styles.descuento}>{formatPorcentaje(precio.descuentoTotalPorcentaje)}</div>
+            <div className={styles.descuentoDetalle}>{detalleCorto(precio.descuentosAportes)}</div>
+            {precio.noAlcanzaMargen && Number(precio.precioListaArs) > 0 && (
+              <div className={styles.ajustado} title={`Con los descuentos quedaba en ${formatARS(precio.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(precio.precioMinimo)}.`}>
+                Ajustado al precio mínimo
+              </div>
+            )}
+          </div>
+        );
+      },
+      sortable: true,
+      align: 'right',
+      width: '1%',
+    },
+    {
+      key: 'precioFinalArs',
+      header: 'Precio final ARS',
       render: (item) => (
-        <span className={styles.priceUsd}>{formatUSD(item.precioVentaUsd)}</span>
+        <span className={styles.priceArs}>{formatARS(precios.get(item.id)?.precioFinalArs ?? item.precioVentaArs)}</span>
       ),
+      sortable: true,
+      align: 'right',
+      width: '1%',
+    },
+    {
+      key: 'precioFinalUsd',
+      header: 'Precio final USD',
+      render: (item) => {
+        const precio = precios.get(item.id);
+        return <span className={styles.priceUsd}>{formatUSD(precio ? precio.precioFinalUsd : item.precioVentaUsd)}</span>;
+      },
       sortable: true,
       align: 'right',
       width: '1%',

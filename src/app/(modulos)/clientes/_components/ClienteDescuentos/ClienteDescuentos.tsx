@@ -88,7 +88,7 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
         <p className={styles.explicacion}>
           <Info size={14} aria-hidden />
           Los descuentos se aplican uno después del otro: 10% + 5% no es 15%, es 14,5%.
-          {habitual > 0 && ` Además, el descuento habitual de ${formatPorcentaje(habitual)} se suma al final (se cambia en Información del cliente).`}
+          {habitual > 0 && ` Además, el descuento habitual de ${formatPorcentaje(habitual)} se aplica al final, también sobre el saldo (se cambia en Información del cliente).`}
         </p>
         {sucursales.length > 1 && (
           <div className={styles.sucursalPrecios}>

@@ -292,13 +292,18 @@ export function calcularCascada(entrada: EntradaCascada): ResultadoCascada {
   }
 
   let precio = precioBase;
+  // Un descuento del cliente reemplaza al general del mismo nivel: el de
+  // categoría/subcategoría del cliente al de categoría, el de producto al de producto.
+  const categoriaGeneral = entrada.descuentoCategoriaCliente != null ? 0 : entrada.descuentoCategoria;
+  const productoGeneral = entrada.descuentoProductoCliente != null ? 0 : entrada.descuentoProducto;
   const enCascada: [NivelDescuento, number][] = [
     ['sucursal', normalizarPorcentaje(entrada.descuentoSucursal)],
-    ['categoria', normalizarPorcentaje(entrada.descuentoCategoria)],
-    ['producto', normalizarPorcentaje(entrada.descuentoProducto)],
+    ['categoria', normalizarPorcentaje(categoriaGeneral)],
+    ['producto', normalizarPorcentaje(productoGeneral)],
     ['region-cliente', normalizarPorcentaje(entrada.descuentoRegionCliente)],
     ['categoria-cliente', normalizarPorcentaje(entrada.descuentoCategoriaCliente)],
     ['producto-cliente', normalizarPorcentaje(entrada.descuentoProductoCliente)],
+    ['cliente', normalizarPorcentaje(entrada.descuentoCliente)],
   ];
 
   for (const [nivel, porcentaje] of enCascada) {
@@ -309,21 +314,6 @@ export function calcularCascada(entrada: EntradaCascada): ResultadoCascada {
     aportes.push({
       nivel,
       porcentaje,
-      montoDescontado,
-      precioResultante: redondear(precio),
-    });
-  }
-
-  const descuentoCliente = normalizarPorcentaje(entrada.descuentoCliente);
-  if (descuentoCliente > 0) {
-    const precioAnterior = precio;
-    const efectivoCascada = (1 - precio / precioBase) * 100;
-    const efectivoTotal = Math.min(efectivoCascada + descuentoCliente, 100);
-    precio = precioBase * (1 - efectivoTotal / 100);
-    const montoDescontado = redondear(precioAnterior - precio);
-    aportes.push({
-      nivel: 'cliente',
-      porcentaje: descuentoCliente,
       montoDescontado,
       precioResultante: redondear(precio),
     });

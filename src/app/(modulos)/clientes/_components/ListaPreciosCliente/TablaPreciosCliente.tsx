@@ -4,7 +4,7 @@ import { AlertTriangle, Info, Search } from 'lucide-react';
 import Select from '../../../../../components/ui/Select/Select';
 import { formatARS, formatPorcentaje, formatUSD } from '../../../../../lib/utils/formatters';
 import { ajustadoAlMinimo, esPendienteRevision, ListaPreciosClienteEstado } from './useListaPreciosCliente';
-import { detalleCorto, detalleLargo } from './nivelesDescuento';
+import { detalleCorto, detalleLargo } from '../../../../../lib/utils/niveles-descuento';
 import styles from './TablaPreciosCliente.module.css';
 
 const MOTIVO_PENDIENTE =

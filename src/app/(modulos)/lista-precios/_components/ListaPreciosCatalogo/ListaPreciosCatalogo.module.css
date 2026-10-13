@@ -87,3 +87,33 @@
 .emptyStateHint {
   font-size: 0.875rem;
 }
+
+/* Descuentos generales de la sucursal (mismo lenguaje visual que la lista del cliente) */
+.priceTachado {
+  color: var(--color-text-muted, #6b7280);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+.descuento {
+  font-weight: 600;
+  color: var(--color-success);
+  font-variant-numeric: tabular-nums;
+}
+
+.descuentoDetalle {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #6b7280);
+  white-space: nowrap;
+}
+
+.sinDescuento {
+  color: var(--color-border-strong);
+}
+
+.ajustado {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-warning);
+  cursor: help;
+}
