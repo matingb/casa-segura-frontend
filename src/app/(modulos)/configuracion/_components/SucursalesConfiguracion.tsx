@@ -176,7 +176,7 @@ export default function SucursalesConfiguracion() {
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>{usaCentral ? 'Dólar anterior de sucursal (solo lectura)' : 'Valor del dólar anterior de sucursal'}</span>
+          <span className={styles.fieldLabel}>Valor del dólar</span>
           <input
             type="number"
             min="0"
