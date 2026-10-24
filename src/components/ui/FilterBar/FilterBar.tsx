@@ -23,6 +23,7 @@ interface FilterBarProps {
   onFilterChange: (columnKey: string, value: string) => void;
   filterOptions?: Record<string, ComboboxOption[]>;
   loading?: boolean;
+  children?: React.ReactNode;
 }
 
 function useDebouncedDraft(value: string, onChange: (val: string) => void, delay = 300) {
@@ -128,10 +129,11 @@ export default function FilterBar({
   onFilterChange,
   filterOptions,
   loading,
+  children,
 }: FilterBarProps) {
   const [open, setOpen] = useState(false);
 
-  if (fields.length === 0 && !onSearchChange) return null;
+  if (fields.length === 0 && !onSearchChange && !children) return null;
 
   const activeChips = fields
     .map((field) => {
@@ -162,6 +164,8 @@ export default function FilterBar({
             placeholder={searchPlaceholder}
           />
         )}
+
+        {children}
 
         {fields.length > 0 && (
           <button

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { FileDown, FileSpreadsheet } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Building2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar, { FilterField } from '../../../../../components/ui/FilterBar/FilterBar';
+import Combobox from '../../../../../components/ui/Combobox/Combobox';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { useListaPrecios } from '../../_hooks/useListaPrecios';
@@ -22,7 +23,6 @@ import ContextoPrecios from '../../../../../components/ContextoPrecios';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
 
 const FILTER_FIELDS: FilterField[] = [
-  { key: 'sucursal', label: 'Sucursal', required: true },
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
   { key: 'subtipo', label: 'Subtipo' },
@@ -31,6 +31,7 @@ const FILTER_FIELDS: FilterField[] = [
 export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
+    sucursalOptions,
     contexto, error, actualizarSeleccion, precios,
     items,
     pageItems,
@@ -200,7 +201,19 @@ export default function ListaPreciosCatalogo() {
           filters={filters}
           onFilterChange={onFilterChange}
           filterOptions={filterOptions}
-        />
+          loading={isLoading}
+        >
+          <div className={styles.sucursalFilter}>
+            <Combobox
+              icon={<Building2 size={15} />}
+              options={filterOptions.sucursal ?? sucursalOptions}
+              value={sucursalId}
+              onChange={(value) => onFilterChange('sucursal', value)}
+              placeholder="Sucursal"
+              loading={isLoading}
+            />
+          </div>
+        </FilterBar>
       </div>
 
       <ContextoPrecios contexto={contexto} error={error} legado={items.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />

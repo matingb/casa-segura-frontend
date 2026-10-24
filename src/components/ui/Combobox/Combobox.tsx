@@ -10,6 +10,7 @@ export interface ComboboxOption {
 
 interface ComboboxProps {
   label?: ReactNode;
+  icon?: ReactNode;
   options: ComboboxOption[];
   value: string;
   onChange: (value: string) => void;
@@ -22,6 +23,7 @@ interface ComboboxProps {
 
 export default function Combobox({
   label,
+  icon,
   options,
   value,
   onChange,
@@ -37,6 +39,8 @@ export default function Combobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  const wasOpenRef = useRef(false);
 
   const selectedOption = options.find((o) => o.value === value);
 
@@ -67,7 +71,7 @@ export default function Combobox({
   useEffect(() => {
     if (isOpen && listRef.current) {
       const el = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
-      el?.scrollIntoView({ block: 'nearest' });
+      el?.scrollIntoView?.({ block: 'nearest' });
     }
   }, [highlightedIndex, isOpen]);
 
@@ -75,6 +79,19 @@ export default function Combobox({
     onChange(option.value);
     setIsOpen(false);
     setQuery('');
+  };
+
+  const handleMouseDown = () => {
+    wasOpenRef.current = isOpen;
+  };
+
+  const handleClick = () => {
+    if (disabled || loading) return;
+    if (wasOpenRef.current) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -107,16 +124,18 @@ export default function Combobox({
     <div className={styles.comboboxGroup} ref={containerRef}>
       {label && <label>{label}</label>}
       <div className={styles.inputWrapper}>
+        {icon && <span className={styles.iconBadge}>{icon}</span>}
         <input
           ref={inputRef}
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${icon ? styles.inputWithIcon : ''}`}
           value={isOpen ? query : selectedOption?.label ?? ''}
           placeholder={loading ? 'Cargando...' : placeholder}
           disabled={disabled || loading}
           tabIndex={tabIndex}
           onFocus={() => setIsOpen(true)}
-          onClick={() => setIsOpen(true)}
+          onMouseDown={handleMouseDown}
+          onClick={handleClick}
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);

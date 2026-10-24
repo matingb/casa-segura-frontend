@@ -32,6 +32,28 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.inputWithIcon {
+  padding-left: 2.5rem;
+}
+
+.iconBadge {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .input:hover:not(:disabled) {
   border-color: var(--color-input-border-hover);
 }
