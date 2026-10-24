@@ -1,50 +1,110 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  PanelLeft,
+  Package,
+  Users,
+  Warehouse,
+  Tag,
+  Settings,
+  // Fuera del alcance de la próxima release (ocultos del menú, las rutas siguen existiendo):
+  // ArrowLeftRight,
+  // Landmark,
+  // Truck,
+} from 'lucide-react';
 import { appVersion } from '../../../lib/appVersion';
 import styles from './Sidebar.module.css';
 
 interface NavItem {
   label: string;
   href: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 // Fuera del alcance de la próxima release (ocultos del menú, las rutas siguen existiendo):
-// { label: 'Operaciones', href: '/operaciones' }
-// { label: 'Cuentas financieras', href: '/cuentas-financieras' }
-// { label: 'Pedidos de reposición', href: '/pedidos-reposicion' }
+// { label: 'Operaciones', href: '/operaciones', icon: ArrowLeftRight }
+// { label: 'Cuentas financieras', href: '/cuentas-financieras', icon: Landmark }
+// { label: 'Pedidos de reposición', href: '/pedidos-reposicion', icon: Truck }
 const navItems: NavItem[] = [
-  { label: 'Productos', href: '/productos' },
-  { label: 'Clientes', href: '/clientes' },
-  { label: 'Stock por sucursal', href: '/stock' },
-  { label: 'Lista de precios', href: '/lista-precios' },
+  { label: 'Clientes', href: '/clientes', icon: Users },
+  { label: 'Productos', href: '/productos', icon: Package },
+  { label: 'Stock por sucursal', href: '/stock', icon: Warehouse },
+  { label: 'Lista de precios', href: '/lista-precios', icon: Tag },
 ];
 
-interface SidebarProps {
-  isOpen: boolean;
-}
-
-export default function Sidebar({ isOpen }: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname();
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = () => {
+    setIsOpen((prev) => !prev);
+  };
+
   return (
-    <aside className={isOpen ? `${styles.sidebar} ${styles.open}` : styles.sidebar}>
-      <div className={styles.brand}>CasaSegura</div>
-      <nav className={styles.nav}>
+    <aside
+      className={isOpen ? `${styles.sidebar} ${styles.open}` : styles.sidebar}
+      aria-label="Menú principal"
+      data-testid="sidebar"
+      data-state={isOpen ? 'open' : 'collapsed'}
+    >
+      <div className={styles.header}>
+        <button
+          type="button"
+          className={styles.toggleButton}
+          onClick={handleToggle}
+          aria-label={isOpen ? 'Colapsar barra lateral' : 'Expandir barra lateral'}
+          title={!isOpen ? 'Expandir' : 'Colapsar'}
+        >
+          <PanelLeft size={22} className={styles.toggleIcon} />
+          {!isOpen && (
+            <span className={styles.tooltip} role="tooltip">
+              Expandir
+            </span>
+          )}
+        </button>
+
+        <div className={styles.divider} aria-hidden="true" />
+
+        <Link
+          href="/productos"
+          className={styles.brandLink}
+          title="CasaSegura"
+          aria-label="CasaSegura"
+        >
+          <span className={styles.brandText}>CasaSegura</span>
+        </Link>
+      </div>
+
+      <nav className={styles.nav} aria-label="Navegación del ERP">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
+              title={!isOpen ? item.label : undefined}
+              aria-label={item.label}
             >
-              {item.label}
+              <div className={styles.iconContainer}>
+                <Icon size={20} className={styles.navIcon} />
+              </div>
+              <span className={styles.navLabel}>{item.label}</span>
+              {!isOpen && (
+                <span className={styles.tooltip} role="tooltip">
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
+
       <div className={styles.bottomSection}>
         <Link
           href="/configuracion"
@@ -54,25 +114,21 @@ export default function Sidebar({ isOpen }: SidebarProps) {
               : styles.configLink
           }
           aria-label="Configuración"
+          title={!isOpen ? 'Configuración' : undefined}
         >
-          <svg
-            className={styles.gearIcon}
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-          <span>Configuración</span>
+          <div className={styles.iconContainer}>
+            <Settings className={styles.gearIcon} size={20} />
+          </div>
+          <span className={styles.configLabel}>Configuración</span>
+          {!isOpen && (
+            <span className={styles.tooltip} role="tooltip">
+              Configuración
+            </span>
+          )}
         </Link>
+
         <div className={styles.footer}>
-          <span className={styles.version}>Versión {appVersion}</span>
+          <span>{appVersion}</span>
         </div>
       </div>
     </aside>

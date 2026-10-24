@@ -11,11 +11,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children }: AppShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isLoading, user } = useAuth();
-
-  const toggleSidebar = () => setIsSidebarOpen((open) => !open);
-  const closeSidebar = () => setIsSidebarOpen(false);
 
   if (isLoading) {
     return (
@@ -31,30 +27,10 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div className={styles.shell}>
-      <Sidebar isOpen={isSidebarOpen} />
-
-      {isSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Cerrar menú"
-          className={styles.overlay}
-          onClick={closeSidebar}
-        />
-      )}
+      <Sidebar />
 
       <div className={styles.contentArea}>
         <header className={styles.topbar}>
-          <button
-            type="button"
-            className={styles.menuToggle}
-            aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={isSidebarOpen}
-            onClick={toggleSidebar}
-          >
-            <span className={styles.menuIconBar} />
-            <span className={styles.menuIconBar} />
-            <span className={styles.menuIconBar} />
-          </button>
           <UserMenu />
         </header>
         <main className={styles.main}>{children}</main>

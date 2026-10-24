@@ -1,14 +1,21 @@
 .sidebar {
-  width: 260px;
+  width: 68px;
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
   background: var(--color-sidebar-bg);
-  padding: 1.5rem 1rem;
+  padding: 1.25rem 0.625rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   flex-shrink: 0;
-  overflow-y: auto;
+  box-sizing: border-box;
+  overflow: visible;
+  position: relative;
+  z-index: 25;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -20,28 +27,125 @@
   border-radius: 2px;
 }
 
-.brand {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-text-inverted);
-  padding: 0 0.75rem;
-  letter-spacing: -0.01em;
+/* Header: Icono de colapsar / expandir | Logo / Marca */
+.header {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: visible;
 }
 
+.toggleButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #38bdf8;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  margin-left: 5px;
+}
+
+.toggleButton:hover {
+  background: var(--color-sidebar-bg-hover);
+  color: #7dd3fc;
+}
+
+.toggleIcon {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.brandText {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-inverted);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Navigation items */
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.4rem;
   flex: 1;
 }
 
 .navItem {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
   color: var(--color-text-inverted-muted);
   font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.navIcon {
+  flex-shrink: 0;
+  color: currentColor;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.navLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navItem:hover {
@@ -49,29 +153,60 @@
   color: var(--color-text-inverted);
 }
 
-.active {
-  background: var(--color-primary);
-  color: var(--color-text-inverted);
+.navItem:hover .navIcon {
+  transform: scale(1.08);
+  color: #ffffff;
 }
 
+.active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.active:hover {
+  background: var(--color-primary-hover);
+  color: var(--color-primary-contrast);
+}
+
+.active .navIcon {
+  color: var(--color-primary-contrast);
+}
+
+/* Bottom configuration section */
 .bottomSection {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .configLink {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
+  justify-content: flex-start;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
   color: var(--color-text-inverted-muted);
   font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
   text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.configLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .configLink:hover {
@@ -79,74 +214,132 @@
   color: var(--color-text-inverted);
 }
 
-.configLink.active {
-  background: var(--color-primary);
-  color: var(--color-text-inverted);
-}
-
 .gearIcon {
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform 0.3s ease, color 0.15s ease;
 }
 
 .configLink:hover .gearIcon {
-  transform: rotate(30deg);
+  transform: rotate(45deg);
+  color: #ffffff;
 }
 
+.configLink.active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.configLink.active:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Footer / Version */
 .footer {
   padding-top: 0.75rem;
-  border-top: 1px solid var(--color-sidebar-bg-hover);
-}
-
-.footer > * {
-  width: 100%;
-}
-
-.version {
-  display: block;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-text-inverted-muted);
   font-size: 0.75rem;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
-/* Mobile: drawer que se superpone al contenido, oculto por defecto */
+/* Tooltip for collapsed state */
+.tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  z-index: 1000;
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent #1e293b transparent transparent;
+}
+
+/* Hover de tooltips en modo colapsado */
+.sidebar:not(.open) .toggleButton:hover .tooltip,
+.sidebar:not(.open) .navItem:hover .tooltip,
+.sidebar:not(.open) .configLink:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ---------------------------------------------
+   Expanded state styles (.sidebar.open)
+   Transición fluida, continua y deslizante
+   --------------------------------------------- */
+.sidebar.open {
+  width: 250px;
+}
+
+.sidebar.open .divider {
+  opacity: 1;
+  width: 1px;
+  margin: 0 0.85rem;
+  pointer-events: auto;
+}
+
+.sidebar.open .brandText {
+  opacity: 1;
+  max-width: 160px;
+  pointer-events: auto;
+}
+
+.sidebar.open .navLabel {
+  opacity: 1;
+  max-width: 160px;
+  margin-left: 0.75rem;
+  pointer-events: auto;
+}
+
+.sidebar.open .configLabel {
+  opacity: 1;
+  max-width: 160px;
+  margin-left: 0.75rem;
+  pointer-events: auto;
+}
+
+.sidebar.open .tooltip {
+  display: none;
+}
+
+/* ---------------------------------------------
+   Mobile: drawer adaptativo sin colapso a 0
+   --------------------------------------------- */
 @media (max-width: 767px) {
   .sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 30;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    max-height: 100vh;
-    overflow-y: auto;
-  }
-
-  .open {
-    transform: translateX(0);
-  }
-}
-
-/* Desktop: colapsable en el flujo normal, sin overlay */
-@media (min-width: 768px) {
-  .sidebar {
-    width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    overflow: hidden;
-    transition: width 0.2s ease, padding 0.2s ease;
+    width: 60px;
+    padding: 1rem 0.35rem;
   }
 
   .sidebar.open {
-    width: 260px;
-    padding: 1.5rem 1rem;
-    max-height: 100vh;
-    overflow-y: auto;
-  }
-
-  .brand,
-  .navItem,
-  .configLink,
-  .footer {
-    white-space: nowrap;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 250px;
+    z-index: 30;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
   }
 }
