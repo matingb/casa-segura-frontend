@@ -173,10 +173,9 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           margen_minimo: parseNum('margenMinimo'),
           descuento: parseNum('descuento'),
           stock_minimo: parseNum('stockMinimo'),
-          ...(readOnly ? {} : {
-            ...(parseNum('cantidadDisponible') !== Number(stockItem?.cantidadDisponible) ? { cantidad_disponible: parseNum('cantidadDisponible') } : {}),
-            ...(parseNum('cantidadReservada') !== Number(stockItem?.cantidadReservada) ? { cantidad_reservada: parseNum('cantidadReservada') } : {}),
-          }),
+          // Solo las cantidades que se corrigieron: no pisar lo que movieron otras operaciones.
+          ...(parseNum('cantidadDisponible') !== Number(stockItem?.cantidadDisponible) ? { cantidad_disponible: parseNum('cantidadDisponible') } : {}),
+          ...(parseNum('cantidadReservada') !== Number(stockItem?.cantidadReservada) ? { cantidad_reservada: parseNum('cantidadReservada') } : {}),
           habilitado: formData.get('habilitado') === 'true',
         }
       : {
@@ -186,6 +185,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           margen_minimo: parseNum('margenMinimo'),
           descuento: parseNum('descuento'),
           stock_minimo: parseNum('stockMinimo'),
+          cantidad_disponible: parseNum('cantidadDisponible') ?? 0,
           habilitado: formData.get('habilitado') === 'true',
         };
 
@@ -537,27 +537,25 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Control de stock</h2>
             <div className={styles.grid}>
-              {isEditing && !readOnly && (
-                <>
-                  <Input
-                    label="Cantidad disponible"
-                    name="cantidadDisponible"
-                    type="number"
-                    step="1"
-                    min="0"
-                    defaultValue={stockItem?.cantidadDisponible ?? 0}
-                    placeholder="Ej: 20"
-                  />
-                  <Input
-                    label="Cantidad reservada"
-                    name="cantidadReservada"
-                    type="number"
-                    step="1"
-                    min="0"
-                    defaultValue={stockItem?.cantidadReservada ?? 0}
-                    placeholder="Ej: 0"
-                  />
-                </>
+              <Input
+                label={isEditing ? 'Cantidad disponible' : 'Cantidad disponible inicial'}
+                name="cantidadDisponible"
+                type="number"
+                step="1"
+                min="0"
+                defaultValue={stockItem?.cantidadDisponible ?? 0}
+                placeholder="Ej: 20"
+              />
+              {isEditing && (
+                <Input
+                  label="Cantidad reservada"
+                  name="cantidadReservada"
+                  type="number"
+                  step="1"
+                  min="0"
+                  defaultValue={stockItem?.cantidadReservada ?? 0}
+                  placeholder="Ej: 0"
+                />
               )}
               <Input
                 label="Stock mínimo"

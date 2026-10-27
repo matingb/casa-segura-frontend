@@ -47,4 +47,14 @@ describe('Guardado del precio de sucursal', () => {
     expect(payload).not.toHaveProperty('precio');
     expect(payload).not.toHaveProperty('costo');
   });
+  it('permite corregir las cantidades al editar desde el detalle', async () => {
+    render(<StockForm title="Detalle" stockItem={item} readOnly />);
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.change(screen.getByLabelText('Cantidad reservada'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(stockClient.actualizar).toHaveBeenCalled());
+    const payload = vi.mocked(stockClient.actualizar).mock.calls[0][1];
+    expect(payload.cantidad_reservada).toBe(5);
+    expect(payload).not.toHaveProperty('cantidad_disponible');
+  });
 });
