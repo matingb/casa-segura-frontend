@@ -7,7 +7,7 @@ function mapApiRegion(r: any): Region {
   return {
     id: r.id,
     tenantId: r.tenant_id,
-    sucursalId: r.sucursal_id,
+    sucursales: Array.isArray(r.sucursales) ? r.sucursales : [],
     nombre: r.nombre ?? '',
     descuento: r.descuento != null ? Number(r.descuento) : 0,
     activo: r.activo ?? true,
@@ -17,6 +17,18 @@ function mapApiRegion(r: any): Region {
 }
 
 export const regionClient = {
+  /** Todas las regiones de la empresa, con sus puntos de venta. */
+  obtenerTodas: async (soloActivas = false): Promise<Region[]> => {
+    const res = await apiFetch(`/api/regiones${soloActivas ? '?solo_activas=true' : ''}`);
+    if (!res.ok) throw new Error('Error al cargar regiones');
+    const json = await res.json();
+    if (json.status === 'success' && Array.isArray(json.data)) {
+      return json.data.map(mapApiRegion);
+    }
+    return [];
+  },
+
+  /** Regiones que incluyen el punto de venta. */
   obtenerPorSucursal: async (sucursalId: string, soloActivas = false): Promise<Region[]> => {
     const res = await apiFetch(`/api/regiones/sucursal/${sucursalId}${soloActivas ? '?solo_activas=true' : ''}`);
     if (!res.ok) throw new Error('Error al cargar regiones de la sucursal');
@@ -27,7 +39,7 @@ export const regionClient = {
     return [];
   },
 
-  crear: async (data: { sucursal_id: string; nombre: string; descuento?: number }): Promise<Region> => {
+  crear: async (data: { nombre: string; descuento?: number; sucursal_ids: string[] }): Promise<Region> => {
     const res = await apiFetch('/api/regiones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,7 +54,7 @@ export const regionClient = {
 
   actualizar: async (
     id: string,
-    data: { nombre?: string; descuento?: number; activo?: boolean }
+    data: { nombre?: string; descuento?: number; activo?: boolean; sucursal_ids?: string[] }
   ): Promise<Region> => {
     const res = await apiFetch(`/api/regiones/${id}`, {
       method: 'PATCH',

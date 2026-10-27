@@ -2,27 +2,27 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Region, regionClient } from '../../../../lib/api/region.client';
-import { useSucursales } from '../../../../context/SucursalContext';
+import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
-import Select from '../../../../components/ui/Select/Select';
 import { formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './RegionesConfiguracion.module.css';
 
 interface FormState {
   nombre: string;
   descuento: string;
+  sucursalIds: string[];
 }
 
-const FORM_VACIO: FormState = { nombre: '', descuento: '' };
+const FORM_VACIO: FormState = { nombre: '', descuento: '', sucursalIds: [] };
 
 export default function RegionesConfiguracion() {
   const { showSuccess, showError } = useToast();
-  const { sucursales } = useSucursales();
 
-  const [selectedSucursalId, setSelectedSucursalId] = useState<string>('');
+  // Puntos de venta activos de la empresa (no solo los asignados al usuario).
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [regiones, setRegiones] = useState<Region[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [creando, setCreando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -32,38 +32,27 @@ export default function RegionesConfiguracion() {
   const [eliminarTarget, setEliminarTarget] = useState<Region | null>(null);
   const [eliminando, setEliminando] = useState(false);
 
-  // Inicializar sucursal seleccionada
-  useEffect(() => {
-    if (!selectedSucursalId && sucursales.length > 0) {
-      const central = sucursales.find((s) => s.esCentral);
-      setSelectedSucursalId(central?.id || sucursales[0].id);
+  const cargar = useCallback(async () => {
+    setLoading(true);
+    try {
+      setRegiones(await regionClient.obtenerTodas());
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Error al cargar regiones');
+    } finally {
+      setLoading(false);
     }
-  }, [sucursales, selectedSucursalId]);
-
-  const cargar = useCallback(
-    async (sucId: string) => {
-      if (!sucId) return;
-      setLoading(true);
-      try {
-        const data = await regionClient.obtenerPorSucursal(sucId);
-        setRegiones(data);
-      } catch (err) {
-        showError(err instanceof Error ? err.message : 'Error al cargar regiones');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [showError],
-  );
+  }, [showError]);
 
   useEffect(() => {
-    if (selectedSucursalId) {
-      cargar(selectedSucursalId);
-      setCreando(false);
-      setEditandoId(null);
-      setForm(FORM_VACIO);
-    }
-  }, [selectedSucursalId, cargar]);
+    cargar();
+  }, [cargar]);
+
+  useEffect(() => {
+    sucursalClient
+      .obtenerParaAdmin(false)
+      .then(setSucursales)
+      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar los puntos de venta'));
+  }, [showError]);
 
   const abrirCreacion = () => {
     setEditandoId(null);
@@ -76,7 +65,8 @@ export default function RegionesConfiguracion() {
     setEditandoId(r.id);
     setForm({
       nombre: r.nombre,
-      descuento: r.descuento === 0 ? '0' : String(r.descuento),
+      descuento: String(r.descuento),
+      sucursalIds: r.sucursales.map((s) => s.id),
     });
   };
 
@@ -97,22 +87,22 @@ export default function RegionesConfiguracion() {
       showError('El descuento debe ser un porcentaje entre 0% y 100%.');
       return;
     }
+    if (form.sucursalIds.length === 0) {
+      showError('Elegí al menos un punto de venta para la región.');
+      return;
+    }
 
     setGuardando(true);
     try {
       if (editandoId) {
-        await regionClient.actualizar(editandoId, { nombre, descuento });
+        await regionClient.actualizar(editandoId, { nombre, descuento, sucursal_ids: form.sucursalIds });
         showSuccess('Región actualizada exitosamente.');
       } else {
-        await regionClient.crear({
-          sucursal_id: selectedSucursalId,
-          nombre,
-          descuento,
-        });
+        await regionClient.crear({ nombre, descuento, sucursal_ids: form.sucursalIds });
         showSuccess('Región creada exitosamente.');
       }
       cerrarForm();
-      await cargar(selectedSucursalId);
+      await cargar();
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Error al guardar la región');
     } finally {
@@ -127,7 +117,7 @@ export default function RegionesConfiguracion() {
       await regionClient.eliminar(eliminarTarget.id);
       showSuccess(`Región "${eliminarTarget.nombre}" dada de baja.`);
       setEliminarTarget(null);
-      await cargar(selectedSucursalId);
+      await cargar();
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Error al eliminar la región');
     } finally {
@@ -167,9 +157,49 @@ export default function RegionesConfiguracion() {
             onChange={(e) => setForm((prev) => ({ ...prev, descuento: e.target.value }))}
             placeholder="Ej: 5"
           />
-          <span className={styles.hint}>% sobre el saldo tras descuentos de producto</span>
+          <span className={styles.hint}>% sobre el saldo tras descuentos de producto. Puede ser 0%.</span>
         </label>
       </div>
+
+      <fieldset className={styles.puntosVenta}>
+        <legend className={styles.fieldLabel}>
+          Puntos de venta<span className={styles.required}>*</span>
+        </legend>
+        {(() => {
+          // Un punto de venta dado de baja que ya estaba en la región se sigue mostrando.
+          const opciones = [
+            ...sucursales.map((s) => ({ id: s.id, nombre: s.nombre })),
+            ...regiones
+              .flatMap((r) => (r.id === editandoId ? r.sucursales : []))
+              .filter((s) => !sucursales.some((a) => a.id === s.id)),
+          ];
+          return opciones.length === 0 ? (
+            <span className={styles.hint}>Cargando puntos de venta...</span>
+          ) : (
+            <div className={styles.puntosVentaGrid}>
+              {opciones.map((s) => (
+                <label key={s.id} className={styles.checkItem}>
+                  <input
+                    type="checkbox"
+                    checked={form.sucursalIds.includes(s.id)}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        sucursalIds: e.target.checked
+                          ? [...prev.sucursalIds, s.id]
+                          : prev.sucursalIds.filter((id) => id !== s.id),
+                      }))
+                    }
+                    disabled={guardando}
+                  />
+                  {s.nombre}
+                </label>
+              ))}
+            </div>
+          );
+        })()}
+        <span className={styles.hint}>Una región puede agrupar uno o más puntos de venta.</span>
+      </fieldset>
 
       <div className={styles.formActions}>
         <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
@@ -186,34 +216,18 @@ export default function RegionesConfiguracion() {
     <div className={styles.container}>
       <div className={styles.headerToolbar}>
         <div className={styles.toolbarInfo}>
-          <h2 className={styles.toolbarTitle}>Regiones por Punto de Venta</h2>
+          <h2 className={styles.toolbarTitle}>Regiones</h2>
           <p className={styles.toolbarDescription}>
-            Configurá las regiones geográficas y sus descuentos correspondientes para cada punto de venta.
+            Configurá las regiones geográficas, sus descuentos y los puntos de venta que agrupa cada una.
           </p>
         </div>
 
         <div className={styles.toolbarActions}>
-          <div className={styles.sucursalSelect}>
-            <Select
-              id="select-sucursal-regiones"
-              label="Punto de venta"
-              value={selectedSucursalId}
-              onChange={(e) => setSelectedSucursalId(e.target.value)}
-              disabled={sucursales.length === 0}
-            >
-              {sucursales.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.esCentral ? `${s.nombre} (Casa central)` : s.nombre}
-                </option>
-              ))}
-            </Select>
-          </div>
-
           <button
             type="button"
             className={styles.btnPrimary}
             onClick={abrirCreacion}
-            disabled={creando || loading || !selectedSucursalId}
+            disabled={creando || loading}
           >
             <svg
               width="16"
@@ -242,7 +256,7 @@ export default function RegionesConfiguracion() {
         </div>
       ) : regiones.length === 0 ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyTitle}>No hay regiones configuradas para este punto de venta.</p>
+          <p className={styles.emptyTitle}>No hay regiones configuradas.</p>
           <p>Creá regiones para asignar a tus clientes y aplicar descuentos geográficos automáticos.</p>
         </div>
       ) : (
@@ -262,6 +276,13 @@ export default function RegionesConfiguracion() {
                   ) : (
                     <span className={styles.sinDescuento}>Sin descuento</span>
                   )}
+                  <div className={styles.chips} aria-label={`Puntos de venta de ${r.nombre}`}>
+                    {r.sucursales.map((s) => (
+                      <span key={s.id} className={styles.chip}>
+                        {s.nombre}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className={styles.filaAcciones}>

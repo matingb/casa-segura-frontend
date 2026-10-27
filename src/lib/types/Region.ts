@@ -1,7 +1,8 @@
 export interface Region {
   id: string;
   tenantId: string;
-  sucursalId: string;
+  /** Puntos de venta (sucursales) que forman la región. */
+  sucursales: { id: string; nombre: string }[];
   nombre: string;
   descuento: number;
   activo: boolean;
