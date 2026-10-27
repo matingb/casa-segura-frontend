@@ -1,11 +1,12 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Region, regionClient } from '../../../../lib/api/region.client';
 import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
+import Combobox from '../../../../components/ui/Combobox/Combobox';
 import { formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './RegionesConfiguracion.module.css';
 
@@ -162,10 +163,10 @@ export default function RegionesConfiguracion() {
         </label>
       </div>
 
-      <fieldset className={styles.puntosVenta}>
-        <legend className={styles.fieldLabel}>
+      <div className={styles.puntosVenta}>
+        <span className={styles.fieldLabel}>
           Puntos de venta<span className={styles.required}>*</span>
-        </legend>
+        </span>
         {(() => {
           // Un punto de venta dado de baja que ya estaba en la región se sigue mostrando.
           const opciones = [
@@ -174,33 +175,55 @@ export default function RegionesConfiguracion() {
               .flatMap((r) => (r.id === editandoId ? r.sucursales : []))
               .filter((s) => !sucursales.some((a) => a.id === s.id)),
           ];
-          return opciones.length === 0 ? (
-            <span className={styles.hint}>Cargando puntos de venta...</span>
-          ) : (
-            <div className={styles.puntosVentaGrid}>
-              {opciones.map((s) => (
-                <label key={s.id} className={styles.checkItem}>
-                  <input
-                    type="checkbox"
-                    checked={form.sucursalIds.includes(s.id)}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        sucursalIds: e.target.checked
-                          ? [...prev.sucursalIds, s.id]
-                          : prev.sucursalIds.filter((id) => id !== s.id),
-                      }))
-                    }
-                    disabled={guardando}
-                  />
-                  {s.nombre}
-                </label>
-              ))}
+          // Las etiquetas respetan el orden en que se fueron agregando.
+          const seleccionados = form.sucursalIds
+            .map((id) => opciones.find((o) => o.id === id))
+            .filter((o): o is { id: string; nombre: string } => Boolean(o));
+          // El desplegable solo ofrece lo que todavía no está elegido.
+          const disponibles = opciones
+            .filter((o) => !form.sucursalIds.includes(o.id))
+            .map((o) => ({ value: o.id, label: o.nombre }));
+          return (
+            <div className={styles.puntosVentaPicker}>
+              <Combobox
+                label="Agregar punto de venta"
+                options={disponibles}
+                value=""
+                onChange={(val) => {
+                  if (val) setForm((prev) => ({ ...prev, sucursalIds: [...prev.sucursalIds, val] }));
+                }}
+                placeholder={
+                  opciones.length > 0 && disponibles.length === 0
+                    ? 'Todos los puntos de venta agregados'
+                    : 'Seleccionar punto de venta'
+                }
+                disabled={guardando || disponibles.length === 0}
+                loading={opciones.length === 0}
+              />
+              {seleccionados.length > 0 && (
+                <div className={styles.chipsSeleccion}>
+                  {seleccionados.map((o) => (
+                    <span key={o.id} className={styles.chipSeleccion}>
+                      {o.nombre}
+                      <button
+                        type="button"
+                        aria-label={`Quitar ${o.nombre}`}
+                        onClick={() =>
+                          setForm((prev) => ({ ...prev, sucursalIds: prev.sucursalIds.filter((id) => id !== o.id) }))
+                        }
+                        disabled={guardando}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
         <span className={styles.hint}>Una región puede agrupar uno o más puntos de venta.</span>
-      </fieldset>
+      </div>
 
       <div className={styles.formActions}>
         <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
@@ -270,14 +293,15 @@ export default function RegionesConfiguracion() {
                 <div className={styles.filaInfo}>
                   <div className={styles.filaNombre}>
                     <span className={styles.nombre}>{r.nombre}</span>
+                    {r.descuento > 0 ? (
+                      <span className={styles.descuentoBadge}>{formatPorcentaje(r.descuento)} de descuento</span>
+                    ) : (
+                      <span className={styles.sinDescuento}>Sin descuento</span>
+                    )}
                     {!r.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
                   </div>
-                  {r.descuento > 0 ? (
-                    <span className={styles.descuentoBadge}>{formatPorcentaje(r.descuento)} de descuento</span>
-                  ) : (
-                    <span className={styles.sinDescuento}>Sin descuento</span>
-                  )}
-                  <div className={styles.chips} aria-label={`Puntos de venta de ${r.nombre}`}>
+                  <div className={styles.chips}>
+                    <span className={styles.chipsLabel}>{r.sucursales.length === 1 ? 'Punto de venta:' : 'Puntos de venta:'}</span>
                     {r.sucursales.map((s) => (
                       <span key={s.id} className={styles.chip}>
                         {s.nombre}
