@@ -264,39 +264,6 @@
   flex-shrink: 0;
 }
 
-.btnLink,
-.btnLinkDanger {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: none;
-  background: none;
-  font-size: 0.82rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-}
-
-.btnLink {
-  color: var(--color-primary);
-}
-
-.btnLinkDanger {
-  color: var(--color-danger);
-}
-
-.btnLink:hover:not(:disabled),
-.btnLinkDanger:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.btnLink:disabled,
-.btnLinkDanger:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  text-decoration: none;
-}
-
 /* ── Estados ─────────────── */
 .loadingState,
 .emptyState {
@@ -420,4 +387,36 @@
   border: 1px solid var(--color-border-strong);
   color: var(--color-text-muted);
   background: var(--color-bg-elevated);
+}
+
+/* Acciones de fila con ícono solo, como en Categorías (el texto va en el tooltip). */
+.btnIcon,
+.btnIconDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btnIcon:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.btnIconDanger:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.btnIcon:disabled,
+.btnIconDanger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

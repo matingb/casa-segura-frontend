@@ -333,3 +333,35 @@
     align-items: flex-start;
   }
 }
+
+/* Acciones de fila con ícono solo, como en Categorías (el texto va en el tooltip). */
+.btnIcon,
+.btnIconDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btnIcon:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.btnIconDanger:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.btnIcon:disabled,
+.btnIconDanger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OpcionesAsignacion, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useSucursales } from '../../../../context/SucursalContext';
@@ -356,19 +356,20 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                 <div className={styles.filaAcciones}>
                   <button
                     type="button"
-                    className={styles.btnLink}
+                    className={styles.btnIcon}
                     onClick={() => abrirEdicion(s)}
                     disabled={!s.asignado}
-                    title={!s.asignado ? MOTIVO_NO_ASIGNADO : undefined}
+                    title={!s.asignado ? MOTIVO_NO_ASIGNADO : `Editar ${s.nombre}`}
+                    aria-label={`Editar ${s.nombre}`}
                   >
-                    <Pencil size={15} aria-hidden="true" />
-                    Editar
+                    <Pencil size={16} />
                   </button>
                   {s.activo ? (
                     <button
                       type="button"
-                      className={styles.btnLinkDanger}
+                      className={styles.btnIconDanger}
                       onClick={() => pedirBaja(s)}
+                      aria-label={`Dar de baja ${s.nombre}`}
                       disabled={s.esCentral || !s.asignado}
                       title={
                         !s.asignado
@@ -378,18 +379,18 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                           : `Dar de baja ${s.nombre}`
                       }
                     >
-                      <Trash2 size={15} aria-hidden="true" />
-                      Dar de baja
+                      <Trash2 size={16} />
                     </button>
                   ) : (
                     <button
                       type="button"
-                      className={styles.btnLink}
+                      className={styles.btnIcon}
                       onClick={() => reactivar(s)}
                       disabled={!s.asignado}
-                      title={!s.asignado ? MOTIVO_NO_ASIGNADO : undefined}
+                      title={!s.asignado ? MOTIVO_NO_ASIGNADO : `Reactivar ${s.nombre}`}
+                      aria-label={`Reactivar ${s.nombre}`}
                     >
-                      Reactivar
+                      <RotateCcw size={16} />
                     </button>
                   )}
                 </div>

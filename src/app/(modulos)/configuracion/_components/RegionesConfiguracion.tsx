@@ -18,7 +18,12 @@ interface FormState {
 
 const FORM_VACIO: FormState = { nombre: '', descuento: '', sucursalIds: [] };
 
-export default function RegionesConfiguracion() {
+interface RegionesConfiguracionProps {
+  /** Avisa cada vez que se recarga el listado (lo usa el contador de la pestaña). */
+  onRegionesCargadas?: (regiones: Region[]) => void;
+}
+
+export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesConfiguracionProps) {
   const { showSuccess, showError } = useToast();
 
   // Puntos de venta activos de la empresa (no solo los asignados al usuario).
@@ -37,13 +42,15 @@ export default function RegionesConfiguracion() {
   const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      setRegiones(await regionClient.obtenerTodas());
+      const lista = await regionClient.obtenerTodas();
+      setRegiones(lista);
+      onRegionesCargadas?.(lista);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Error al cargar regiones');
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [showError, onRegionesCargadas]);
 
   useEffect(() => {
     cargar();
@@ -313,22 +320,24 @@ export default function RegionesConfiguracion() {
                 <div className={styles.filaAcciones}>
                   <button
                     type="button"
-                    className={styles.btnLink}
+                    className={styles.btnIcon}
                     onClick={() => abrirEdicion(r)}
                     disabled={guardando || eliminando}
+                    title={`Editar ${r.nombre}`}
+                    aria-label={`Editar ${r.nombre}`}
                   >
-                    <Pencil size={15} aria-hidden="true" />
-                    Editar
+                    <Pencil size={16} />
                   </button>
                   {r.activo && (
                     <button
                       type="button"
-                      className={styles.btnLinkDanger}
+                      className={styles.btnIconDanger}
                       onClick={() => setEliminarTarget(r)}
                       disabled={guardando || eliminando}
+                      title={`Dar de baja ${r.nombre}`}
+                      aria-label={`Dar de baja ${r.nombre}`}
                     >
-                      <Trash2 size={15} aria-hidden="true" />
-                      Dar de baja
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>

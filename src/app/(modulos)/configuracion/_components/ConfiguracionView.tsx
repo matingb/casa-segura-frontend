@@ -7,6 +7,7 @@ import SucursalesConfiguracion from './SucursalesConfiguracion';
 import RegionesConfiguracion from './RegionesConfiguracion';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
+import { Region, regionClient } from '../../../../lib/api/region.client';
 import styles from '../configuracion.module.css';
 
 type TabType = 'categorias' | 'sucursales' | 'regiones' | 'cotizacion';
@@ -23,6 +24,15 @@ export default function ConfiguracionView() {
   useEffect(() => {
     sucursalClient.obtenerParaAdmin(false).then(contarSucursales).catch(() => setSucursalesActivas(null));
   }, [contarSucursales]);
+
+  // Regiones activas: las que lista la pestaña, sin las dadas de baja.
+  const [regionesActivas, setRegionesActivas] = useState<number | null>(null);
+  const contarRegiones = useCallback((lista: Region[]) => {
+    setRegionesActivas(lista.filter((r) => r.activo).length);
+  }, []);
+  useEffect(() => {
+    regionClient.obtenerTodas().then(contarRegiones).catch(() => setRegionesActivas(null));
+  }, [contarRegiones]);
 
   return (
     <div className={styles.page}>
@@ -95,6 +105,7 @@ export default function ConfiguracionView() {
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
           <span>Regiones</span>
+          {regionesActivas !== null && <span className={styles.tabBadge}>{regionesActivas}</span>}
         </button>
       </nav>
 
@@ -106,7 +117,7 @@ export default function ConfiguracionView() {
       >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
         {activeTab === 'sucursales' && <SucursalesConfiguracion onSucursalesCargadas={contarSucursales} onIrACotizacion={() => setActiveTab('cotizacion')} />}
-        {activeTab === 'regiones' && <RegionesConfiguracion />}
+        {activeTab === 'regiones' && <RegionesConfiguracion onRegionesCargadas={contarRegiones} />}
         {activeTab === 'cotizacion' && <CotizacionConfiguracion />}
       </main>
     </div>
