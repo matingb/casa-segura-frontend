@@ -5,7 +5,6 @@ import { X } from 'lucide-react';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
 import { DescuentoSucursal } from '../../../../lib/types/Tipo';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
-import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
 import styles from './DescuentoEditor.module.css';
 
@@ -17,6 +16,8 @@ interface DescuentoEditorProps {
   descuentosSucursal: DescuentoSucursal[];
   /** Qué pasa si se deja vacío (ej. "no tener descuento", "heredar el de la categoría"). */
   textoSinDescuento: string;
+  /** Sucursales activas de la empresa (no solo las asignadas al usuario). */
+  sucursales: { id: string; nombre: string }[];
   onChanged: () => Promise<void>;
 }
 
@@ -51,9 +52,9 @@ export default function DescuentoEditor({
   descuentoGeneral,
   descuentosSucursal,
   textoSinDescuento,
+  sucursales,
   onChanged,
 }: DescuentoEditorProps) {
-  const { sucursales } = useSucursales();
   const { showSuccess, showError } = useToast();
 
   const [generalDraft, setGeneralDraft] = useState(textoGeneral(descuentoGeneral));

@@ -4,24 +4,26 @@ import CategoriasConfiguracion from './CategoriasConfiguracion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
 import { ToastProvider } from '../../../../context/ToastContext';
 
-vi.mock('../../../../context/SucursalContext', () => ({
-  useSucursales: () => ({
-    sucursales: [{ id: 'suc1', nombre: 'Casa Central', esCentral: true, valorDolar: 1000 }],
-    sucursalOptions: [],
-    isLoading: false,
-    error: null,
-    recargarSucursales: vi.fn(),
-  }),
-}));
-
 vi.mock('../../../../lib/api/clasificacion.client', () => ({
   clasificacionClient: {
     obtenerTipos: vi.fn(),
     obtenerSubtipos: vi.fn(),
     crearTipo: vi.fn(),
     eliminarTipo: vi.fn(),
+    renombrarTipo: vi.fn(),
     crearSubtipo: vi.fn(),
     eliminarSubtipo: vi.fn(),
+    renombrarSubtipo: vi.fn(),
+  },
+}));
+
+// Las sucursales de la empresa, incluida una a la que el usuario no está asignado.
+vi.mock('../../../../lib/api/sucursal.client', () => ({
+  sucursalClient: {
+    obtenerParaAdmin: vi.fn().mockResolvedValue([
+      { id: 'suc1', nombre: 'Casa Central', esCentral: true, valorDolar: 0, descuento: null, activo: true },
+      { id: 'suc2', nombre: 'Sucursal Mendoza', esCentral: false, valorDolar: 0, descuento: null, activo: true },
+    ]),
   },
 }));
 
@@ -145,5 +147,51 @@ describe('CategoriasConfiguracion', () => {
     await waitFor(() => {
       expect(clasificacionClient.eliminarSubtipo).toHaveBeenCalledWith('s1');
     });
+  });
+
+  it('permite renombrar una categoría', async () => {
+    vi.mocked(clasificacionClient.renombrarTipo).mockResolvedValue();
+
+    renderComponent();
+    await screen.findByText('Herramientas');
+
+    fireEvent.click(screen.getByLabelText('Editar categoría Herramientas'));
+    const input = screen.getByLabelText('Nombre de la categoría');
+    expect(input).toHaveValue('Herramientas');
+    fireEvent.change(input, { target: { value: 'Herramientas eléctricas' } });
+    fireEvent.click(within(input.closest('form')!).getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => {
+      expect(clasificacionClient.renombrarTipo).toHaveBeenCalledWith('t1', 'Herramientas eléctricas');
+    });
+  });
+
+  it('permite renombrar una subcategoría', async () => {
+    vi.mocked(clasificacionClient.renombrarSubtipo).mockResolvedValue();
+
+    renderComponent();
+    await screen.findByText('Herramientas');
+    fireEvent.click(screen.getByText('Herramientas'));
+    await screen.findByText('Manuales');
+
+    fireEvent.click(screen.getByLabelText('Editar subcategoría Manuales'));
+    const input = screen.getByLabelText('Nombre de la subcategoría');
+    fireEvent.change(input, { target: { value: 'Manuales pro' } });
+    fireEvent.submit(input.closest('form')!);
+
+    await waitFor(() => {
+      expect(clasificacionClient.renombrarSubtipo).toHaveBeenCalledWith('s1', 'Manuales pro');
+    });
+  });
+
+  it('ofrece todas las sucursales de la empresa para el descuento por sucursal', async () => {
+    renderComponent();
+    await screen.findByText('Herramientas');
+    fireEvent.click(screen.getByText('Herramientas'));
+
+    fireEvent.click(await screen.findByRole('button', { name: /agregar sucursal/i }));
+    fireEvent.focus(screen.getByRole('combobox'));
+
+    expect(await screen.findByRole('option', { name: 'Sucursal Mendoza' })).toBeInTheDocument();
   });
 });

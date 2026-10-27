@@ -69,6 +69,18 @@ export const clasificacionClient = {
     return mapApiTipoToTipo(json.data);
   },
 
+  renombrarTipo: async (id: string, nombre: string): Promise<void> => {
+    const res = await apiFetch(`/api/tipos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre }),
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al renombrar la categoría');
+    }
+  },
+
   eliminarTipo: async (id: string): Promise<void> => {
     const res = await apiFetch(`/api/tipos/${id}`, {
       method: 'DELETE',
@@ -90,6 +102,18 @@ export const clasificacionClient = {
       throw new Error(json.message || 'Error al crear subtipo');
     }
     return mapApiSubtipoToSubtipo(json.data);
+  },
+
+  renombrarSubtipo: async (id: string, nombre: string): Promise<void> => {
+    const res = await apiFetch(`/api/subtipos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre }),
+    });
+    const json = await res.json();
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message || 'Error al renombrar la subcategoría');
+    }
   },
 
   eliminarSubtipo: async (id: string): Promise<void> => {

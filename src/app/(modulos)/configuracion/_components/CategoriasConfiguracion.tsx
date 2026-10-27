@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Pencil } from 'lucide-react';
 import { useClasificacion, notifyClasificacionChanged } from '../../../../lib/hooks/useClasificacion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
+import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import DescuentoEditor from './DescuentoEditor';
 import styles from './CategoriasConfiguracion.module.css';
@@ -29,6 +31,22 @@ export default function CategoriasConfiguracion() {
   // Eliminación en progreso
   const [deletingTipoId, setDeletingTipoId] = useState<string | null>(null);
   const [deletingSubtipoId, setDeletingSubtipoId] = useState<string | null>(null);
+
+  // Renombrar: una categoría o una subcategoría a la vez
+  const [editandoTipoId, setEditandoTipoId] = useState<string | null>(null);
+  const [editandoSubtipoId, setEditandoSubtipoId] = useState<string | null>(null);
+  const [nombreEdicion, setNombreEdicion] = useState('');
+  const [guardandoNombre, setGuardandoNombre] = useState(false);
+
+  // Los descuentos por sucursal se cargan para cualquier sucursal activa de la
+  // empresa, no solo para las asignadas al usuario.
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  useEffect(() => {
+    sucursalClient
+      .obtenerParaAdmin(false)
+      .then(setSucursales)
+      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar sucursales'));
+  }, [showError]);
 
   const toggleTipoExpanded = (tipoId: string) => {
     setExpandedTipos((prev) => {
@@ -59,6 +77,93 @@ export default function CategoriasConfiguracion() {
     await refetch();
     notifyClasificacionChanged();
   };
+
+  const empezarEdicionTipo = (tipo: { id: string; nombre: string }, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditandoSubtipoId(null);
+    setEditandoTipoId(tipo.id);
+    setNombreEdicion(tipo.nombre);
+  };
+
+  const empezarEdicionSubtipo = (subtipo: { id: string; nombre: string }) => {
+    setEditandoTipoId(null);
+    setEditandoSubtipoId(subtipo.id);
+    setNombreEdicion(subtipo.nombre);
+  };
+
+  const cancelarEdicion = () => {
+    setEditandoTipoId(null);
+    setEditandoSubtipoId(null);
+    setNombreEdicion('');
+  };
+
+  const guardarNombre = async (e: React.FormEvent, nombreActual: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const nombre = nombreEdicion.trim();
+    if (!nombre) return;
+    if (nombre === nombreActual) {
+      cancelarEdicion();
+      return;
+    }
+
+    setGuardandoNombre(true);
+    try {
+      if (editandoTipoId) {
+        await clasificacionClient.renombrarTipo(editandoTipoId, nombre);
+        showSuccess(`Categoría renombrada a "${nombre}".`);
+      } else if (editandoSubtipoId) {
+        await clasificacionClient.renombrarSubtipo(editandoSubtipoId, nombre);
+        showSuccess(`Subcategoría renombrada a "${nombre}".`);
+      }
+      cancelarEdicion();
+      await recargar();
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'No se pudo renombrar.');
+    } finally {
+      setGuardandoNombre(false);
+    }
+  };
+
+  /** Formulario en línea para renombrar; no deja que el click o el teclado lleguen al acordeón. */
+  const formularioNombre = (nombreActual: string, etiqueta: string) => (
+    <form
+      className={styles.editNameForm}
+      onSubmit={(e) => guardarNombre(e, nombreActual)}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Escape') cancelarEdicion();
+      }}
+    >
+      <input
+        type="text"
+        className={styles.subInput}
+        value={nombreEdicion}
+        onChange={(e) => setNombreEdicion(e.target.value)}
+        aria-label={etiqueta}
+        autoFocus
+        disabled={guardandoNombre}
+      />
+      <button
+        type="submit"
+        className={styles.btnPrimary}
+        disabled={guardandoNombre || !nombreEdicion.trim()}
+        style={{ padding: '0.45rem 0.85rem' }}
+      >
+        {guardandoNombre ? 'Guardando...' : 'Guardar'}
+      </button>
+      <button
+        type="button"
+        className={styles.btnSecondary}
+        onClick={cancelarEdicion}
+        disabled={guardandoNombre}
+        style={{ padding: '0.45rem 0.75rem' }}
+      >
+        Cancelar
+      </button>
+    </form>
+  );
 
   // Crear categoría
   const handleCreateTipo = async (e: React.FormEvent) => {
@@ -265,14 +370,18 @@ export default function CategoriasConfiguracion() {
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                       </svg>
                     </div>
-                    <div className={styles.categoryTitleGroup}>
-                      <span className={styles.categoryTitle}>{tipo.nombre}</span>
-                      <span className={styles.subCountBadge}>
-                        {tipoSubtipos.length === 1
-                          ? '1 subcategoría'
-                          : `${tipoSubtipos.length} subcategorías`}
-                      </span>
-                    </div>
+                    {editandoTipoId === tipo.id ? (
+                      formularioNombre(tipo.nombre, 'Nombre de la categoría')
+                    ) : (
+                      <div className={styles.categoryTitleGroup}>
+                        <span className={styles.categoryTitle}>{tipo.nombre}</span>
+                        <span className={styles.subCountBadge}>
+                          {tipoSubtipos.length === 1
+                            ? '1 subcategoría'
+                            : `${tipoSubtipos.length} subcategorías`}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.categoryHeaderRight}>
@@ -295,6 +404,18 @@ export default function CategoriasConfiguracion() {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                       <span>Subcategoría</span>
+                    </button>
+
+                    {/* Botón editar categoría */}
+                    <button
+                      type="button"
+                      className={styles.btnIcon}
+                      onClick={(e) => empezarEdicionTipo(tipo, e)}
+                      disabled={editandoTipoId === tipo.id}
+                      title={`Editar categoría "${tipo.nombre}"`}
+                      aria-label={`Editar categoría ${tipo.nombre}`}
+                    >
+                      <Pencil size={15} />
                     </button>
 
                     {/* Botón eliminar categoría */}
@@ -339,6 +460,7 @@ export default function CategoriasConfiguracion() {
                         descuentoGeneral={tipo.descuentoGeneral}
                         descuentosSucursal={tipo.descuentosSucursal}
                         textoSinDescuento="que no tenga descuento"
+                        sucursales={sucursales}
                         onChanged={recargar}
                       />
                     </div>
@@ -357,7 +479,11 @@ export default function CategoriasConfiguracion() {
                             <div className={styles.subcategoryRow}>
                               <div className={styles.subLeft}>
                                 <span className={styles.subBullet} />
-                                <span className={styles.subName}>{subtipo.nombre}</span>
+                                {editandoSubtipoId === subtipo.id ? (
+                                  formularioNombre(subtipo.nombre, 'Nombre de la subcategoría')
+                                ) : (
+                                  <span className={styles.subName}>{subtipo.nombre}</span>
+                                )}
                                 {tieneDescuento && (
                                   <span className={styles.descuentoBadge}>
                                     {subtipo.descuentoGeneral !== null
@@ -373,6 +499,16 @@ export default function CategoriasConfiguracion() {
                                 aria-expanded={descuentoAbierto}
                               >
                                 {descuentoAbierto ? 'Ocultar descuentos' : 'Descuentos'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnIcon}
+                                onClick={() => empezarEdicionSubtipo(subtipo)}
+                                disabled={editandoSubtipoId === subtipo.id}
+                                title={`Editar subcategoría "${subtipo.nombre}"`}
+                                aria-label={`Editar subcategoría ${subtipo.nombre}`}
+                              >
+                                <Pencil size={14} />
                               </button>
                               <button
                                 type="button"
@@ -410,6 +546,7 @@ export default function CategoriasConfiguracion() {
                                 descuentoGeneral={subtipo.descuentoGeneral}
                                 descuentosSucursal={subtipo.descuentosSucursal}
                                 textoSinDescuento="que herede el de la categoría"
+                                sucursales={sucursales}
                                 onChanged={recargar}
                               />
                             )}

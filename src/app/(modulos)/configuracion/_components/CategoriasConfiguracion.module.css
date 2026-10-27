@@ -255,6 +255,39 @@
   cursor: not-allowed;
 }
 
+/* Ícono neutro (editar): mismo tamaño que el de eliminar. */
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btnIcon:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.btnIcon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Renombrar en línea, en el lugar del nombre. */
+.editNameForm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 /* ── Panel de Subcategorías (Desplegado) ─────────────────────── */
 .subcategoriesPanel {
   border-top: 1px solid var(--color-border);
