@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { OpcionesAsignacion, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './SucursalesConfiguracion.module.css';
 import { useCotizacion } from '../../../../context/CotizacionContext';
+import SucursalUsuariosEditor, { FilaAsignacion } from './SucursalUsuariosEditor';
 
 interface FormState {
   nombre: string;
@@ -50,6 +51,12 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
 
+  const [opcionesAsignacion, setOpcionesAsignacion] = useState<OpcionesAsignacion | null>(null);
+  const [asignaciones, setAsignaciones] = useState<FilaAsignacion[]>([]);
+  const [cargandoAsignaciones, setCargandoAsignaciones] = useState(false);
+  // Descarta respuestas de una edición que ya se cerró o cambió de sucursal.
+  const pedidoAsignaciones = useRef(0);
+
   const [bajaTarget, setBajaTarget] = useState<Sucursal | null>(null);
   const [usoBaja, setUsoBaja] = useState<{ productosConStock: number; usuarios: number } | null>(null);
   const [dandoBaja, setDandoBaja] = useState(false);
@@ -71,22 +78,48 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
     cargar();
   }, [cargar]);
 
+  useEffect(() => {
+    sucursalClient
+      .obtenerOpcionesAsignacion()
+      .then(setOpcionesAsignacion)
+      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar los usuarios'));
+  }, [showError]);
+
   const abrirCreacion = () => {
+    pedidoAsignaciones.current++;
     setEditandoId(null);
     setForm(FORM_VACIO);
+    setAsignaciones([]);
+    setCargandoAsignaciones(false);
     setCreando(true);
   };
 
-  const abrirEdicion = (s: Sucursal) => {
+  const abrirEdicion = async (s: Sucursal) => {
     setCreando(false);
     setEditandoId(s.id);
     setForm(aFormState(s));
+    setAsignaciones([]);
+    setCargandoAsignaciones(true);
+    const pedido = ++pedidoAsignaciones.current;
+    try {
+      const actuales = await sucursalClient.obtenerUsuarios(s.id);
+      if (pedido !== pedidoAsignaciones.current) return;
+      setAsignaciones(actuales.map(({ usuarioId, nombre, email, rolId, esActual }) => ({ usuarioId, nombre, email, rolId, esActual })));
+      setCargandoAsignaciones(false);
+    } catch (err) {
+      if (pedido !== pedidoAsignaciones.current) return;
+      showError(err instanceof Error ? err.message : 'Error al cargar los usuarios de la sucursal');
+      cerrarForm();
+    }
   };
 
   const cerrarForm = () => {
+    pedidoAsignaciones.current++;
     setCreando(false);
     setEditandoId(null);
     setForm(FORM_VACIO);
+    setAsignaciones([]);
+    setCargandoAsignaciones(false);
   };
 
   const guardar = async () => {
@@ -111,6 +144,10 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
       ...(!usaCentral ? { valor_dolar: valorDolar } : {}),
       descuento,
       es_central: form.esCentral,
+      // Solo un administrador manda la lista; al crear, el backend suma a quien crea.
+      ...(opcionesAsignacion?.puedeAdministrar
+        ? { usuarios: asignaciones.map((a) => ({ usuario_id: a.usuarioId, id_rol: a.rolId })) }
+        : {}),
     };
 
     setGuardando(true);
@@ -241,11 +278,20 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
         <span className={styles.hint}>Solo puede haber una: se le quita a la que la tenga.</span>
       </label>
 
+      <SucursalUsuariosEditor
+        opciones={opcionesAsignacion}
+        asignaciones={asignaciones}
+        onChange={setAsignaciones}
+        creando={creando}
+        cargando={cargandoAsignaciones}
+        disabled={guardando}
+      />
+
       <div className={styles.formActions}>
         <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando}>
+        <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando || cargandoAsignaciones || !opcionesAsignacion}>
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>
       </div>
@@ -261,7 +307,13 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
             Administra las sucursales y sus descuentos. La referencia del dólar se configura para toda la empresa.
           </p>
         </div>
-        <button type="button" className={styles.btnPrimary} onClick={abrirCreacion} disabled={creando}>
+        <button
+          type="button"
+          className={styles.btnPrimary}
+          onClick={abrirCreacion}
+          disabled={creando || !opcionesAsignacion?.puedeAdministrar}
+          title={opcionesAsignacion && !opcionesAsignacion.puedeAdministrar ? 'Solo un administrador puede crear sucursales.' : undefined}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />

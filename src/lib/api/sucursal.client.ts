@@ -19,6 +19,31 @@ export interface SucursalUso {
   usuarios: number;
 }
 
+/** Un usuario asignado a una sucursal, con su rol en ella. */
+export interface AsignacionSucursal {
+  usuarioId: string;
+  nombre: string;
+  email: string | null;
+  rolId: string;
+  rolNombre: string;
+  /** Es el usuario autenticado. */
+  esActual: boolean;
+}
+
+export interface UsuarioAsignable {
+  id: string;
+  nombre: string;
+  email: string | null;
+  esActual: boolean;
+}
+
+export interface OpcionesAsignacion {
+  /** Solo un administrador puede asignar usuarios. */
+  puedeAdministrar: boolean;
+  usuarios: UsuarioAsignable[];
+  roles: { id: string; nombre: string }[];
+}
+
 function mapApiSucursal(s: any): Sucursal {
   return {
     id: s.id,
@@ -90,6 +115,37 @@ export const sucursalClient = {
     if (!res.ok || json.status !== 'success') {
       throw new Error(json.message || 'No se pudo dar de baja la sucursal');
     }
+  },
+
+  obtenerUsuarios: async (id: string): Promise<AsignacionSucursal[]> => {
+    const res = await apiFetch(`/api/sucursales/${id}/usuarios`);
+    if (!res.ok) throw new Error('Error al cargar los usuarios de la sucursal');
+    const json = await res.json();
+    return (json.data ?? []).map((a: Record<string, unknown>) => ({
+      usuarioId: a.usuario_id as string,
+      nombre: (a.nombre as string) ?? '',
+      email: (a.email as string | null) ?? null,
+      rolId: a.id_rol as string,
+      rolNombre: (a.rol_nombre as string) ?? '',
+      esActual: a.es_actual === true,
+    }));
+  },
+
+  /** Usuarios y roles del tenant para asignar, y si el usuario autenticado puede hacerlo. */
+  obtenerOpcionesAsignacion: async (): Promise<OpcionesAsignacion> => {
+    const res = await apiFetch('/api/sucursales/opciones-asignacion');
+    if (!res.ok) throw new Error('Error al cargar los usuarios');
+    const json = await res.json();
+    return {
+      puedeAdministrar: json.data?.puede_administrar === true,
+      usuarios: (json.data?.usuarios ?? []).map((u: Record<string, unknown>) => ({
+        id: u.id as string,
+        nombre: (u.nombre as string) ?? '',
+        email: (u.email as string | null) ?? null,
+        esActual: u.es_actual === true,
+      })),
+      roles: json.data?.roles ?? [],
+    };
   },
 
   obtenerUso: async (id: string): Promise<SucursalUso> => {
