@@ -37,8 +37,7 @@
   color: var(--color-text-muted);
 }
 
-.ayuda a,
-.accion {
+.ayuda a {
   color: var(--color-primary);
   font: inherit;
   font-weight: 600;
@@ -49,14 +48,8 @@
   cursor: pointer;
 }
 
-.ayuda a:hover,
-.accion:hover:not(:disabled) {
+.ayuda a:hover {
   text-decoration: underline;
-}
-
-.accion:disabled {
-  color: var(--color-text-muted);
-  cursor: default;
 }
 
 .aviso {

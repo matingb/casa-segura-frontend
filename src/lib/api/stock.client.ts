@@ -27,6 +27,7 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
     precioVentaUsd: (apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) != null ? Number(apiData.precio_resuelto ? apiData.precio_resuelto.usd : apiData.precio_venta_usd) : null,
     precio: apiData.precio_resuelto,
     precioGlobal: apiData.producto_precio_resuelto,
+    precioDesdeProducto: apiData.precio_desde_producto === true,
     contextoMonetario: apiData.contexto_monetario,
     precioHeredado: { ars: apiData.precio_venta_ars_heredado ?? null, usd: apiData.precio_venta_usd_heredado ?? null },
     iva: apiData.iva != null ? Number(apiData.iva) : 21,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
@@ -49,7 +49,12 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const { stockItem: stockItemCargado, isLoading: isLoadingDetalle, error: errorDetalle, reload } = useStockDetalle(stockItemId ?? '');
   const stockItem = stockItemId ? stockItemCargado ?? undefined : stockItemProp;
   const isEditing = Boolean(stockItemId) || Boolean(stockItemProp?.id);
-  const { precio, setPrecio, resetPrecio } = usePrecioEdicion(stockItem);
+  // Sin precio propio, el editor arranca vacío: el precio que trae es el del producto.
+  const fuentePrecio = useMemo(
+    () => (stockItem?.precioDesdeProducto ? { contextoMonetario: stockItem.contextoMonetario } : stockItem),
+    [stockItem]
+  );
+  const { precio, setPrecio, resetPrecio } = usePrecioEdicion(fuentePrecio);
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
   const precioVista = resolverPrecioVista(precio.moneda, precio.importe || null, precio.cambiado ? precio.contexto : cotizacion ?? precio.contexto);
   const { monto: costoEdicion, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(stockItem, stockItem?.costo, stockItem?.costoReposicion, stockItem?.contextoMonetario);
@@ -123,10 +128,15 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const numeroDeCampo = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
   // Con costo y precio en USD el margen se compara en USD; si no, en ARS con la
   // cotización vigente (igual que el backend).
-  const margenEnUsd = precio.moneda === 'USD' && costoEdicion.moneda === 'USD';
+  // Sin precio de sucursal rige el precio base del producto: el margen se valida contra él.
+  const precioProducto = isEditing ? stockItem?.precioGlobal : productoSeleccionado?.precio;
+  const usaPrecioProducto = precio.importe.trim() === '' && precioProducto?.importe_referencia != null;
+  const precioEfectivo = usaPrecioProducto ? precioProducto! : precioVista;
+  const monedaPrecio = usaPrecioProducto ? precioProducto!.moneda_referencia : precio.moneda;
+  const margenEnUsd = monedaPrecio === 'USD' && costoEdicion.moneda === 'USD';
   const simbolo = margenEnUsd ? 'US$' : '$';
   const costoComparable = margenEnUsd ? costoVista.usd : costoVista.ars;
-  const precioComparable = margenEnUsd ? precioVista.usd : precioVista.ars;
+  const precioComparable = margenEnUsd ? precioEfectivo.usd : precioEfectivo.ars;
   const costo = costoComparable === null ? null : Number(costoComparable);
   const precioVenta = precioComparable === null ? null : Number(precioComparable);
   const margen = numeroDeCampo(margenMinimo);
@@ -458,13 +468,13 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               <PrecioEditor
                 value={precio}
                 onChange={setPrecio}
-                original={stockItem?.precio}
+                original={stockItem?.precioDesdeProducto ? undefined : stockItem?.precio}
                 heredado={stockItem?.precioHeredado}
                 label="Precio de sucursal"
-                sugerencia={!isEditing && productoSeleccionado ? {
-                  etiqueta: 'Precio global del producto',
-                  precio: productoSeleccionado.precio ?? resolverPrecioVista('ARS', productoSeleccionado.precioBase?.toString() ?? null, cotizacion),
-                } : undefined}
+                porDefecto={{
+                  etiqueta: 'el precio base del producto',
+                  precio: isEditing ? stockItem?.precioGlobal ?? null : productoSeleccionado ? productoSeleccionado.precio ?? null : undefined,
+                }}
               />
               <PrecioEditor
                 value={costoEdicion}
@@ -507,11 +517,6 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 placeholder={heredaDescuento ? String(stockItem!.descuentoBase) : '—'}
               />
             </div>
-            {!isEditing && productoSeleccionado && (
-              <p className={styles.hintDescuento}>
-                El precio de la sucursal es independiente del global: copiarlo no los vincula.
-              </p>
-            )}
             {heredaDescuento && (
               <p className={styles.hintDescuento}>
                 Vacío: hereda el descuento general del producto ({stockItem!.descuentoBase}%).

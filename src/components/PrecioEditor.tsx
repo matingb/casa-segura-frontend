@@ -22,11 +22,15 @@ export function textoCotizacion(contexto: ContextoMonetario | null | undefined):
  * calculado. Los avisos (precio heredado, cambio de cotización) ocupan una
  * fila completa solo cuando aparecen.
  */
-export default function PrecioEditor({ value, onChange, original, heredado, sugerencia, label = 'Precio', tipo = 'precio', tabIndex, onKeyDown }: {
+export default function PrecioEditor({ value, onChange, original, heredado, porDefecto, label = 'Precio', tipo = 'precio', tabIndex, onKeyDown }: {
   value: PrecioEdicion; onChange: (value: PrecioEdicion) => void; original?: PrecioResuelto;
   heredado?: { ars: string | null; usd: string | null };
-  /** Precio que se puede copiar explícitamente (ej.: el global al configurar una sucursal). */
-  sugerencia?: { etiqueta: string; precio: PrecioResuelto };
+  /**
+   * Precio que rige si el campo queda vacío (ej.: el base del producto para el
+   * stock). Se muestra como placeholder y se aclara debajo. `precio` undefined:
+   * todavía no se sabe cuál es; null o sin importe: no hay precio cargado.
+   */
+  porDefecto?: { etiqueta: string; precio?: PrecioResuelto | null };
   label?: string;
   /** Un costo en ARS no depende del dólar: no pide confirmar la cotización. */
   tipo?: 'precio' | 'costo';
@@ -43,7 +47,8 @@ export default function PrecioEditor({ value, onChange, original, heredado, suge
   const otra: Moneda = value.moneda === 'ARS' ? 'USD' : 'ARS';
   const equivalente = otra === 'ARS' ? precio.ars : precio.usd;
   const cotizacion = textoCotizacion(contexto);
-  const sugerenciaImporte = sugerencia?.precio.importe_referencia ?? null;
+  const importePorDefecto = porDefecto?.precio?.importe_referencia ?? null;
+  const textoPorDefecto = importePorDefecto != null ? formatPrecio(porDefecto!.precio!.moneda_referencia, importePorDefecto) : null;
 
   const cambiar = (importe: string) => onChange({ ...value, importe, contexto: value.cambiado ? value.contexto : datos ?? value.contexto, cambiado: true });
   const cambiarMoneda = (moneda: Moneda) => {
@@ -63,7 +68,7 @@ export default function PrecioEditor({ value, onChange, original, heredado, suge
           step={value.moneda === 'ARS' ? '0.01' : '0.0001'}
           value={value.importe}
           onChange={e => cambiar(e.target.value)}
-          placeholder="Sin precio"
+          placeholder={textoPorDefecto ?? 'Sin precio'}
           tabIndex={tabIndex}
           onKeyDown={onKeyDown}
         />
@@ -79,9 +84,12 @@ export default function PrecioEditor({ value, onChange, original, heredado, suge
           <option value="USD">USD</option>
         </Select>
       </div>
-      {sugerencia && <p className={styles.ayuda}>
-        {sugerencia.etiqueta}: {sugerenciaImporte == null ? 'sin precio' : formatPrecio(sugerencia.precio.moneda_referencia, sugerenciaImporte)}
-        {sugerenciaImporte != null && <> · <button type="button" className={styles.accion} onClick={() => onChange({ moneda: sugerencia.precio.moneda_referencia, importe: sugerenciaImporte, contexto: datos ?? value.contexto, cambiado: true })}>Copiar</button></>}
+      {porDefecto && <p className={styles.ayuda}>
+        {textoPorDefecto
+          ? `Si lo dejás vacío, se usa ${porDefecto.etiqueta}: ${textoPorDefecto}.`
+          : porDefecto.precio === undefined
+          ? `Si lo dejás vacío, se usa ${porDefecto.etiqueta}.`
+          : `Si lo dejás vacío, se usa ${porDefecto.etiqueta}, que hoy no tiene precio cargado.`}
       </p>}
     </div>
 

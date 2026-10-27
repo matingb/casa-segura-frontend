@@ -47,6 +47,24 @@ describe('Guardado del precio de sucursal', () => {
     expect(payload).not.toHaveProperty('precio');
     expect(payload).not.toHaveProperty('costo');
   });
+  it('sin precio propio, el precio arranca vacío y no se guarda el del producto', async () => {
+    const heredado = { ...item, precioDesdeProducto: true, precioGlobal: { moneda_referencia: 'ARS', importe_referencia: '500.00', ars: '500.00', usd: '0.5000', estado: 'VINCULADO' } } as StockItem;
+    render(<StockForm title="Editar" stockItem={heredado} />);
+    const input = screen.getByLabelText('Precio de sucursal');
+    expect(input).toHaveValue(null);
+    expect(input.getAttribute('placeholder')).toMatch(/500/);
+    expect(screen.getByText(/^Si lo dejás vacío, se usa el precio base del producto: .*500/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(stockClient.actualizar).toHaveBeenCalled());
+    expect(vi.mocked(stockClient.actualizar).mock.calls[0][1]).not.toHaveProperty('precio');
+  });
+  it('borrar el precio propio lo manda vacío para volver al del producto', async () => {
+    render(<StockForm title="Editar" stockItem={item} />);
+    fireEvent.change(screen.getByLabelText('Precio de sucursal'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(stockClient.actualizar).toHaveBeenCalled());
+    expect(vi.mocked(stockClient.actualizar).mock.calls[0][1].precio).toBeNull();
+  });
   it('permite corregir las cantidades al editar desde el detalle', async () => {
     render(<StockForm title="Detalle" stockItem={item} readOnly />);
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));

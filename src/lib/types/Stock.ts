@@ -27,6 +27,8 @@ export interface StockItem {
   precioVentaUsd: number | null;
   precio?: PrecioResuelto;
   precioGlobal?: PrecioResuelto;
+  /** Sin precio propio: `precio` es el precio base del producto. */
+  precioDesdeProducto?: boolean;
   contextoMonetario?: ContextoMonetario;
   precioHeredado?: { ars: string | null; usd: string | null };
   iva: number;
