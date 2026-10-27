@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import CotizacionConfiguracion from './CotizacionConfiguracion';
 import CategoriasConfiguracion from './CategoriasConfiguracion';
 import SucursalesConfiguracion from './SucursalesConfiguracion';
 import RegionesConfiguracion from './RegionesConfiguracion';
 import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
-import { useSucursales } from '../../../../context/SucursalContext';
+import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import styles from '../configuracion.module.css';
 
 type TabType = 'categorias' | 'sucursales' | 'regiones' | 'cotizacion';
@@ -15,7 +15,14 @@ export default function ConfiguracionView() {
   const [activeTab, setActiveTab] = useState<TabType>('categorias');
   useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'cotizacion') setActiveTab('cotizacion'); }, []);
   const { tipos } = useClasificacion();
-  const { sucursales } = useSucursales();
+  // Sucursales activas del tenant: las mismas que lista la pestaña, sin las dadas de baja.
+  const [sucursalesActivas, setSucursalesActivas] = useState<number | null>(null);
+  const contarSucursales = useCallback((lista: Sucursal[]) => {
+    setSucursalesActivas(lista.filter((s) => s.activo).length);
+  }, []);
+  useEffect(() => {
+    sucursalClient.obtenerParaAdmin(false).then(contarSucursales).catch(() => setSucursalesActivas(null));
+  }, [contarSucursales]);
 
   return (
     <div className={styles.page}>
@@ -71,7 +78,7 @@ export default function ConfiguracionView() {
             <path d="M10 21v-6h4v6" />
           </svg>
           <span>Sucursales</span>
-          <span className={styles.tabBadge}>{sucursales.length}</span>
+          {sucursalesActivas !== null && <span className={styles.tabBadge}>{sucursalesActivas}</span>}
         </button>
 
         <button
@@ -98,7 +105,7 @@ export default function ConfiguracionView() {
         aria-labelledby={`tab-${activeTab}`}
       >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
-        {activeTab === 'sucursales' && <SucursalesConfiguracion />}
+        {activeTab === 'sucursales' && <SucursalesConfiguracion onSucursalesCargadas={contarSucursales} onIrACotizacion={() => setActiveTab('cotizacion')} />}
         {activeTab === 'regiones' && <RegionesConfiguracion />}
         {activeTab === 'cotizacion' && <CotizacionConfiguracion />}
       </main>

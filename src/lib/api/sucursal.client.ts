@@ -7,6 +7,8 @@ export interface Sucursal {
   valorDolar: number;
   descuento: number | null;
   activo: boolean;
+  /** Si el usuario autenticado está asignado (solo lo informa el listado de administración). */
+  asignado?: boolean;
   usuarioSucursalId?: string;
   rolId?: string;
   rolNombre?: string;
@@ -25,6 +27,7 @@ function mapApiSucursal(s: any): Sucursal {
     valorDolar: s.valor_dolar ? Number(s.valor_dolar) : 0,
     descuento: s.descuento != null ? Number(s.descuento) : null,
     activo: s.activo ?? true,
+    asignado: s.asignado,
     usuarioSucursalId: s.usuario_sucursal_id,
     rolId: s.id_rol,
     rolNombre: s.rol_nombre,

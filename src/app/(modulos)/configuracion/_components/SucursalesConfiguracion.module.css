@@ -120,6 +120,13 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.field input:disabled {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+  border-color: var(--color-border-strong);
+  cursor: not-allowed;
+}
+
 .field input:hover:not(:disabled) {
   border-color: var(--color-input-border-hover);
 }
@@ -158,6 +165,11 @@
 .hint {
   font-size: 0.75rem;
   color: var(--color-text-muted);
+}
+
+/* Link dentro de un texto de ayuda: toma el tamaño del texto que lo rodea. */
+.hintLink {
+  font-size: inherit;
 }
 
 .formActions {

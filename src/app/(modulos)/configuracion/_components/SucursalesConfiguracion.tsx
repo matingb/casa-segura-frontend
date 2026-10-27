@@ -27,7 +27,16 @@ function aFormState(s: Sucursal): FormState {
   };
 }
 
-export default function SucursalesConfiguracion() {
+const MOTIVO_NO_ASIGNADO = 'No estás asignado a esta sucursal, por eso no podés modificarla.';
+
+interface SucursalesConfiguracionProps {
+  /** Avisa cada vez que se recarga el listado (lo usa el contador de la pestaña). */
+  onSucursalesCargadas?: (sucursales: Sucursal[]) => void;
+  /** Lleva a la pestaña donde se configura el dólar de toda la empresa. */
+  onIrACotizacion?: () => void;
+}
+
+export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACotizacion }: SucursalesConfiguracionProps) {
   const { showSuccess, showError } = useToast();
   const { recargarSucursales } = useSucursales();
   const { datos: cotizacion } = useCotizacion();
@@ -48,13 +57,15 @@ export default function SucursalesConfiguracion() {
   const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      setSucursales(await sucursalClient.obtenerParaAdmin());
+      const lista = await sucursalClient.obtenerParaAdmin();
+      setSucursales(lista);
+      onSucursalesCargadas?.(lista);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Error al cargar sucursales');
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [showError, onSucursalesCargadas]);
 
   useEffect(() => {
     cargar();
@@ -181,11 +192,28 @@ export default function SucursalesConfiguracion() {
             type="number"
             min="0"
             step="0.01"
-            value={form.valorDolar}
+            // Con dólar de empresa se muestra ese valor (solo lectura); al guardar no se envía.
+            value={usaCentral ? String(Number(cotizacion!.cotizacion_usd_ars)) : form.valorDolar}
             onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
-            placeholder="Ej: 1200"
+            placeholder={usaCentral ? undefined : 'Ej: 1200'}
             disabled={guardando || usaCentral}
           />
+          {usaCentral && (
+            <span className={styles.hint}>
+              El dólar se configura para toda la empresa
+              {onIrACotizacion ? (
+                <>
+                  {' en '}
+                  <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}>
+                    Configuración → Cotización
+                  </button>
+                </>
+              ) : (
+                ' en Configuración → Cotización'
+              )}
+              .
+            </span>
+          )}
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Descuento (%)</span>
@@ -273,7 +301,13 @@ export default function SucursalesConfiguracion() {
                 </div>
 
                 <div className={styles.filaAcciones}>
-                  <button type="button" className={styles.btnLink} onClick={() => abrirEdicion(s)}>
+                  <button
+                    type="button"
+                    className={styles.btnLink}
+                    onClick={() => abrirEdicion(s)}
+                    disabled={!s.asignado}
+                    title={!s.asignado ? MOTIVO_NO_ASIGNADO : undefined}
+                  >
                     Editar
                   </button>
                   {s.activo ? (
@@ -281,9 +315,11 @@ export default function SucursalesConfiguracion() {
                       type="button"
                       className={styles.btnLinkDanger}
                       onClick={() => pedirBaja(s)}
-                      disabled={s.esCentral}
+                      disabled={s.esCentral || !s.asignado}
                       title={
-                        s.esCentral
+                        !s.asignado
+                          ? MOTIVO_NO_ASIGNADO
+                          : s.esCentral
                           ? 'La casa central no se puede dar de baja'
                           : `Dar de baja ${s.nombre}`
                       }
@@ -291,7 +327,13 @@ export default function SucursalesConfiguracion() {
                       Dar de baja
                     </button>
                   ) : (
-                    <button type="button" className={styles.btnLink} onClick={() => reactivar(s)}>
+                    <button
+                      type="button"
+                      className={styles.btnLink}
+                      onClick={() => reactivar(s)}
+                      disabled={!s.asignado}
+                      title={!s.asignado ? MOTIVO_NO_ASIGNADO : undefined}
+                    >
                       Reactivar
                     </button>
                   )}
