@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { FileDown, FileSpreadsheet, Building2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
-import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar, { FilterField } from '../../../../../components/ui/FilterBar/FilterBar';
 import Combobox from '../../../../../components/ui/Combobox/Combobox';
@@ -143,9 +142,6 @@ export default function ListaPreciosCatalogo() {
       width: '1%',
     },
     {
-      key: 'referencia', header: 'Referencia', render: item => `${item.precio?.moneda_referencia ?? 'ARS'}${item.precio?.estado === 'LEGADO_PENDIENTE_REVISION' ? ' · revisar' : ''}`,
-    },
-    {
       key: 'iva',
       header: 'IVA',
       render: (item) => (
@@ -154,11 +150,6 @@ export default function ListaPreciosCatalogo() {
       sortable: true,
       align: 'right',
       width: '1%',
-    },
-    {
-      key: 'estado',
-      header: 'Estado',
-      render: () => <Badge variant="success">Habilitado</Badge>,
     },
   ];
 
