@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
 import { DescuentoSucursal } from '../../../../lib/types/Tipo';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
@@ -227,7 +227,7 @@ export default function DescuentoEditor({
               }
               disabled={guardando}
             >
-              <X size={14} />
+              <Trash2 size={14} />
             </button>
           </div>
         ))}
@@ -240,7 +240,8 @@ export default function DescuentoEditor({
             onClick={agregarFila}
             disabled={guardando}
           >
-            + Agregar sucursal
+            <Plus size={14} aria-hidden="true" />
+            Agregar sucursal
           </button>
         )}
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Card from '../../../../../components/ui/Card/Card';
@@ -364,6 +365,7 @@ export default function OperacionDetalle({ operacionId }: OperacionDetalleProps)
                         onClick={() => setPagoAEliminar(c)}
                         aria-label={`Eliminar ${operacion.tipoNombre === 'Compra' ? 'pago' : 'cobro'} de ${formatMonto(c.monto)} en ${c.cuentaNombre}`}
                       >
+                        <Trash2 size={15} aria-hidden="true" />
                         Eliminar
                       </Button>
                     )}

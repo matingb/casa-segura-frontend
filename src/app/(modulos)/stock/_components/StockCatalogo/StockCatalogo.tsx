@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye } from 'lucide-react';
+import { Pencil, Eye, Plus } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
@@ -157,7 +157,7 @@ export default function StockCatalogo() {
       title="Catálogo de stock"
       actions={
         <Button variant="primary" onClick={() => router.push('/stock/nuevo')}>
-          + Nuevo stock
+          <Plus size={16} aria-hidden="true" /> Nuevo stock
         </Button>
       }
     >

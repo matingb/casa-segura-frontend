@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Trash2 } from 'lucide-react';
 import { ClienteRegion, Region } from '../../../../../lib/types/Region';
 import { regionClient } from '../../../../../lib/api/region.client';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
@@ -116,7 +116,7 @@ export default function RegionSelector({ clienteId, sucursales, regionesAsignada
                   {asignada ? 'Reemplazar' : 'Asignar'}
                 </button>
                 {asignada && (
-                  <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(asignada)} disabled={guardando}>Quitar</button>
+                  <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(asignada)} disabled={guardando}><Trash2 size={14} aria-hidden="true" />Quitar</button>
                 )}
               </div>
               {elegida && elegidaId !== asignada?.regionId && (

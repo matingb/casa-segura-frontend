@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
@@ -362,9 +363,11 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               Volver
             </Button>
             <Button type="button" onClick={() => setInlineEditing(true)}>
+              <Pencil size={15} aria-hidden="true" />
               Editar
             </Button>
             <Button type="button" variant="danger" onClick={() => setShowDeleteConfirmation(true)}>
+              <Trash2 size={15} aria-hidden="true" />
               Eliminar
             </Button>
           </div>

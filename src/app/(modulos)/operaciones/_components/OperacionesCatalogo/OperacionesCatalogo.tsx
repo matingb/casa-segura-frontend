@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
@@ -162,7 +162,7 @@ export default function OperacionesCatalogo() {
         title="Historial de operaciones"
         actions={
           <Button variant="primary" onClick={() => setShowNuevaOperacion(true)}>
-            + Nueva operación
+            <Plus size={16} aria-hidden="true" /> Nueva operación
           </Button>
         }
       >

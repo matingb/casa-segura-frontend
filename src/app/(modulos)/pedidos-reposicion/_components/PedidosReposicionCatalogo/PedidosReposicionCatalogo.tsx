@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
@@ -79,7 +80,7 @@ export default function PedidosReposicionCatalogo() {
       title="Pedidos de reposición"
       actions={
         <Button variant="primary" onClick={() => router.push('/pedidos-reposicion/nuevo')}>
-          + Nuevo pedido
+          <Plus size={16} aria-hidden="true" /> Nuevo pedido
         </Button>
       }
     >

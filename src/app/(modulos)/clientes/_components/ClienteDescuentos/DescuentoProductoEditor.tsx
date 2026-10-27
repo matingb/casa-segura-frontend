@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Package } from 'lucide-react';
+import { Package, Trash2 } from 'lucide-react';
 import { ClienteDescuentoProducto } from '../../../../../lib/types/Region';
 import { Producto } from '../../../../../lib/types/Producto';
 import { productoClient } from '../../../../../lib/api/producto.client';
@@ -197,7 +197,7 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
                     </td>
                     <td className={styles.nota}>{p.nota || <span className={styles.muted}>—</span>}</td>
                     <td className={styles.acciones}>
-                      <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(p)}>Quitar</button>
+                      <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(p)}><Trash2 size={14} aria-hidden="true" />Quitar</button>
                     </td>
                   </tr>
                 );

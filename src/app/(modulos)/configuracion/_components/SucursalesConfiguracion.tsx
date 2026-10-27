@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OpcionesAsignacion, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useSucursales } from '../../../../context/SucursalContext';
@@ -360,6 +361,7 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                     disabled={!s.asignado}
                     title={!s.asignado ? MOTIVO_NO_ASIGNADO : undefined}
                   >
+                    <Pencil size={15} aria-hidden="true" />
                     Editar
                   </button>
                   {s.activo ? (
@@ -376,6 +378,7 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                           : `Dar de baja ${s.nombre}`
                       }
                     >
+                      <Trash2 size={15} aria-hidden="true" />
                       Dar de baja
                     </button>
                   ) : (

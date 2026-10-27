@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, FileDown, Pencil, User, Percent, Building2, MapPin, ArrowLeft } from 'lucide-react';
+import { X, FileDown, Pencil, User, Percent, Building2, MapPin, ArrowLeft, Trash2 } from 'lucide-react';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
 import Input from '../../../../components/ui/Input/Input';
@@ -592,6 +592,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
                 variant="dangerOutline"
                 onClick={() => setShowDeleteConfirmation(true)}
               >
+                <Trash2 size={15} aria-hidden="true" />
                 Dar de baja
               </Button>
             )}
@@ -665,7 +666,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
                     variant="secondary"
                     onClick={() => setInlineEditing(true)}
                   >
-                    <Pencil size={15} style={{ marginRight: '0.4rem' }} />
+                    <Pencil size={15} aria-hidden="true" />
                     Editar información
                   </Button>
                 </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { OpcionesAsignacion } from '../../../../lib/api/sucursal.client';
 import styles from './SucursalUsuariosEditor.module.css';
@@ -118,6 +119,7 @@ export default function SucursalUsuariosEditor({
                         onClick={() => quitar(a.usuarioId)}
                         disabled={disabled}
                       >
+                        <Trash2 size={14} aria-hidden="true" />
                         Quitar
                       </button>
                     )}
@@ -170,6 +172,7 @@ export default function SucursalUsuariosEditor({
                   onClick={agregar}
                   disabled={disabled || !nuevoUsuarioId || !nuevoRolId}
                 >
+                  <Plus size={15} aria-hidden="true" />
                   Agregar
                 </button>
               </div>

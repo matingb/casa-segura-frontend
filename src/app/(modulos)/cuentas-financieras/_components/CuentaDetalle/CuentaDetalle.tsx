@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '../../../../../components/ui/Card/Card';
@@ -119,6 +120,7 @@ export default function CuentaDetalle({ cuentaId }: CuentaDetalleProps) {
             variant="secondary"
             onClick={() => router.push(`/cuentas-financieras/${cuenta.id}/editar`)}
           >
+            <Pencil size={15} aria-hidden="true" />
             Editar cuenta
           </Button>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Tag } from 'lucide-react';
+import { Tag, Trash2 } from 'lucide-react';
 import { ClienteDescuentoCategoria } from '../../../../../lib/types/Region';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
@@ -221,7 +221,7 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
                   <td className={styles.num}>{afectadosDe(c)}</td>
                   <td className={styles.nota}>{c.nota || <span className={styles.muted}>—</span>}</td>
                   <td className={styles.acciones}>
-                    <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(c)}>Quitar</button>
+                    <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(c)}><Trash2 size={14} aria-hidden="true" />Quitar</button>
                   </td>
                 </tr>
               ))}

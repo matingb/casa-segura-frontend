@@ -95,6 +95,9 @@
 
 .btnQuitar,
 .btnAgregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;

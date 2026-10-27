@@ -345,6 +345,7 @@ export default function ItemsEditor({
                 onChange={(e) => actualizarItem(index, { cantidad: Number(e.target.value) })}
               />
               <Button type="button" variant="danger" onClick={() => quitarItem(index)}>
+                <Trash2 size={15} aria-hidden="true" />
                 Quitar
               </Button>
             </div>
@@ -353,7 +354,8 @@ export default function ItemsEditor({
 
       {modo === 'traslado' && (
         <Button type="button" variant="secondary" onClick={agregarItem} disabled={!sucursalId}>
-          + Agregar producto
+          <Plus size={16} aria-hidden="true" />
+          Agregar producto
         </Button>
       )}
 

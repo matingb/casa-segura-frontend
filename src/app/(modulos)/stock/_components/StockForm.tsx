@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '../../../../components/ui/Card/Card';
@@ -381,9 +382,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               Volver
             </Button>
             <Button type="button" onClick={() => setInlineEditing(true)}>
+              <Pencil size={15} aria-hidden="true" />
               Editar
             </Button>
             <Button type="button" variant="danger" onClick={() => setShowDeleteConfirmation(true)}>
+              <Trash2 size={15} aria-hidden="true" />
               Eliminar
             </Button>
           </div>

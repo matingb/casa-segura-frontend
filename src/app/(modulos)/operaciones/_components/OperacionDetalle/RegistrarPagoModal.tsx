@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Button from '../../../../../components/ui/Button/Button';
 import Input from '../../../../../components/ui/Input/Input';
@@ -192,7 +193,8 @@ export default function RegistrarPagoModal({ operacion, onClose, onRegistered }:
         </div>
 
         <button type="button" className={styles.agregarMovimiento} onClick={agregarLinea}>
-          + Añadir otra cuenta
+          <Plus size={16} aria-hidden="true" />
+          Añadir otra cuenta
         </button>
         {error && <p className={styles.error} role="alert">{error}</p>}
       </form>

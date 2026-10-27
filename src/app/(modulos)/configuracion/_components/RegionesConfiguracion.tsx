@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Region, regionClient } from '../../../../lib/api/region.client';
 import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
@@ -292,6 +293,7 @@ export default function RegionesConfiguracion() {
                     onClick={() => abrirEdicion(r)}
                     disabled={guardando || eliminando}
                   >
+                    <Pencil size={15} aria-hidden="true" />
                     Editar
                   </button>
                   {r.activo && (
@@ -301,6 +303,7 @@ export default function RegionesConfiguracion() {
                       onClick={() => setEliminarTarget(r)}
                       disabled={guardando || eliminando}
                     >
+                      <Trash2 size={15} aria-hidden="true" />
                       Dar de baja
                     </button>
                   )}
