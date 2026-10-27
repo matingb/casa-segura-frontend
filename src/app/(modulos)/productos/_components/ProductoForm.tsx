@@ -23,7 +23,7 @@ import styles from './ProductoForm.module.css';
 import PrecioEditor from '../../../../components/PrecioEditor';
 import PrecioDetalle from '../../../../components/PrecioDetalle';
 import { useMontoEdicion, usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
-import { costoParaGuardar, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
+import { costoParaGuardar, PrecioEdicion, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
 
@@ -32,7 +32,17 @@ interface ProductoFormProps {
   producto?: Producto;
   productoId?: string;
   readOnly?: boolean;
+  /** Al crear: producto cuyos datos se copian de entrada (ej. desde el listado). */
+  copiarDeId?: string;
 }
+
+/** Precio o costo de un producto como borrador del editor (para copiarlo). */
+function montoCopiado(resuelto: Producto['precio'], arsLegado: number | null | undefined, contexto: PrecioEdicion['contexto']): PrecioEdicion {
+  const importe = resuelto ? resuelto.importe_referencia ?? '' : arsLegado?.toString() ?? '';
+  return { moneda: resuelto?.moneda_referencia ?? 'ARS', importe, contexto, cambiado: importe !== '' };
+}
+
+const MENSAJE_COPIA_SIN_CAMBIOS = 'Cambiá al menos un dato respecto del producto copiado.';
 
 function focusNextField(current: HTMLElement, form: HTMLFormElement | null) {
   if (!form) return;
@@ -51,7 +61,7 @@ function handleEnterAdvance(e: KeyboardEvent<HTMLInputElement>, formRef: React.R
   }
 }
 
-export default function ProductoForm({ title, producto: productoProp, productoId, readOnly = false }: ProductoFormProps) {
+export default function ProductoForm({ title, producto: productoProp, productoId, readOnly = false, copiarDeId }: ProductoFormProps) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const { producto: productoCargado, isLoading, error, reload } = useProductoDetalle(productoId ?? '');
@@ -86,6 +96,15 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const [isDeleting, setIsDeleting] = useState(false);
   const isReadOnlyView = readOnly && !inlineEditing;
 
+  // Copiar al crear: `origen` es el producto copiado; sus datos son los valores
+  // iniciales del formulario y hay que cambiar al menos uno para poder guardar.
+  const [origen, setOrigen] = useState<Producto | null>(null);
+  const [opcionesCopia, setOpcionesCopia] = useState<{ value: string; label: string }[]>([]);
+  const [cargandoCopia, setCargandoCopia] = useState(false);
+  const [montosOrigen, setMontosOrigen] = useState<{ precio: PrecioEdicion; costo: PrecioEdicion } | null>(null);
+  const snapshotCopiaPendiente = useRef(false);
+  const base = producto ?? origen ?? undefined;
+
   const serializeForm = (): string => {
     if (!formRef.current) return '';
     const formData = new FormData(formRef.current);
@@ -102,26 +121,96 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   };
 
   const checkForChanges = () => {
-    if (!isEditing) return;
+    if (!isEditing && !origen) return;
     setHasChanges(serializeForm() !== snapshotRef.current);
   };
+
+  const copiarDe = async (id: string) => {
+    if (!id) {
+      setOrigen(null);
+      setMontosOrigen(null);
+      snapshotRef.current = null;
+      setPrecio({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false });
+      setCosto({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false });
+      setTipoId('');
+      setSubtipoId('');
+      setImagenUrl(undefined);
+      setCodigoQr('');
+      setUnidadAlto('cm');
+      setUnidadAncho('cm');
+      setUnidadProfundidad('cm');
+      setUnidadPeso('kg');
+      setHasChanges(true);
+      return;
+    }
+    setCargandoCopia(true);
+    try {
+      const copia = await productoClient.obtenerPorId(id);
+      if (!copia) throw new Error('No se encontró el producto a copiar.');
+      const montos = {
+        precio: montoCopiado(copia.precio, copia.precioBase, cotizacion),
+        costo: montoCopiado(copia.costo, copia.costoReposicionBase, cotizacion),
+      };
+      setMontosOrigen(montos);
+      setPrecio(montos.precio);
+      setCosto(montos.costo);
+      snapshotCopiaPendiente.current = true;
+      setSubmitError(null);
+      setOrigen(copia);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo copiar el producto.');
+    } finally {
+      setCargandoCopia(false);
+    }
+  };
+
+  // Opciones para copiar: solo al crear.
+  useEffect(() => {
+    if (isEditing || readOnly) return;
+    productoClient
+      .obtenerTodos()
+      .then((lista) => setOpcionesCopia(lista.map((p) => ({ value: p.id, label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre}` }))))
+      .catch(() => setOpcionesCopia([]));
+  }, [isEditing, readOnly]);
+
+  // Copia pedida desde el listado (/productos/nuevo?copiar=<id>).
+  useEffect(() => {
+    if (copiarDeId && !isEditing) void copiarDe(copiarDeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copiarDeId]);
+
+  // La foto de la copia se toma cuando el formulario ya muestra sus datos.
+  useEffect(() => {
+    if (!origen || !snapshotCopiaPendiente.current) return;
+    if (subtipoId !== (origen.subtipoId ?? '') || codigoQr !== (origen.codigoQr ?? '')) return;
+    snapshotRef.current = serializeForm();
+    snapshotCopiaPendiente.current = false;
+    setHasChanges(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origen, subtipoId, codigoQr, imagenUrl, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
+
+  const mismoMonto = (a: PrecioEdicion, b: PrecioEdicion) => a.moneda === b.moneda && a.importe.trim() === b.importe.trim();
+  const copiaSinCambios = Boolean(
+    origen && montosOrigen && !hasChanges &&
+    mismoMonto(precio, montosOrigen.precio) && mismoMonto(costo, montosOrigen.costo)
+  );
 
   useEffect(() => {
     if (!isReadOnlyView) codigoInputRef.current?.focus();
   }, [isReadOnlyView]);
 
   useEffect(() => {
-    if (producto) {
-      setTipoId(getTipoIdDeSubtipo(producto.subtipoId) ?? '');
-      setSubtipoId(producto.subtipoId ?? '');
-      setImagenUrl(producto.imagenUrl);
-      setCodigoQr(producto.codigoQr ?? '');
-      setUnidadAlto(producto.unidadAlto ?? 'cm');
-      setUnidadAncho(producto.unidadAncho ?? 'cm');
-      setUnidadProfundidad(producto.unidadProfundidad ?? 'cm');
-      setUnidadPeso(producto.unidadPesoUnitario ?? 'kg');
+    if (base) {
+      setTipoId(getTipoIdDeSubtipo(base.subtipoId) ?? '');
+      setSubtipoId(base.subtipoId ?? '');
+      setImagenUrl(base.imagenUrl);
+      setCodigoQr(base.codigoQr ?? '');
+      setUnidadAlto(base.unidadAlto ?? 'cm');
+      setUnidadAncho(base.unidadAncho ?? 'cm');
+      setUnidadProfundidad(base.unidadProfundidad ?? 'cm');
+      setUnidadPeso(base.unidadPesoUnitario ?? 'kg');
     }
-  }, [producto, getTipoIdDeSubtipo]);
+  }, [base, getTipoIdDeSubtipo]);
 
   useEffect(() => {
     if (isEditing && producto) {
@@ -132,7 +221,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   }, [producto]);
 
   useEffect(() => {
-    if (isEditing && snapshotRef.current !== null) {
+    if ((isEditing || origen) && snapshotRef.current !== null) {
       checkForChanges();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,6 +230,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (savingRef.current) return;
+    if (copiaSinCambios) {
+      setSubmitError(MENSAJE_COPIA_SIN_CAMBIOS);
+      return;
+    }
 
     const formData = new FormData(e.currentTarget);
     const body = {
@@ -391,12 +484,33 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       <h1 className={styles.pageTitle}>{title}</h1>
 
       <Card>
+        {!isEditing && (
+          <div className={styles.copiarBloque}>
+            <Combobox
+              label="Copiar datos de un producto existente"
+              options={opcionesCopia}
+              value={origen?.id ?? ''}
+              onChange={(id) => void copiarDe(id)}
+              placeholder="Buscar producto a copiar..."
+              loading={cargandoCopia}
+              disabled={isSaving}
+            />
+            {origen && (
+              <p className={styles.hintDescuento}>
+                Se copiaron todos los datos de <b>{origen.nombre}</b>. Cambiá al menos uno antes de guardar.{' '}
+                <button type="button" className={styles.linkQuitarCopia} onClick={() => void copiarDe('')} disabled={isSaving}>
+                  Empezar en blanco
+                </button>
+              </p>
+            )}
+          </div>
+        )}
         <form
           ref={formRef}
           onSubmit={handleSubmit}
           onChange={checkForChanges}
           className={styles.form}
-          key={producto?.id ?? 'nuevo'}
+          key={producto?.id ?? (origen ? `copia-${origen.id}` : 'nuevo')}
         >
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Identificación</h2>
@@ -405,7 +519,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 ref={codigoInputRef}
                 label={<>Código<span className={styles.requiredMark}>*</span></>}
                 name="codigo"
-                defaultValue={producto?.codigo}
+                defaultValue={base?.codigo}
                 placeholder="Ej: CAM-001"
                 required
                 tabIndex={1}
@@ -414,7 +528,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label="Código de barra proveedor"
                 name="codigoBarraProveedor"
-                defaultValue={producto?.codigoBarraProveedor}
+                defaultValue={base?.codigoBarraProveedor}
                 placeholder="Ej: 7791234560011"
                 tabIndex={2}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -422,7 +536,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label={<>Nombre<span className={styles.requiredMark}>*</span></>}
                 name="nombre"
-                defaultValue={producto?.nombre}
+                defaultValue={base?.nombre}
                 placeholder="Ej: Cámara domo 4MP"
                 required
                 tabIndex={3}
@@ -443,7 +557,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 min="0"
                 max="100"
                 step="0.01"
-                defaultValue={producto?.descuentoBase ?? undefined}
+                defaultValue={base?.descuentoBase ?? undefined}
                 placeholder="—"
                 tabIndex={4}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -469,7 +583,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label="Marca"
                 name="marca"
-                defaultValue={producto?.marca}
+                defaultValue={base?.marca}
                 placeholder="Ej: Hikvision"
                 tabIndex={5}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -477,7 +591,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label="Modelo"
                 name="modelo"
-                defaultValue={producto?.modelo}
+                defaultValue={base?.modelo}
                 placeholder="Ej: DS-2CE56"
                 tabIndex={6}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -485,7 +599,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label="Color"
                 name="color"
-                defaultValue={producto?.color}
+                defaultValue={base?.color}
                 placeholder="Ej: Blanco"
                 tabIndex={7}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -493,7 +607,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <Input
                 label="Presentación"
                 name="presentacion"
-                defaultValue={producto?.presentacion}
+                defaultValue={base?.presentacion}
                 placeholder="Ej: Unidad, Kit, Caja x10"
                 tabIndex={8}
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -536,7 +650,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   name="alto"
                   type="number"
                   step="0.01"
-                  defaultValue={producto?.alto ? Number(producto.alto).toFixed(2) : undefined}
+                  defaultValue={base?.alto ? Number(base.alto).toFixed(2) : undefined}
                   placeholder="Ej: 9.50"
                   tabIndex={11}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -558,7 +672,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   name="ancho"
                   type="number"
                   step="0.01"
-                  defaultValue={producto?.ancho ? Number(producto.ancho).toFixed(2) : undefined}
+                  defaultValue={base?.ancho ? Number(base.ancho).toFixed(2) : undefined}
                   placeholder="Ej: 9.50"
                   tabIndex={13}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -580,7 +694,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   name="profundidad"
                   type="number"
                   step="0.01"
-                  defaultValue={producto?.profundidad ? Number(producto.profundidad).toFixed(2) : undefined}
+                  defaultValue={base?.profundidad ? Number(base.profundidad).toFixed(2) : undefined}
                   placeholder="Ej: 7.20"
                   tabIndex={15}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -602,7 +716,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   name="pesoUnitario"
                   type="number"
                   step="0.01"
-                  defaultValue={producto?.pesoUnitario ? Number(producto.pesoUnitario).toFixed(2) : undefined}
+                  defaultValue={base?.pesoUnitario ? Number(base.pesoUnitario).toFixed(2) : undefined}
                   placeholder="Ej: 0.45"
                   tabIndex={17}
                   onKeyDown={(e) => handleEnterAdvance(e, formRef)}
@@ -623,7 +737,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Estado y descripción</h2>
             <div className={styles.grid}>
-              <Select label="Estado" name="activo" defaultValue={producto ? String(producto.activo) : 'true'} tabIndex={19}>
+              <Select label="Estado" name="activo" defaultValue={base ? String(base.activo) : 'true'} tabIndex={19}>
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
               </Select>
@@ -633,7 +747,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <textarea
                 id="descripcion"
                 name="descripcion"
-                defaultValue={producto?.descripcion}
+                defaultValue={base?.descripcion}
                 placeholder="Descripción del producto"
                 rows={3}
                 tabIndex={20}
@@ -682,10 +796,11 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || (isEditing && !hasChanges && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
+            <Button type="submit" variant="primary" disabled={isSaving || copiaSinCambios || (isEditing && !hasChanges && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
               {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
+          {copiaSinCambios && <p className={styles.hintDescuento}>{MENSAJE_COPIA_SIN_CAMBIOS}</p>}
           {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
         </form>
       </Card>

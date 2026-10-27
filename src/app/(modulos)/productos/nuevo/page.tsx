@@ -1,5 +1,11 @@
 import ProductoForm from '../_components/ProductoForm';
 
-export default function NuevoProductoPage() {
-  return <ProductoForm title="Nuevo producto" />;
+interface NuevoProductoPageProps {
+  searchParams: Promise<{ copiar?: string }>;
+}
+
+export default async function NuevoProductoPage({ searchParams }: NuevoProductoPageProps) {
+  const { copiar } = await searchParams;
+
+  return <ProductoForm title="Nuevo producto" copiarDeId={copiar} />;
 }

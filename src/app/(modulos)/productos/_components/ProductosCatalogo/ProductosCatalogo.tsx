@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus } from 'lucide-react';
+import { Pencil, Eye, Plus, Copy, Trash2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
@@ -9,6 +10,8 @@ import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
+import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
+import { useToast } from '../../../../../context/ToastContext';
 import { Producto } from '../../../../../lib/types/Producto';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { productoClient } from '../../../../../lib/api/producto.client';
@@ -30,6 +33,11 @@ export default function ProductosCatalogo() {
   const router = useRouter();
   const { revision } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
+  const { showSuccess, showError } = useToast();
+  const [aEliminar, setAEliminar] = useState<Producto | null>(null);
+  const [eliminando, setEliminando] = useState(false);
+  // Se incrementa para recargar el listado después de eliminar.
+  const [recargas, setRecargas] = useState(0);
   const {
     items: productos,
     loading,
@@ -44,7 +52,22 @@ export default function ProductosCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
+  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS, { refreshKey: `${revision}-${recargas}` });
+
+  const confirmarEliminar = async () => {
+    if (!aEliminar) return;
+    setEliminando(true);
+    try {
+      await productoClient.eliminar(aEliminar.id);
+      showSuccess(`Producto "${aEliminar.nombre}" eliminado.`);
+      setAEliminar(null);
+      setRecargas((n) => n + 1);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo eliminar el producto.');
+    } finally {
+      setEliminando(false);
+    }
+  };
 
   const columns: TableColumn<Producto>[] = [
     {
@@ -114,6 +137,23 @@ export default function ProductosCatalogo() {
               router.push(`/productos/${producto.id}/editar`);
             }}
           />
+          <IconButton
+            icon={<Copy size={16} />}
+            label="Copiar"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/productos/nuevo?copiar=${producto.id}`);
+            }}
+          />
+          <IconButton
+            icon={<Trash2 size={16} />}
+            label="Eliminar"
+            variant="danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAEliminar(producto);
+            }}
+          />
         </div>
       ),
       align: 'right',
@@ -155,6 +195,17 @@ export default function ProductosCatalogo() {
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+
+      {aEliminar && (
+        <ConfirmActionModal
+          title="Eliminar producto"
+          description={`Se dará de baja "${aEliminar.nombre}" y sus configuraciones de stock. Solo es posible si no tiene stock disponible ni reservado.`}
+          confirmLabel="Eliminar producto"
+          isConfirming={eliminando}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
+      )}
     </Card>
   );
 }
