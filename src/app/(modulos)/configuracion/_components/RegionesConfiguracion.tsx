@@ -93,8 +93,8 @@ export default function RegionesConfiguracion() {
       return;
     }
     const descuento = Number(form.descuento);
-    if (form.descuento.trim() === '' || !Number.isFinite(descuento) || descuento <= 0 || descuento > 100) {
-      showError('El descuento debe ser mayor a 0% y como máximo 100%.');
+    if (form.descuento.trim() === '' || !Number.isFinite(descuento) || descuento < 0 || descuento > 100) {
+      showError('El descuento debe ser un porcentaje entre 0% y 100%.');
       return;
     }
 
@@ -160,7 +160,7 @@ export default function RegionesConfiguracion() {
           </span>
           <input
             type="number"
-            min="0.01"
+            min="0"
             max="100"
             step="0.01"
             value={form.descuento}
