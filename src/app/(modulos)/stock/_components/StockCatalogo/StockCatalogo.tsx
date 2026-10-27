@@ -10,7 +10,6 @@ import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
-import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { stockClient } from '../../../../../lib/api/stock.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import styles from './StockCatalogo.module.css';
@@ -36,7 +35,6 @@ function getDisponibleVariant(neto: number, minimo: number): 'warning' | 'danger
 export default function StockCatalogo() {
   const router = useRouter();
   const { revision } = useCotizacion();
-  const { getSubtipoNombre } = useClasificacion();
   const {
     items: stock,
     loading,
@@ -77,7 +75,6 @@ export default function StockCatalogo() {
     },
     { key: 'marca', header: 'Marca', render: (item) => item.marca, sortable: true },
     { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
-    { key: 'subtipo', header: 'Subtipo', render: (item) => getSubtipoNombre(item.subtipoId), sortable: true },
     { key: 'sucursal', header: 'Sucursal', render: (item) => item.sucursalNombre, sortable: true },
     { key: 'precioVentaArs', header: 'Venta ARS', render: item => formatARS(item.precio?.ars ?? item.precioVentaArs), sortable: true, align: 'right' },
     { key: 'precioVentaUsd', header: 'Venta USD', render: item => formatUSD(item.precio?.usd ?? item.precioVentaUsd), sortable: true, align: 'right' },

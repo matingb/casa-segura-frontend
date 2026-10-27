@@ -21,7 +21,7 @@ import {
 } from '../../../../lib/types/Cliente';
 import { clienteClient } from '../../../../lib/api/cliente.client';
 import { useClienteDetalle } from '../_hooks/useClienteDetalle';
-import { useSucursales } from '../../../../context/SucursalContext';
+import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import { formatPorcentaje, parseNum } from '../../../../lib/utils/formatters';
 import ClienteDescuentos from './ClienteDescuentos/ClienteDescuentos';
@@ -58,7 +58,18 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const { cliente: clienteCargado, isLoading, error, reload } = useClienteDetalle(clienteId ?? '');
   const cliente = clienteId ? clienteCargado ?? undefined : clienteProp;
 
-  const { sucursales, isLoading: loadingSucursales } = useSucursales();
+  // Todas las sucursales de la empresa, no solo las asignadas al usuario. Se
+  // cargan también las dadas de baja para seguir mostrando las que el cliente ya
+  // tiene; para agregar solo se ofrecen las activas.
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [loadingSucursales, setLoadingSucursales] = useState(true);
+  useEffect(() => {
+    sucursalClient
+      .obtenerParaAdmin()
+      .then(setSucursales)
+      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar sucursales'))
+      .finally(() => setLoadingSucursales(false));
+  }, [showError]);
   const [tipoCliente, setTipoCliente] = useState<TipoCliente>('persona');
   const [tipoDocumento, setTipoDocumento] = useState('');
   const [condicionIva, setCondicionIva] = useState('');
@@ -79,7 +90,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
 
   // El desplegable solo ofrece lo que todavía no está elegido.
   const sucursalesDisponibles = sucursales
-    .filter((s) => !sucursalIds.includes(s.id))
+    .filter((s) => s.activo && !sucursalIds.includes(s.id))
     .map((s) => ({ value: s.id, label: s.nombre }));
 
   const isEditing = Boolean(cliente?.id);
