@@ -1,10 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus } from 'lucide-react';
+import { Pencil, Eye, Plus, AlertTriangle } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
-import IconButton from '../../../../../components/ui/IconButton/IconButton';
+import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
+import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
+import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
+import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
+import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
@@ -26,11 +30,28 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] 
   { key: 'estado', label: 'Estado' },
 ];
 
-function getDisponibleVariant(neto: number, minimo: number): 'warning' | 'danger' | null {
-  if (neto <= 0) return 'danger';
-  if (neto <= minimo) return 'warning';
+const plural = (n: number, singular: string, varios: string) => `${n} ${n === 1 ? singular : varios}`;
+
+/**
+ * Cómo se ve el disponible (solo presentación, el dato no se toca). Se evalúa
+ * el stock libre (disponible − reservado), como la tabla anterior:
+ * - disponible negativo → dato inconsistente;
+ * - libre en 0 o menos → rojo;
+ * - libre en el mínimo o debajo → naranja.
+ */
+function nivelDisponible(disponible: number, reservado: number, minimo: number): 'inconsistente' | 'error' | 'advertencia' | null {
+  if (disponible < 0) return 'inconsistente';
+  const libre = disponible - reservado;
+  if (libre <= 0) return 'error';
+  if (libre <= minimo) return 'advertencia';
   return null;
 }
+
+const AVISO_STOCK = {
+  inconsistente: 'Dato inconsistente',
+  error: 'Sin stock libre (disponible − reservado)',
+  advertencia: 'Stock libre en el mínimo o debajo',
+};
 
 export default function StockCatalogo() {
   const router = useRouter();
@@ -51,65 +72,63 @@ export default function StockCatalogo() {
     filtersLoading,
   } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
 
+  // Producto | Sucursal | Precio de venta | Stock | Estado | Acciones,
+  // con las mismas celdas que Productos y Clientes.
   const columns: TableColumn<StockItem>[] = [
     {
-      key: 'imagen',
-      header: 'Imagen',
-      render: (item) =>
-        item.imagenUrl ? (
-          <img src={item.imagenUrl} alt={item.nombre} className={styles.thumbnail} />
-        ) : (
-          <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
-        ),
-    },
-    { key: 'codigo', header: 'Código', render: (item) => item.codigo, sortable: true },
-    {
+      // Ordena por nombre, el dato principal de la celda.
       key: 'nombre',
-      header: 'Nombre',
+      header: 'Producto',
       render: (item) => (
-        <span className={styles.nombreCell} title={item.nombre}>
-          {item.nombre}
-        </span>
+        <CeldaProducto nombre={item.nombre} imagenUrl={item.imagenUrl} secundarios={[item.codigo, item.marca, item.modelo]} />
       ),
       sortable: true,
     },
-    { key: 'marca', header: 'Marca', render: (item) => item.marca, sortable: true },
-    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
-    { key: 'sucursal', header: 'Sucursal', render: (item) => item.sucursalNombre, sortable: true },
-    { key: 'precioVentaArs', header: 'Venta ARS', render: item => formatARS(item.precio?.ars ?? item.precioVentaArs), sortable: true, align: 'right' },
-    { key: 'precioVentaUsd', header: 'Venta USD', render: item => formatUSD(item.precio?.usd ?? item.precioVentaUsd), sortable: true, align: 'right' },
-    { key: 'referencia', header: 'Referencia', render: item => <span>{item.precio?.moneda_referencia ?? 'ARS'}{item.precio?.estado === 'LEGADO_PENDIENTE_REVISION' ? ' · revisar' : ''}</span> },
     {
+      key: 'sucursal',
+      header: 'Sucursal',
+      render: (item) => <TextoRecortado>{item.sucursalNombre}</TextoRecortado>,
+      sortable: true,
+    },
+    {
+      // Ordena por el precio en ARS (como la columna Venta ARS anterior).
+      key: 'precioVentaArs',
+      header: 'Precio de venta',
+      render: (item) => (
+        <CeldaPrecio
+          ars={formatARS(item.precio?.ars ?? item.precioVentaArs)}
+          usd={formatUSD(item.precio?.usd ?? item.precioVentaUsd)}
+        />
+      ),
+      sortable: true,
+    },
+    {
+      // Ordena por disponible, el dato principal de la celda.
       key: 'cantidadDisponible',
-      header: 'Disponible',
+      header: 'Stock',
       render: (item) => {
-        const neto = item.cantidadDisponible - item.cantidadReservada;
-        const variant = getDisponibleVariant(neto, item.stockMinimo);
-        return variant ? (
-          <Badge variant={variant}>{item.cantidadDisponible}</Badge>
+        const nivel = nivelDisponible(item.cantidadDisponible, item.cantidadReservada, item.stockMinimo);
+        const detalle = `${plural(item.cantidadReservada, 'reservado', 'reservados')} · mín. ${item.stockMinimo}`;
+        const principal = (
+          <span
+            className={nivel === 'advertencia' ? styles.stockAdvertencia : nivel ? styles.stockError : undefined}
+            title={nivel ? AVISO_STOCK[nivel] : undefined}
+          >
+            {plural(item.cantidadDisponible, 'disponible', 'disponibles')}
+            {nivel && <AlertTriangle size={14} className={styles.stockIcono} aria-label={AVISO_STOCK[nivel]} />}
+          </span>
+        );
+        // Con un disponible negativo la segunda línea avisa la inconsistencia;
+        // reservados y mínimo quedan en el tooltip para no agrandar la fila.
+        return nivel === 'inconsistente' ? (
+          <span title={detalle}>
+            <CeldaTexto principal={principal} secundarias={[<span key="error" className={styles.stockError}>Dato inconsistente</span>]} />
+          </span>
         ) : (
-          <span className={styles.plainNumber}>{item.cantidadDisponible}</span>
+          <CeldaTexto principal={principal} secundarias={[detalle]} lineasSecundarias={1} />
         );
       },
       sortable: true,
-      align: 'right',
-      width: '1%',
-    },
-    {
-      key: 'cantidadReservada',
-      header: 'Reservado',
-      render: (item) => <span className={styles.plainNumber}>{item.cantidadReservada}</span>,
-      sortable: true,
-      align: 'right',
-      width: '1%',
-    },
-    {
-      key: 'stockMinimo',
-      header: 'Mín.',
-      render: (item) => <span className={styles.plainNumber}>{item.stockMinimo}</span>,
-      sortable: true,
-      align: 'right',
-      width: '1%',
     },
     {
       key: 'estado',
@@ -120,29 +139,19 @@ export default function StockCatalogo() {
         </Badge>
       ),
       sortable: true,
+      width: '1%',
     },
     {
       key: 'acciones',
       header: '',
       render: (item) => (
-        <div className={styles.rowActions}>
-          <IconButton
-            icon={<Eye size={16} />}
-            label="Ver detalle"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/stock/${item.id}`);
-            }}
-          />
-          <IconButton
-            icon={<Pencil size={16} />}
-            label="Editar"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/stock/${item.id}/editar`);
-            }}
-          />
-        </div>
+        <ActionMenu
+          label={`Acciones de ${item.nombre} en ${item.sucursalNombre}`}
+          items={[
+            { label: 'Ver detalle', icon: <Eye size={16} />, onSelect: () => router.push(`/stock/${item.id}`) },
+            { label: 'Editar', icon: <Pencil size={16} />, onSelect: () => router.push(`/stock/${item.id}/editar`) },
+          ]}
+        />
       ),
       align: 'right',
       width: '1%',
@@ -180,6 +189,7 @@ export default function StockCatalogo() {
         onSortChange={onSortChange}
         onRowClick={(item) => router.push(`/stock/${item.id}`)}
         stickyHeader
+        ajustarAncho
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
