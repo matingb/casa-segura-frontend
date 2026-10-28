@@ -1,0 +1,25 @@
+/* ARS y USD en dos columnas compactas, alineadas entre filas
+   (mismo ancho mínimo en todas). */
+.celda {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(6.5rem, max-content));
+  column-gap: 1rem;
+}
+
+.valor {
+  display: flex;
+  flex-direction: column;
+}
+
+.importe {
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.moneda {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}

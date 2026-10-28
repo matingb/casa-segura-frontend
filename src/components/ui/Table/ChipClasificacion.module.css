@@ -1,0 +1,18 @@
+/* Una línea con "…" (tooltip con el nombre completo) y un ancho máximo para
+   que una clasificación larga no determine el ancho de la columna. */
+.chip {
+  display: inline-flex;
+  max-width: min(100%, 11rem);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.vacio {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+}

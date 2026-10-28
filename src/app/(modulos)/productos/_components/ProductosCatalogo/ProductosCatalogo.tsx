@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus, Copy, Trash2, ImageIcon } from 'lucide-react';
+import { Pencil, Eye, Plus, Copy, Trash2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
-import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
-import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
+import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
+import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
+import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
@@ -78,27 +79,13 @@ export default function ProductosCatalogo() {
       // Ordena por nombre, el dato principal de la celda.
       key: 'nombre',
       header: 'Producto',
-      render: (producto) => {
-        const secundarios = [producto.codigo, producto.marca, producto.modelo].filter(Boolean);
-        return (
-          <div className={styles.productoCell}>
-            {/* Miniatura de tamaño fijo: con o sin imagen ocupa lo mismo. */}
-            <div className={producto.imagenUrl ? styles.miniatura : `${styles.miniatura} ${styles.miniaturaVacia}`}>
-              {producto.imagenUrl ? (
-                <img src={producto.imagenUrl} alt={producto.nombre} className={styles.miniaturaImagen} />
-              ) : (
-                <ImageIcon size={18} aria-hidden="true" />
-              )}
-            </div>
-            <CeldaTexto
-              principal={producto.nombre}
-              secundarias={[secundarios.join(' · ')]}
-              lineasPrincipal={2}
-              lineasSecundarias={1}
-            />
-          </div>
-        );
-      },
+      render: (producto) => (
+        <CeldaProducto
+          nombre={producto.nombre}
+          imagenUrl={producto.imagenUrl}
+          secundarios={[producto.codigo, producto.marca, producto.modelo]}
+        />
+      ),
       sortable: true,
     },
     {
@@ -106,11 +93,7 @@ export default function ProductosCatalogo() {
       header: 'Subtipo',
       render: (producto) => {
         const nombre = producto.subtipoId ? getSubtipoNombre(producto.subtipoId) : 'Sin subtipo';
-        return (
-          <span className={producto.subtipoId ? styles.subtipoChip : `${styles.subtipoChip} ${styles.subtipoVacio}`}>
-            <TextoRecortado cortarEnCualquierLetra>{nombre}</TextoRecortado>
-          </span>
-        );
+        return <ChipClasificacion texto={nombre} vacio={!producto.subtipoId} />;
       },
       sortable: true,
     },
@@ -119,16 +102,10 @@ export default function ProductosCatalogo() {
       key: 'precioBase',
       header: 'Precio base',
       render: (producto) => (
-        <div className={styles.precioCell}>
-          <span className={styles.precioValor}>
-            <span className={styles.precioImporte}>{formatARS(producto.precio?.ars ?? producto.precioBase)}</span>
-            <span className={styles.precioMoneda}>ARS</span>
-          </span>
-          <span className={styles.precioValor}>
-            <span className={styles.precioImporte}>{formatUSD(producto.precio?.usd ?? producto.precioBaseUsd)}</span>
-            <span className={styles.precioMoneda}>USD</span>
-          </span>
-        </div>
+        <CeldaPrecio
+          ars={formatARS(producto.precio?.ars ?? producto.precioBase)}
+          usd={formatUSD(producto.precio?.usd ?? producto.precioBaseUsd)}
+        />
       ),
       sortable: true,
     },
