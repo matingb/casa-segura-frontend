@@ -8,3 +8,7 @@
   overflow-wrap: anywhere;
   min-width: 0;
 }
+
+.cualquierLetra {
+  word-break: break-all;
+}

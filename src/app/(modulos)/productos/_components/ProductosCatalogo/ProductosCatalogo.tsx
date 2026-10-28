@@ -7,6 +7,7 @@ import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
+import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
@@ -81,14 +82,20 @@ export default function ProductosCatalogo() {
         const secundarios = [producto.codigo, producto.marca, producto.modelo].filter(Boolean);
         return (
           <div className={styles.productoCell}>
-            {producto.imagenUrl ? (
-              <img src={producto.imagenUrl} alt={producto.nombre} className={styles.thumbnail} />
-            ) : (
-              <div className={styles.thumbnailPlaceholder} aria-hidden="true">
-                <ImageIcon size={18} />
-              </div>
-            )}
-            <CeldaTexto principal={producto.nombre} secundarias={[secundarios.join(' · ')]} />
+            {/* Miniatura de tamaño fijo: con o sin imagen ocupa lo mismo. */}
+            <div className={producto.imagenUrl ? styles.miniatura : `${styles.miniatura} ${styles.miniaturaVacia}`}>
+              {producto.imagenUrl ? (
+                <img src={producto.imagenUrl} alt={producto.nombre} className={styles.miniaturaImagen} />
+              ) : (
+                <ImageIcon size={18} aria-hidden="true" />
+              )}
+            </div>
+            <CeldaTexto
+              principal={producto.nombre}
+              secundarias={[secundarios.join(' · ')]}
+              lineasPrincipal={2}
+              lineasSecundarias={1}
+            />
           </div>
         );
       },
@@ -101,7 +108,7 @@ export default function ProductosCatalogo() {
         const nombre = producto.subtipoId ? getSubtipoNombre(producto.subtipoId) : 'Sin subtipo';
         return (
           <span className={producto.subtipoId ? styles.subtipoChip : `${styles.subtipoChip} ${styles.subtipoVacio}`}>
-            {nombre}
+            <TextoRecortado cortarEnCualquierLetra>{nombre}</TextoRecortado>
           </span>
         );
       },

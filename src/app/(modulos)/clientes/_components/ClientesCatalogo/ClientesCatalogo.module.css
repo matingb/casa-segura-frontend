@@ -41,11 +41,3 @@
   gap: 0.4rem;
   min-width: 0;
 }
-
-/*
- * Corta en cualquier letra: así el "…" cae justo al final del espacio y el +N
- * queda pegado al texto (cortando por palabras quedaba un hueco en el medio).
- */
-.nombresSucursales {
-  word-break: break-all;
-}

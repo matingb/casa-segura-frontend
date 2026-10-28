@@ -124,7 +124,7 @@ export default function ClientesCatalogo() {
         // Las dos primeras en una línea y un "+N" con el resto; el tooltip muestra todas.
         return (
           <span className={styles.sucursales} title={todas}>
-            <TextoRecortado title={todas} className={styles.nombresSucursales}>{visibles}</TextoRecortado>
+            <TextoRecortado title={todas} cortarEnCualquierLetra>{visibles}</TextoRecortado>
             {resto > 0 && <Badge variant="neutral">+{resto}</Badge>}
           </span>
         );
