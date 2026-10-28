@@ -6,6 +6,7 @@ import { Pencil, Eye, Plus, Copy, Trash2, ImageIcon } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
+import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
@@ -87,12 +88,7 @@ export default function ProductosCatalogo() {
                 <ImageIcon size={18} />
               </div>
             )}
-            <div className={styles.productoTexto}>
-              <span className={styles.productoNombre}>{producto.nombre}</span>
-              {secundarios.length > 0 && (
-                <span className={styles.productoSecundario}>{secundarios.join(' · ')}</span>
-              )}
-            </div>
+            <CeldaTexto principal={producto.nombre} secundarias={[secundarios.join(' · ')]} />
           </div>
         );
       },

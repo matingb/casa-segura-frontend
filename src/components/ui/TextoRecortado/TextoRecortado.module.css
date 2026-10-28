@@ -1,0 +1,10 @@
+.recortado {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lineas, 1);
+  line-clamp: var(--lineas, 1);
+  overflow: hidden;
+  /* Corta palabras largas (emails, CUITs) en lugar de ensanchar la columna. */
+  overflow-wrap: anywhere;
+  min-width: 0;
+}

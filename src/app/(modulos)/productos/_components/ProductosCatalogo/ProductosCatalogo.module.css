@@ -34,27 +34,6 @@
   color: var(--color-text-muted);
 }
 
-.productoTexto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.productoNombre {
-  font-weight: 600;
-  color: var(--color-text);
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.productoSecundario {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
 /* ── Columna Subtipo: chip discreto ── */
 .subtipoChip {
   display: inline-block;
