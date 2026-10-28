@@ -36,42 +36,24 @@
 }
 
 /* ─── Tabla ────────────────────────────────────────────────────── */
-.thumbnail {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid var(--color-border, #e5e7eb);
-}
-
-.thumbnailPlaceholder {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  background: var(--color-surface-alt, #f3f4f6);
-  border: 1px dashed var(--color-border, #d1d5db);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  color: var(--color-text-muted, #9ca3af);
-  text-align: center;
-}
-
-.priceArs {
-  font-weight: 600;
-  color: var(--color-text, #111827);
+/* Precio de lista: referencia secundaria frente al precio final. */
+.precioLista {
+  color: var(--color-text);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.priceUsd {
-  font-size: 0.82rem;
-  color: var(--color-text-muted, #6b7280);
+.precioTachado {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .ivaTag {
   display: inline-block;
+  white-space: nowrap;
   font-size: 0.75rem;
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
@@ -101,31 +83,21 @@
   font-size: 0.875rem;
 }
 
-/* Descuentos generales de la sucursal (mismo lenguaje visual que la lista del cliente) */
-.priceTachado {
-  color: var(--color-text-muted, #6b7280);
-  text-decoration: line-through;
-  font-variant-numeric: tabular-nums;
+/* Descuento: porcentaje + origen (1 línea, detalle en el tooltip) */
+.descuentoCelda {
+  max-width: 13rem;
 }
 
 .descuento {
-  font-weight: 600;
   color: var(--color-success);
   font-variant-numeric: tabular-nums;
 }
 
-.descuentoDetalle {
-  font-size: 0.74rem;
-  color: var(--color-text-muted, #6b7280);
-  white-space: nowrap;
-}
-
 .sinDescuento {
-  color: var(--color-border-strong);
+  color: var(--color-text-muted);
 }
 
 .ajustado {
-  font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-warning);
   cursor: help;

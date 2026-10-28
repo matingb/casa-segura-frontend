@@ -19,6 +19,11 @@ import ExportarColumnasModal from '../../../../../components/ExportarColumnasMod
 import { EXPORT_COLUMNS, DEFAULT_EXPORT_COLUMN_KEYS } from '../../_lib/exportColumns';
 import styles from './ListaPreciosCatalogo.module.css';
 import ContextoPrecios from '../../../../../components/ContextoPrecios';
+import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
+import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
+import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
+import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
+import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
 
 const FILTER_FIELDS: FilterField[] = [
@@ -61,42 +66,36 @@ export default function ListaPreciosCatalogo() {
     void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.items[0]?.contextoMonetario, nuevos.precios); } });
   };
 
+  // Producto | Clasificación | Precio | Descuento | Precio final | IVA, con las
+  // mismas celdas que Productos y Stock. El precio final es el dato dominante;
+  // el precio de lista queda como referencia (tachado si hay descuento).
   const columns: TableColumn<StockItem>[] = [
     {
-      key: 'imagen',
-      header: 'Img.',
-      render: (item) =>
-        item.imagenUrl ? (
-          <img
-            src={item.imagenUrl}
-            alt={item.nombre}
-            className={styles.thumbnail}
-          />
-        ) : (
-          <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
-        ),
+      key: 'nombre',
+      header: 'Producto',
+      render: (item) => (
+        <CeldaProducto nombre={item.nombre} imagenUrl={item.imagenUrl} secundarios={[item.codigo, item.marca, item.modelo]} />
+      ),
+      sortable: true,
     },
-    { key: 'codigo', header: 'Código', render: (item) => item.codigo, sortable: true },
-    { key: 'nombre', header: 'Nombre', render: (item) => item.nombre, sortable: true },
-    { key: 'marca', header: 'Marca', render: (item) => item.marca, sortable: true },
-    { key: 'modelo', header: 'Modelo', render: (item) => item.modelo, sortable: true },
     {
       key: 'subtipo',
-      header: 'Subtipo',
-      render: (item) => getSubtipoNombre(item.subtipoId),
+      header: 'Clasificación',
+      render: (item) => <ChipClasificacion texto={getSubtipoNombre(item.subtipoId)} vacio={!item.subtipoId} />,
       sortable: true,
     },
     {
       key: 'precioArs',
-      header: 'Precio de lista',
-      render: (item) => (
-        <span className={(precios.get(item.id)?.descuentoTotalPorcentaje ?? 0) > 0 ? styles.priceTachado : styles.priceArs}>
-          {formatARS(item.precioVentaArs)}
-        </span>
-      ),
+      header: 'Precio',
+      render: (item) => {
+        const conDescuento = (precios.get(item.id)?.descuentoTotalPorcentaje ?? 0) > 0;
+        return (
+          <span className={conDescuento ? styles.precioTachado : styles.precioLista}>
+            {formatARS(item.precioVentaArs)}
+          </span>
+        );
+      },
       sortable: true,
-      align: 'right',
-      width: '1%',
     },
     {
       key: 'descuento',
@@ -104,51 +103,50 @@ export default function ListaPreciosCatalogo() {
       render: (item) => {
         const precio = precios.get(item.id);
         if (!precio || !(precio.descuentoTotalPorcentaje > 0)) return <span className={styles.sinDescuento}>0%</span>;
+        // Segunda línea: el origen del descuento o, si se topeó, el aviso de
+        // precio mínimo. El detalle completo queda en el tooltip.
+        const ajustado = precio.noAlcanzaMargen && Number(precio.precioListaArs) > 0;
+        const segunda = ajustado ? (
+          <span
+            className={styles.ajustado}
+            title={`Con los descuentos quedaba en ${formatARS(precio.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(precio.precioMinimo)}.`}
+          >
+            Ajustado al precio mínimo
+          </span>
+        ) : (
+          <TextoRecortado title={detalleLargo(precio.descuentosAportes)}>{detalleCorto(precio.descuentosAportes)}</TextoRecortado>
+        );
         return (
-          <div title={detalleLargo(precio.descuentosAportes)}>
-            <div className={styles.descuento}>{formatPorcentaje(precio.descuentoTotalPorcentaje)}</div>
-            <div className={styles.descuentoDetalle}>{detalleCorto(precio.descuentosAportes)}</div>
-            {precio.noAlcanzaMargen && Number(precio.precioListaArs) > 0 && (
-              <div className={styles.ajustado} title={`Con los descuentos quedaba en ${formatARS(precio.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(precio.precioMinimo)}.`}>
-                Ajustado al precio mínimo
-              </div>
-            )}
+          <div className={styles.descuentoCelda}>
+            <CeldaTexto
+              principal={<span className={styles.descuento}>{formatPorcentaje(precio.descuentoTotalPorcentaje)}</span>}
+              secundarias={[segunda]}
+            />
           </div>
         );
       },
       sortable: true,
-      align: 'right',
-      width: '1%',
     },
     {
       key: 'precioFinalArs',
-      header: 'Precio final ARS',
-      render: (item) => (
-        <span className={styles.priceArs}>{formatARS(precios.get(item.id)?.precioFinalArs ?? item.precioVentaArs)}</span>
-      ),
-      sortable: true,
-      align: 'right',
-      width: '1%',
-    },
-    {
-      key: 'precioFinalUsd',
-      header: 'Precio final USD',
+      header: 'Precio final',
       render: (item) => {
         const precio = precios.get(item.id);
-        return <span className={styles.priceUsd}>{formatUSD(precio ? precio.precioFinalUsd : item.precioVentaUsd)}</span>;
+        return (
+          <CeldaPrecio
+            ars={formatARS(precio?.precioFinalArs ?? item.precioVentaArs)}
+            usd={formatUSD(precio ? precio.precioFinalUsd : item.precioVentaUsd)}
+          />
+        );
       },
       sortable: true,
-      align: 'right',
-      width: '1%',
     },
     {
       key: 'iva',
       header: 'IVA',
-      render: (item) => (
-        <span className={styles.ivaTag}>{item.iva}%</span>
-      ),
+      render: (item) => <span className={styles.ivaTag}>{item.iva}%</span>,
       sortable: true,
-      align: 'right',
+      align: 'center',
       width: '1%',
     },
   ];
@@ -235,6 +233,7 @@ export default function ListaPreciosCatalogo() {
             sort={sort}
             onSortChange={onSortChange}
             stickyHeader
+            ajustarAncho
           />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>

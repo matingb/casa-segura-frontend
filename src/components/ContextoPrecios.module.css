@@ -1,0 +1,48 @@
+/* Avisos de la lista de precios: compactos, con ícono y buena separación. */
+.contexto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.icono {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.info {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}
+
+.info .icono {
+  color: var(--color-primary);
+}
+
+.info a {
+  margin-left: 0.35rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.advertencia {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.error {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
