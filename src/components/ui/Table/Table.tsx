@@ -41,6 +41,12 @@ interface TableProps<T> {
   onSortChange?: (columnKey: string) => void;
   onRowClick?: (row: T) => void;
   stickyHeader?: boolean;
+  /**
+   * Ajusta la tabla al ancho disponible y deja que las celdas hagan wrap, en
+   * lugar de medir todo el ancho del contenido (que genera scroll horizontal).
+   * Opcional: por defecto la tabla se comporta como siempre.
+   */
+  ajustarAncho?: boolean;
 }
 
 export default function Table<T>({
@@ -52,10 +58,11 @@ export default function Table<T>({
   onSortChange,
   onRowClick,
   stickyHeader,
+  ajustarAncho = false,
 }: TableProps<T>) {
   return (
     <div className={styles.tableWrapper}>
-      <table className={styles.table}>
+      <table className={ajustarAncho ? `${styles.table} ${styles.tableAjustada}` : styles.table}>
         <thead className={stickyHeader ? styles.stickyHead : undefined}>
           <tr>
             {columns.map((column) => {

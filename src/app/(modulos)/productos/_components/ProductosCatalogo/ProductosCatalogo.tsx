@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus, Copy, Trash2 } from 'lucide-react';
+import { Pencil, Eye, Plus, Copy, Trash2, ImageIcon } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
-import IconButton from '../../../../../components/ui/IconButton/IconButton';
+import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
@@ -69,43 +69,66 @@ export default function ProductosCatalogo() {
     }
   };
 
+  // Producto | Subtipo | Precio base | Estado | Acciones. Se agrupan datos en
+  // pocas columnas para que la tabla siga siendo legible con zoom alto.
   const columns: TableColumn<Producto>[] = [
     {
-      key: 'imagen',
-      header: 'Imagen',
-      render: (producto) =>
-        producto.imagenUrl ? (
-          <img src={producto.imagenUrl} alt={producto.nombre} className={styles.thumbnail} />
-        ) : (
-          <div className={styles.thumbnailPlaceholder}>Sin imagen</div>
-        ),
-    },
-    { key: 'codigo', header: 'Código', render: (producto) => producto.codigo, sortable: true },
-    {
+      // Ordena por nombre, el dato principal de la celda.
       key: 'nombre',
-      header: 'Nombre',
+      header: 'Producto',
+      render: (producto) => {
+        const secundarios = [producto.codigo, producto.marca, producto.modelo].filter(Boolean);
+        return (
+          <div className={styles.productoCell}>
+            {producto.imagenUrl ? (
+              <img src={producto.imagenUrl} alt={producto.nombre} className={styles.thumbnail} />
+            ) : (
+              <div className={styles.thumbnailPlaceholder} aria-hidden="true">
+                <ImageIcon size={18} />
+              </div>
+            )}
+            <div className={styles.productoTexto}>
+              <span className={styles.productoNombre}>{producto.nombre}</span>
+              {secundarios.length > 0 && (
+                <span className={styles.productoSecundario}>{secundarios.join(' · ')}</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: 'subtipo',
+      header: 'Subtipo',
+      render: (producto) => {
+        const nombre = producto.subtipoId ? getSubtipoNombre(producto.subtipoId) : 'Sin subtipo';
+        return (
+          <span className={producto.subtipoId ? styles.subtipoChip : `${styles.subtipoChip} ${styles.subtipoVacio}`}>
+            {nombre}
+          </span>
+        );
+      },
+      sortable: true,
+    },
+    {
+      // Ordena por el precio en ARS (como la columna Base ARS anterior).
+      key: 'precioBase',
+      header: 'Precio base',
       render: (producto) => (
-        <span className={styles.nombreCell} title={producto.nombre}>
-          {producto.nombre}
-        </span>
+        <div className={styles.precioCell}>
+          <span className={styles.precioValor}>
+            <span className={styles.precioImporte}>{formatARS(producto.precio?.ars ?? producto.precioBase)}</span>
+            <span className={styles.precioMoneda}>ARS</span>
+          </span>
+          <span className={styles.precioValor}>
+            <span className={styles.precioImporte}>{formatUSD(producto.precio?.usd ?? producto.precioBaseUsd)}</span>
+            <span className={styles.precioMoneda}>USD</span>
+          </span>
+        </div>
       ),
       sortable: true,
     },
-    { key: 'marca', header: 'Marca', render: (producto) => producto.marca, sortable: true },
-    { key: 'modelo', header: 'Modelo', render: (producto) => producto.modelo, sortable: true },
-    { key: 'subtipo', header: 'Subtipo', render: (producto) => getSubtipoNombre(producto.subtipoId), sortable: true },
-    {
-      key: 'precioBase',
-      header: 'Base ARS',
-      render: (producto) => formatARS(producto.precio?.ars ?? producto.precioBase),
-      sortable: true,
-      align: 'right',
-      width: '1%',
-    },
-    {
-      key: 'precioBaseUsd', header: 'Base USD', render: producto => formatUSD(producto.precio?.usd ?? producto.precioBaseUsd), sortable: true, align: 'right',
-    },
-    { key: 'referencia', header: 'Referencia', render: producto => producto.precio?.moneda_referencia ?? 'ARS' },
     {
       key: 'estado',
       header: 'Estado',
@@ -115,46 +138,21 @@ export default function ProductosCatalogo() {
         </Badge>
       ),
       sortable: true,
+      width: '1%',
     },
     {
       key: 'acciones',
       header: '',
       render: (producto) => (
-        <div className={styles.rowActions}>
-          <IconButton
-            icon={<Eye size={16} />}
-            label="Ver detalle"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/productos/${producto.id}`);
-            }}
-          />
-          <IconButton
-            icon={<Pencil size={16} />}
-            label="Editar"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/productos/${producto.id}/editar`);
-            }}
-          />
-          <IconButton
-            icon={<Copy size={16} />}
-            label="Copiar"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/productos/nuevo?copiar=${producto.id}`);
-            }}
-          />
-          <IconButton
-            icon={<Trash2 size={16} />}
-            label="Eliminar"
-            variant="danger"
-            onClick={(e) => {
-              e.stopPropagation();
-              setAEliminar(producto);
-            }}
-          />
-        </div>
+        <ActionMenu
+          label={`Acciones de ${producto.nombre}`}
+          items={[
+            { label: 'Ver detalle', icon: <Eye size={16} />, onSelect: () => router.push(`/productos/${producto.id}`) },
+            { label: 'Editar', icon: <Pencil size={16} />, onSelect: () => router.push(`/productos/${producto.id}/editar`) },
+            { label: 'Duplicar', icon: <Copy size={16} />, onSelect: () => router.push(`/productos/nuevo?copiar=${producto.id}`) },
+            { label: 'Eliminar', icon: <Trash2 size={16} />, variant: 'danger', onSelect: () => setAEliminar(producto) },
+          ]}
+        />
       ),
       align: 'right',
       width: '1%',
@@ -192,6 +190,7 @@ export default function ProductosCatalogo() {
         onSortChange={onSortChange}
         onRowClick={(producto) => router.push(`/productos/${producto.id}`)}
         stickyHeader
+        ajustarAncho
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />

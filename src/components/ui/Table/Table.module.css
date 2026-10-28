@@ -13,6 +13,11 @@
   border-collapse: collapse;
 }
 
+/* Opt-in (prop ajustarAncho): ocupa el ancho disponible y las celdas hacen wrap. */
+.tableAjustada {
+  width: 100%;
+}
+
 .table thead th {
   text-align: left;
   font-size: 0.75rem;
