@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Escribir los artefactos en español. Conservar los encabezados estructurales
+  de OpenSpec y las palabras SHALL/MUST, WHEN y THEN en inglés.
+  Casa Segura es un ERP multi-tenant y multi-PDV. En el código PDV se llama sucursal.
+  Frontend: Next.js App Router, React, TypeScript y CSS Modules. Las pantallas
+  activas están en src/app/(modulos), con clientes HTTP en src/lib/api.
+  Reutilizar apiFetch, los componentes base y SucursalContext. El backend decide
+  los permisos: ocultar opciones o filtrar arrays en el navegador no autoriza datos.
+  Revisar la navegación efectiva en Sidebar y las llamadas reales de cada pantalla;
+  una ruta existente u oculta del menú no implica que pertenezca a la release visible.
+  El backend Express/PostgreSQL está en ../casa-segura-backend y tiene su propio OpenSpec.
+  Para cambios coordinados usar el mismo change-id, enlazar los artefactos pares
+  y mantener consistentes los contratos HTTP y los escenarios de aceptación.
+  No cambiar autenticación, fórmulas monetarias ni habilitar módulos sin alcance explícito.
+  Pruebas: npm.cmd test -- --run. Lint: npm.cmd run lint. Build: npm.cmd run build.
+  Distinguir pruebas con mocks, compilación y verificación real con navegador/backend.
+
+rules:
+  proposal:
+    - Explicitar pantallas alcanzadas, excepciones y módulos excluidos.
+    - Diferenciar comportamiento observado de decisiones propuestas.
+  specs:
+    - Usar requisitos verificables con SHALL/MUST y escenarios WHEN/THEN.
+    - Cubrir selectores, URL directa, carga inicial, errores, exportaciones y pérdida de acceso.
+    - Mantener los contratos compartidos alineados con el change del backend.
+  design:
+    - Referenciar componentes y hooks reales; mantener CSS Modules y componentes existentes.
+    - No convertir una solicitud de especificación en implementación de componentes.
+  tasks:
+    - Usar tareas numeradas y checkboxes sin marcar para trabajo de implementación pendiente.
+    - Separar pruebas de componentes y validación integrada con el backend.
