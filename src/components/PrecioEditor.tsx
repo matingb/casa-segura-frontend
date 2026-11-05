@@ -7,13 +7,15 @@ import Button from './ui/Button/Button';
 import { useCotizacion } from '../context/CotizacionContext';
 import { PrecioEdicion, resolverPrecioVista } from '../lib/utils/precio';
 import { ContextoMonetario, Moneda, PrecioResuelto } from '../lib/types/Moneda';
-import { formatARS, formatPrecio, formatUSD } from '../lib/utils/formatters';
+import { formatARS, formatFecha, formatPrecio, formatUSD } from '../lib/utils/formatters';
 import styles from './PrecioEditor.module.css';
 
 export function textoCotizacion(contexto: ContextoMonetario | null | undefined): string | null {
   if (!contexto?.cotizacion_usd_ars) return null;
   const tasa = Number(contexto.cotizacion_usd_ars).toLocaleString('es-AR', { maximumFractionDigits: 6 });
-  return `1 USD = $ ${tasa} · versión ${contexto.cotizacion_version}`;
+  const origen = contexto.origen === 'SUCURSAL' ? ' · cotización propia del PDV' : ' · cotización general';
+  const fecha = contexto.actualizada_at ? ` · actualizada ${formatFecha(contexto.actualizada_at)}` : '';
+  return `1 USD = $ ${tasa}${origen}${fecha}`;
 }
 
 /**
@@ -22,7 +24,7 @@ export function textoCotizacion(contexto: ContextoMonetario | null | undefined):
  * calculado. Los avisos (precio heredado, cambio de cotización) ocupan una
  * fila completa solo cuando aparecen.
  */
-export default function PrecioEditor({ value, onChange, original, heredado, porDefecto, label = 'Precio', tipo = 'precio', tabIndex, onKeyDown }: {
+export default function PrecioEditor({ value, onChange, original, heredado, porDefecto, label = 'Precio', tipo = 'precio', tabIndex, onKeyDown, contextoActual, recargarContexto }: {
   value: PrecioEdicion; onChange: (value: PrecioEdicion) => void; original?: PrecioResuelto;
   heredado?: { ars: string | null; usd: string | null };
   /**
@@ -34,15 +36,21 @@ export default function PrecioEditor({ value, onChange, original, heredado, porD
   label?: string;
   /** Un costo en ARS no depende del dólar: no pide confirmar la cotización. */
   tipo?: 'precio' | 'costo';
+  /** Contexto de PDV para editores de stock; omitido usa el contexto general. */
+  contextoActual?: ContextoMonetario | null;
+  recargarContexto?: () => Promise<ContextoMonetario | null>;
   tabIndex?: number; onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }) {
   const id = useId();
   const { datos, error, recargar } = useCotizacion();
+  const vigente = contextoActual === undefined ? datos : contextoActual;
+  const errorContexto = contextoActual === undefined ? error : null;
+  const actualizarContexto = recargarContexto ?? recargar;
   const dependeDelDolar = tipo === 'precio' || value.moneda === 'USD';
   // Un borrador que depende del dólar conserva la cotización con la que se cargó.
-  const contexto = value.cambiado && dependeDelDolar ? value.contexto : datos ?? value.contexto;
+  const contexto = value.cambiado && dependeDelDolar ? value.contexto : vigente ?? value.contexto;
   const precio = resolverPrecioVista(value.moneda, value.importe || null, contexto);
-  const conflicto = dependeDelDolar && value.cambiado && value.contexto?.cotizacion_version !== datos?.cotizacion_version;
+  const conflicto = dependeDelDolar && value.cambiado && value.contexto?.cotizacion_version !== vigente?.cotizacion_version;
   const legado = original?.estado === 'LEGADO_PENDIENTE_REVISION';
   const otra: Moneda = value.moneda === 'ARS' ? 'USD' : 'ARS';
   const equivalente = otra === 'ARS' ? precio.ars : precio.usd;
@@ -50,7 +58,7 @@ export default function PrecioEditor({ value, onChange, original, heredado, porD
   const importePorDefecto = porDefecto?.precio?.importe_referencia ?? null;
   const textoPorDefecto = importePorDefecto != null ? formatPrecio(porDefecto!.precio!.moneda_referencia, importePorDefecto) : null;
 
-  const cambiar = (importe: string) => onChange({ ...value, importe, contexto: value.cambiado ? value.contexto : datos ?? value.contexto, cambiado: true });
+  const cambiar = (importe: string) => onChange({ ...value, importe, contexto: value.cambiado ? value.contexto : vigente ?? value.contexto, cambiado: true });
   const cambiarMoneda = (moneda: Moneda) => {
     const key = moneda === 'ARS' ? 'ars' : 'usd';
     const importe = legado && heredado?.[key] != null ? heredado[key]! : precio[key] ?? value.importe;
@@ -105,7 +113,7 @@ export default function PrecioEditor({ value, onChange, original, heredado, porD
       />
       <p className={styles.ayuda}>
         {cotizacion ?? 'Configurá el valor del dólar para calcular el equivalente.'}
-        {' · '}<Link href="/configuracion?tab=cotizacion">{cotizacion ? 'Cambiar' : 'Configurar'}</Link>
+        {' · '}<Link href={contexto?.origen === 'SUCURSAL' ? '/configuracion?tab=sucursales' : '/configuracion?tab=cotizacion'}>{cotizacion ? 'Cambiar' : 'Configurar'}</Link>
       </p>
     </div>
 
@@ -115,8 +123,8 @@ export default function PrecioEditor({ value, onChange, original, heredado, porD
     </div>}
     {conflicto && <div className={styles.aviso} role="alert">
       <span>Cambió la cotización. Tus datos se conservaron; revisá el equivalente antes de guardar.</span>
-      <Button type="button" variant="secondary" onClick={async () => { const nueva = await recargar(); if (nueva) onChange({ ...value, contexto: nueva }); }}>Actualizar cotización y revisar</Button>
+      <Button type="button" variant="secondary" onClick={async () => { const nueva = await actualizarContexto(); if (nueva) onChange({ ...value, contexto: nueva }); }}>Actualizar cotización y revisar</Button>
     </div>}
-    {error && <p className={styles.error} role="alert">{error} Se conserva la referencia anterior.</p>}
+    {errorContexto && <p className={styles.error} role="alert">{errorContexto} Se conserva la referencia anterior.</p>}
   </>;
 }

@@ -8,8 +8,8 @@ import { useClasificacion } from '../../../../lib/hooks/useClasificacion';
 import { useTableQuery } from '../../../../lib/hooks/useTableQuery';
 import { descuentoEngineClient } from '../../../../lib/api/descuento-engine.client';
 import { ItemConMargenCalculado } from '../../../../lib/types/ListaPreciosCliente';
-
-import { useCotizacion } from '../../../../context/CotizacionContext';
+import { ContextoMonetario } from '../../../../lib/types/Moneda';
+import { useCotizacionSucursal } from '../../../../lib/hooks/useCotizacionSucursal';
 export type { SucursalOption };
 /** Precio con los descuentos generales de la sucursal, por id de producto_sucursal. */
 export type PreciosSucursal = Map<string, ItemConMargenCalculado>;
@@ -25,7 +25,16 @@ function getValor(item: StockItem, key: string, getSubtipoNombre: (id: string) =
   if (key === 'descuento') return precio?.descuentoTotalPorcentaje ?? 0;
   if (key === 'precioFinalArs') return precio?.precioFinalArs == null ? item.precioVentaArs : Number(precio.precioFinalArs);
   if (key === 'precioFinalUsd') return precio?.precioFinalUsd == null ? item.precioVentaUsd : Number(precio.precioFinalUsd);
-  return (item as any)[key] ?? '';
+  const valor = item[key as keyof StockItem];
+  return typeof valor === 'string' || typeof valor === 'number' ? valor : null;
+}
+
+function mismoContexto(a: ContextoMonetario | null | undefined, b: ContextoMonetario | null | undefined) {
+  if (!a || !b) return false;
+  return a.cotizacion_version === b.cotizacion_version &&
+    a.cotizacion_usd_ars === b.cotizacion_usd_ars &&
+    (a.sucursal_id ?? null) === (b.sucursal_id ?? null) &&
+    (a.origen ?? (a.sucursal_id ? 'SUCURSAL' : 'TENANT')) === (b.origen ?? (b.sucursal_id ? 'SUCURSAL' : 'TENANT'));
 }
 
 export function useListaPrecios() {
@@ -33,16 +42,24 @@ export function useListaPrecios() {
   const { sucursales } = useSucursales();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { revision, datos, error: errorCotizacion } = useCotizacion();
   const request = useRef(0);
   const [precios, setPrecios] = useState<PreciosSucursal>(new Map());
   const [errorPrecios, setErrorPrecios] = useState<string | null>(null);
+  const [contextoLista, setContextoLista] = useState<ContextoMonetario | null>(null);
+  const [contextoListaSucursalId, setContextoListaSucursalId] = useState('');
   const requestPrecios = useRef(0);
+  const sucursalActual = useRef('');
+  const ultimoReintentoSnapshot = useRef('');
 
   const query = useTableQuery();
   const { getSubtipoNombre } = useClasificacion();
 
   const sucursalId = query.filters.sucursal ?? '';
+  const cotizacionSucursal = useCotizacionSucursal(sucursalId);
+
+  useEffect(() => {
+    sucursalActual.current = sucursalId;
+  }, [sucursalId]);
 
   useEffect(() => {
     if (sucursales.length > 0 && !sucursalId) {
@@ -62,18 +79,24 @@ export function useListaPrecios() {
       throw err;
     } finally { if (id === request.current) setIsLoading(false); }
   }, []);
-  useEffect(() => { void recargar().catch(() => {}); return () => { request.current++; }; }, [recargar, revision]);
+  useEffect(() => { void recargar().catch(() => {}); return () => { request.current++; }; }, [recargar, cotizacionSucursal.revision]);
 
-  const cargarPrecios = useCallback(async (): Promise<PreciosSucursal> => {
+  const cargarPrecios = useCallback(async (): Promise<{ precios: PreciosSucursal; contexto: ContextoMonetario | null }> => {
     const id = ++requestPrecios.current;
-    if (!sucursalId) { setPrecios(new Map()); return new Map(); }
+    const sucursalSolicitada = sucursalId;
+    if (!sucursalId) { setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); return { precios: new Map(), contexto: null }; }
     try {
       const lista = await descuentoEngineClient.listaSucursal(sucursalId);
       const nuevos: PreciosSucursal = new Map(lista.items.map((item) => [item.id, item]));
-      if (id === requestPrecios.current) { setPrecios(nuevos); setErrorPrecios(null); }
-      return nuevos;
+      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) {
+        setPrecios(nuevos);
+        setContextoLista(lista.contexto_monetario ?? null);
+        setContextoListaSucursalId(sucursalSolicitada);
+        setErrorPrecios(null);
+      }
+      return { precios: nuevos, contexto: lista.contexto_monetario ?? null };
     } catch (err) {
-      if (id === requestPrecios.current) setErrorPrecios(err instanceof Error ? err.message : 'No se pudieron calcular los descuentos.');
+      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) setErrorPrecios(err instanceof Error ? err.message : 'No se pudieron calcular los descuentos.');
       throw err;
     }
   }, [sucursalId]);
@@ -82,7 +105,20 @@ export function useListaPrecios() {
     const contador = requestPrecios;
     void Promise.resolve().then(() => (vigente ? cargarPrecios() : undefined)).catch(() => {});
     return () => { vigente = false; contador.current++; };
-  }, [cargarPrecios, revision]);
+  }, [cargarPrecios, cotizacionSucursal.revision]);
+
+  const contextoActualLista = contextoListaSucursalId === sucursalId ? contextoLista : null;
+  const stockDeSucursal = useMemo(() => stockTotal.filter((item) => item.sucursalId === sucursalId && item.activo), [stockTotal, sucursalId]);
+  const snapshotCompatible = !contextoActualLista || stockDeSucursal.every((item) => mismoContexto(item.contextoMonetario, contextoActualLista));
+
+  useEffect(() => {
+    if (!sucursalId || !contextoActualLista || snapshotCompatible || isLoading) return;
+    const tokens = Array.from(new Set(stockDeSucursal.map((item) => item.contextoMonetario?.cotizacion_version ?? 'sin-contexto'))).sort().join(',');
+    const clave = `${sucursalId}|${contextoActualLista.cotizacion_version}|${tokens}`;
+    if (ultimoReintentoSnapshot.current === clave) return;
+    ultimoReintentoSnapshot.current = clave;
+    void Promise.all([recargar(), cargarPrecios()]).catch(() => {});
+  }, [sucursalId, contextoActualLista, snapshotCompatible, isLoading, stockDeSucursal, recargar, cargarPrecios]);
 
   const sucursalOptions: SucursalOption[] = useMemo(
     () => sucursales.map((s) => ({ value: s.id, label: s.nombre })),
@@ -125,10 +161,17 @@ export function useListaPrecios() {
       return a.id.localeCompare(b.id);
     });
   }, [query.search, query.filters, query.sort, sucursalId, getSubtipoNombre]);
-  const items = useMemo(() => aplicarSeleccion(stockTotal, precios), [aplicarSeleccion, stockTotal, precios]);
+  const items = useMemo(
+    () => snapshotCompatible ? aplicarSeleccion(stockTotal, precios) : [],
+    [snapshotCompatible, aplicarSeleccion, stockTotal, precios]
+  );
   const actualizarSeleccion = async () => {
-    const [stock, nuevos] = await Promise.all([recargar(), cargarPrecios()]);
-    return { items: aplicarSeleccion(stock, nuevos), precios: nuevos };
+    const [stock, resultado] = await Promise.all([recargar(), cargarPrecios()]);
+    const filasSucursal = stock.filter((item) => item.sucursalId === sucursalId && item.activo);
+    if (resultado.contexto && !filasSucursal.every((item) => mismoContexto(item.contextoMonetario, resultado.contexto))) {
+      throw new Error('La cotización cambió durante la actualización. Volvé a actualizar la lista antes de exportar.');
+    }
+    return { items: aplicarSeleccion(stock, resultado.precios), precios: resultado.precios, contexto: resultado.contexto };
   };
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -141,8 +184,8 @@ export function useListaPrecios() {
   return {
     sucursalId,
     actualizarSeleccion,
-    contexto: stockTotal[0]?.contextoMonetario ?? datos,
-    error: error ?? errorPrecios ?? errorCotizacion,
+    contexto: contextoActualLista,
+    error: error ?? errorPrecios ?? cotizacionSucursal.error ?? (!snapshotCompatible ? 'La cotización del PDV cambió mientras se cargaba la lista; actualizando los precios.' : null),
     precios,
     sucursalOptions,
     items,

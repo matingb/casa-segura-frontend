@@ -1,10 +1,14 @@
 import { apiFetch } from '../apiFetch';
+import { CatalogoApiError } from './cotizacion.client';
 
 export interface Sucursal {
   id: string;
   nombre: string;
   esCentral: boolean;
-  valorDolar: number;
+  valorDolar: string | null;
+  valorDolarVersion: string;
+  valorDolarActualizadaAt: string | null;
+  valorDolarActualizadaPor: string | null;
   descuento: number | null;
   activo: boolean;
   /** Si el usuario autenticado está asignado (solo lo informa el listado de administración). */
@@ -44,19 +48,50 @@ export interface OpcionesAsignacion {
   roles: { id: string; nombre: string }[];
 }
 
-function mapApiSucursal(s: any): Sucursal {
+function textoApi(valor: unknown): string | undefined {
+  return typeof valor === 'string' ? valor : undefined;
+}
+
+function mapApiSucursal(s: Record<string, unknown>): Sucursal {
   return {
-    id: s.id,
-    nombre: s.nombre ?? '',
-    esCentral: s.es_central ?? false,
-    valorDolar: s.valor_dolar ? Number(s.valor_dolar) : 0,
+    id: String(s.id ?? ''),
+    nombre: typeof s.nombre === 'string' ? s.nombre : '',
+    esCentral: s.es_central === true,
+    valorDolar: s.valor_dolar == null ? null : String(s.valor_dolar),
+    valorDolarVersion: String(s.valor_dolar_version ?? '0'),
+    valorDolarActualizadaAt: textoApi(s.valor_dolar_actualizada_at) ?? null,
+    valorDolarActualizadaPor: textoApi(s.valor_dolar_actualizada_por) ?? null,
     descuento: s.descuento != null ? Number(s.descuento) : null,
-    activo: s.activo ?? true,
-    asignado: s.asignado,
-    usuarioSucursalId: s.usuario_sucursal_id,
-    rolId: s.id_rol,
-    rolNombre: s.rol_nombre,
+    activo: s.activo !== false,
+    asignado: typeof s.asignado === 'boolean' ? s.asignado : undefined,
+    usuarioSucursalId: textoApi(s.usuario_sucursal_id),
+    rolId: textoApi(s.id_rol),
+    rolNombre: textoApi(s.rol_nombre),
   };
+}
+
+async function respuestaSucursal(res: Response, fallback: string): Promise<Record<string, unknown>> {
+  const contenido: unknown = await res.json().catch(() => ({}));
+  const json = typeof contenido === 'object' && contenido !== null ? contenido as Record<string, unknown> : {};
+  if (!res.ok || json.status !== 'success') {
+    throw new CatalogoApiError(
+      typeof json.message === 'string' ? json.message : fallback,
+      typeof json.code === 'string' ? json.code : undefined,
+      res.status
+    );
+  }
+  if (typeof json.data !== 'object' || json.data === null || Array.isArray(json.data)) {
+    throw new CatalogoApiError(fallback, undefined, res.status);
+  }
+  return json.data as Record<string, unknown>;
+}
+
+export function notificarCotizacionSucursal(sucursalId: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cotizacion-actualizada', {
+      detail: { alcance: 'SUCURSAL', sucursal_id: sucursalId },
+    }));
+  }
 }
 
 export const sucursalClient = {
@@ -88,11 +123,9 @@ export const sucursalClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al crear la sucursal');
-    }
-    return mapApiSucursal(json.data);
+    const sucursal = mapApiSucursal(await respuestaSucursal(res, 'Error al crear la sucursal'));
+    if ('valor_dolar' in data) notificarCotizacionSucursal(sucursal.id);
+    return sucursal;
   },
 
   actualizar: async (id: string, data: Record<string, unknown>): Promise<Sucursal> => {
@@ -101,11 +134,9 @@ export const sucursalClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al actualizar la sucursal');
-    }
-    return mapApiSucursal(json.data);
+    const sucursal = mapApiSucursal(await respuestaSucursal(res, 'Error al actualizar la sucursal'));
+    if ('valor_dolar' in data) notificarCotizacionSucursal(sucursal.id);
+    return sucursal;
   },
 
   /** Baja lógica: la sucursal queda inactiva pero conserva su stock e historial. */

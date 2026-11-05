@@ -23,7 +23,7 @@ import PrecioEditor from '../../../../components/PrecioEditor';
 import PrecioDetalle from '../../../../components/PrecioDetalle';
 import { useMontoEdicion, usePrecioEdicion } from '../../../../lib/hooks/usePrecioEdicion';
 import { costoParaGuardar, PrecioEdicion, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
-import { useCotizacion } from '../../../../context/CotizacionContext';
+import { useCotizacionSucursal } from '../../../../lib/hooks/useCotizacionSucursal';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
 import { PrecioResuelto } from '../../../../lib/types/Moneda';
 
@@ -56,12 +56,14 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     [stockItem]
   );
   const { precio, setPrecio, resetPrecio } = usePrecioEdicion(fuentePrecio);
-  const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
-  const precioVista = resolverPrecioVista(precio.moneda, precio.importe || null, precio.cambiado ? precio.contexto : cotizacion ?? precio.contexto);
-  const { monto: costoEdicion, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(stockItem, stockItem?.costo, stockItem?.costoReposicion, stockItem?.contextoMonetario);
-  const costoVista = resolverPrecioVista(costoEdicion.moneda, costoEdicion.importe || null, cotizacion ?? costoEdicion.contexto);
-
   const { sucursales } = useSucursales();
+  const [sucursalElegida, setSucursalElegida] = useState('');
+  const sucursalId = stockItem?.sucursalId ?? sucursalElegida;
+  const { datos: cotizacion, recargar: recargarCotizacion, error: errorCotizacion, cargando: cargandoCotizacion } = useCotizacionSucursal(sucursalId);
+  const contextoActual = cotizacion ?? stockItem?.contextoMonetario ?? null;
+  const precioVista = resolverPrecioVista(precio.moneda, precio.importe || null, precio.cambiado ? precio.contexto : contextoActual ?? precio.contexto);
+  const { monto: costoEdicion, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(stockItem, stockItem?.costo, stockItem?.costoReposicion, stockItem?.contextoMonetario);
+  const costoVista = resolverPrecioVista(costoEdicion.moneda, costoEdicion.importe || null, contextoActual ?? costoEdicion.contexto);
   const { getSubtipoNombre } = useClasificacion();
   const [productos, setProductos] = useState<ProductoOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(!isEditing);
@@ -106,8 +108,14 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   const productoSeleccionado = productos.find((p) => p.id === productoSeleccionadoId);
   const costoInicial = (producto?: ProductoOption): PrecioEdicion => {
     const importe = producto?.costo ? producto.costo.importe_referencia ?? '' : producto?.costoReposicionBase?.toString() ?? '';
-    return { moneda: producto?.costo?.moneda_referencia ?? 'ARS', importe, contexto: cotizacion, cambiado: importe !== '' };
+    return { moneda: producto?.costo?.moneda_referencia ?? 'ARS', importe, contexto: cotizacion ?? contextoActual, cambiado: importe !== '' };
   };
+
+  useEffect(() => {
+    if (cotizacion && costoEdicion.cambiado && costoEdicion.contexto === null) {
+      setCosto({ ...costoEdicion, contexto: cotizacion });
+    }
+  }, [cotizacion?.cotizacion_version, costoEdicion, setCosto]);
 
   useEffect(() => {
     if (isEditing) {
@@ -132,7 +140,9 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
   // Sin precio de sucursal rige el precio base del producto: el margen se valida contra él.
   const precioProducto = isEditing ? stockItem?.precioGlobal : productoSeleccionado?.precio;
   const usaPrecioProducto = precio.importe.trim() === '' && precioProducto?.importe_referencia != null;
-  const precioEfectivo = usaPrecioProducto ? precioProducto! : precioVista;
+  const precioEfectivo = usaPrecioProducto
+    ? resolverPrecioVista(precioProducto!.moneda_referencia, precioProducto!.importe_referencia, contextoActual)
+    : precioVista;
   const monedaPrecio = usaPrecioProducto ? precioProducto!.moneda_referencia : precio.moneda;
   const margenEnUsd = monedaPrecio === 'USD' && costoEdicion.moneda === 'USD';
   const simbolo = margenEnUsd ? 'US$' : '$';
@@ -172,6 +182,14 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
     }
     setSubmitError(null);
     const formData = new FormData(e.currentTarget);
+      if (!sucursalId) {
+        setSubmitError('Elegí una sucursal para consultar su cotización.');
+        return;
+      }
+      if (!cotizacion || cargandoCotizacion) {
+        setSubmitError(errorCotizacion ?? 'Esperá a que se cargue la cotización efectiva de la sucursal.');
+        return;
+      }
 
     const parseNum = (key: string) => {
       const val = formData.get(key);
@@ -444,7 +462,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                     value={productoSeleccionadoId}
                     onChange={id => {
                       setProductoSeleccionadoId(id);
-                      setPrecio({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false });
+                      setPrecio({ moneda: 'ARS', importe: '', contexto: cotizacion ?? contextoActual, cambiado: false });
                       setCosto(costoInicial(productos.find((p) => p.id === id)));
                     }}
                     placeholder="Buscar producto..."
@@ -452,7 +470,10 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                     loading={loadingOptions}
                   />
                 </div>
-                <Select label="Sucursal" name="sucursalId" required>
+                <Select label="Sucursal" name="sucursalId" value={sucursalElegida} onChange={(e) => {
+                  setSucursalElegida(e.target.value);
+                  setSubmitError(null);
+                }} required>
                   <option value="">Seleccionar sucursal</option>
                   {sucursales.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -471,6 +492,8 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               <PrecioEditor
                 value={precio}
                 onChange={setPrecio}
+                contextoActual={cotizacion}
+                recargarContexto={recargarCotizacion}
                 original={stockItem?.precioDesdeProducto ? undefined : stockItem?.precio}
                 heredado={stockItem?.precioHeredado}
                 label="Precio de sucursal"
@@ -482,6 +505,8 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               <PrecioEditor
                 value={costoEdicion}
                 onChange={(nuevo) => { setCosto(nuevo); setSubmitError(null); }}
+                contextoActual={cotizacion}
+                recargarContexto={recargarCotizacion}
                 tipo="costo"
                 label="Costo de reposición"
               />

@@ -13,7 +13,7 @@ import { formatARS } from '../../../../../lib/utils/formatters';
 import { calcularCascada, AnalisisMargen } from '../../../../../lib/utils/cascada-descuentos';
 import MargenStatusBadge from './MargenStatusBadge';
 import styles from './ItemsEditor.module.css';
-import { useCotizacion } from '../../../../../context/CotizacionContext';
+import { useCotizacionSucursal } from '../../../../../lib/hooks/useCotizacionSucursal';
 
 interface ItemsEditorProps {
   sucursalId: string;
@@ -89,20 +89,24 @@ export default function ItemsEditor({
   analisisMargenItems,
 }: ItemsEditorProps) {
   const [productos, setProductos] = useState<StockItem[]>([]);
-  const { revision } = useCotizacion();
+  const { revision } = useCotizacionSucursal(sucursalId);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!sucursalId) {
       setProductos([]);
+      setLoading(false);
       return;
     }
+    let vigente = true;
     setLoading(true);
+    setProductos([]);
     stockClient
       .obtenerPaginado({ limit: 200, offset: 0, sucursalId, operativo: true })
-      .then((res) => setProductos(res.data))
+      .then((res) => { if (vigente && res.data.every((item) => item.sucursalId === sucursalId)) setProductos(res.data); })
       .catch((err) => console.error('[ItemsEditor] Error cargando productos:', err))
-      .finally(() => setLoading(false));
+      .finally(() => { if (vigente) setLoading(false); });
+    return () => { vigente = false; };
   }, [sucursalId, revision]);
 
   useEffect(() => {

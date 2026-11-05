@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { descuentoEngineClient } from '../../../../../lib/api/descuento-engine.client';
 import { ItemConMargenCalculado, ListaPreciosCliente } from '../../../../../lib/types/ListaPreciosCliente';
-import { useCotizacion } from '../../../../../context/CotizacionContext';
+import { useCotizacionSucursal } from '../../../../../lib/hooks/useCotizacionSucursal';
 
 export const esPendienteRevision = (item: ItemConMargenCalculado) => item.estadoPrecio === 'LEGADO_PENDIENTE_REVISION';
 /** Con precio de lista $ 0 el cálculo no aplica el mínimo: el problema es el precio, no el descuento. */
@@ -18,9 +18,9 @@ export function useListaPreciosCliente({ clienteId, sucursales, activo = true }:
   sucursales: Array<{ id: string; nombre: string }>;
   activo?: boolean;
 }) {
-  const { revision } = useCotizacion();
   const [sucursalElegida, setSucursalElegida] = useState('');
   const sucursalId = sucursalElegida || sucursales[0]?.id || '';
+  const { revision } = useCotizacionSucursal(sucursalId);
   const [datos, setDatos] = useState<ListaPreciosCliente | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);

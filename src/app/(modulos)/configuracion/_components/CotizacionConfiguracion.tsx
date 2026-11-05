@@ -27,15 +27,11 @@ export default function CotizacionConfiguracion() {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const conflicto = editado && datos && version !== datos.cotizacion_version;
   const puedeActualizar = datos?.puede_actualizar ?? false;
-  const sugerencias = datos?.cotizacion_usd_ars == null
-    ? (datos?.sugerencias_sucursales ?? []).filter(s => s.valor_dolar != null && Number(s.valor_dolar) > 0)
-    : [];
-
   return <Card title="Cotización del dólar">
     <div className={styles.contenido}>
       <p className={styles.intro}>
-        Referencia manual única para toda la empresa. Al cambiarla se recalculan los equivalentes en ARS y USD;
-        los precios cargados en su moneda de referencia no se modifican.
+        Cotización general de la empresa. Se aplica a los PDV que no tienen una cotización propia.
+        Al cambiarla se actualizan los equivalentes, sin modificar los importes principales cargados.
       </p>
       {error && <p role="alert" className={styles.alertaError}>{error}</p>}
 
@@ -61,10 +57,6 @@ export default function CotizacionConfiguracion() {
                 <dd>{datos.actualizada_por_nombre}</dd>
               </div>
             )}
-            <div className={styles.metaItem}>
-              <dt>Versión</dt>
-              <dd>{datos.cotizacion_version}</dd>
-            </div>
           </dl>
         )}
       </section>
@@ -86,17 +78,9 @@ export default function CotizacionConfiguracion() {
           <p className={styles.ayuda}>Admite hasta 6 decimales.</p>
         </div>
 
-        {sugerencias.length > 0 && <div className={styles.sugerencias}>
-          <span className={styles.etiqueta}>Valores anteriores por sucursal</span>
-          <p className={styles.ayuda}>Elegí explícitamente una sugerencia o ingresá la referencia de empresa.</p>
-          <div className={styles.sugerenciasLista}>
-            {sugerencias.map(s => <Button key={s.id} type="button" variant="secondary" disabled={!puedeActualizar || guardando} onClick={() => { setValor(s.valor_dolar!); }}>{s.nombre}: $ {formatCotizacion(s.valor_dolar!)}</Button>)}
-          </div>
-        </div>}
-
         {conflicto && <div role="alert" className={styles.alertaConflicto}>
           <p>Otra persona actualizó el dólar. Tu importe se conserva.</p>
-          <Button type="button" variant="secondary" onClick={() => { setVersion(datos!.cotizacion_version); setMensaje(null); }}>Revisar con la versión {datos!.cotizacion_version}</Button>
+          <Button type="button" variant="secondary" onClick={() => { setVersion(datos!.cotizacion_version); setMensaje(null); }}>Revisar con la cotización vigente</Button>
         </div>}
         {mensaje && <p role="alert" className={styles.alertaError}>{mensaje}</p>}
 

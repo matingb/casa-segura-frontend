@@ -1,5 +1,7 @@
 # CAS-54 — Plan de implementación de doble moneda
 
+> **Decisión posterior (4 de noviembre de 2026):** el modelo de cotización única descrito en la sección 3.2 queda reemplazado por la regla de [cotización general con excepción por PDV](plan-cotizacion-general-y-por-pdv.md). La cotización general sigue siendo la referencia sin sucursal; con un PDV se usa su cotización propia si existe y, si es `NULL`, se hereda la general. Esta adenda conserva la decisión histórica de CAS-54 para explicar el diseño anterior. La nueva regla requiere la migración y el despliegue coordinados de backend y frontend.
+
 Fecha de revisión: **4 de octubre de 2026**, zona America/Buenos_Aires.
 
 **Estado de implementación:** etapas 1 a 3 implementadas en el workspace. Ver [funcionalidad, contratos, validación y despliegue](CAS-54-implementacion-etapas-1-3.md). La etapa 4 de entrega y el alcance financiero de las etapas 5 y 6 siguen pendientes.

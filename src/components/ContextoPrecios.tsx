@@ -10,8 +10,8 @@ export default function ContextoPrecios({ contexto, error, legado = false }: { c
     <p className={`${styles.aviso} ${styles.info}`}>
       <Info size={15} className={styles.icono} aria-hidden="true" />
       <span>
-        {contexto?.cotizacion_usd_ars ? `1 USD = ARS ${Number(contexto.cotizacion_usd_ars).toLocaleString('es-AR', { maximumFractionDigits: 6 })} · versión ${contexto.cotizacion_version} · actualizada ${formatFecha(contexto.actualizada_at ?? '')}` : 'Configurá el valor del dólar para calcular el equivalente USD.'}
-        <Link href="/configuracion?tab=cotizacion">Configurar cotización</Link>
+        {contexto?.cotizacion_usd_ars ? `1 USD = ARS ${Number(contexto.cotizacion_usd_ars).toLocaleString('es-AR', { maximumFractionDigits: 6 })} · ${contexto.origen === 'SUCURSAL' ? 'propia del PDV' : 'general de la empresa'} · actualizada ${formatFecha(contexto.actualizada_at ?? '')}` : 'Configurá el valor del dólar para calcular el equivalente USD.'}
+        <Link href={contexto?.origen === 'SUCURSAL' ? '/configuracion?tab=sucursales' : '/configuracion?tab=cotizacion'}>Configurar cotización</Link>
       </span>
     </p>
     {legado && <p className={`${styles.aviso} ${styles.advertencia}`}>

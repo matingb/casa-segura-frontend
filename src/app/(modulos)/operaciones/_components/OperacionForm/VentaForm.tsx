@@ -19,19 +19,16 @@ import ResumenOperacion from './ResumenOperacion';
 import OperacionFormLayout from './OperacionFormLayout';
 import { aCuentasInput, calcularPago, validarPago, FilaPago, ModoPagoElegido } from './pago';
 import styles from './OperacionFormLayout.module.css';
-import { useCotizacion } from '../../../../../context/CotizacionContext';
 import { stockClient } from '../../../../../lib/api/stock.client';
 import Button from '../../../../../components/ui/Button/Button';
+import { useCotizacionSucursal } from '../../../../../lib/hooks/useCotizacionSucursal';
 
 export default function VentaForm() {
   const { sucursales } = useSucursales();
   const { submitting, error, crear } = useOperacionCrear();
-  const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
   const [versionCatalogo, setVersionCatalogo] = useState<string | undefined>(undefined);
   const [errorEvaluacion, setErrorEvaluacion] = useState<string | null>(null);
   const [evaluando, setEvaluando] = useState(false);
-  const cotizacionCambio = versionCatalogo !== undefined && cotizacion != null && versionCatalogo !== cotizacion.cotizacion_version;
-
   const [sucursalElegida, setSucursalElegida] = useState('');
   const [clienteId, setClienteId] = useState('');
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -63,6 +60,8 @@ export default function VentaForm() {
 
   // Si hay sucursales disponibles, se selecciona la primera por defecto.
   const sucursalId = sucursalElegida || (sucursales.length > 0 ? sucursales[0].id : '');
+  const { datos: cotizacion, recargar: recargarCotizacion, cargando: cargandoCotizacion } = useCotizacionSucursal(sucursalId);
+  const cotizacionCambio = versionCatalogo !== undefined && cotizacion != null && versionCatalogo !== cotizacion.cotizacion_version;
 
   // Evaluación centralizada de descuentos y margen de ganancia
   useEffect(() => {
@@ -201,7 +200,9 @@ export default function VentaForm() {
 
   const validar = (): Record<string, string> => {
     const nuevos: Record<string, string> = {};
-    if (cotizacionCambio || errorEvaluacion || evaluando) nuevos.cotizacion = errorEvaluacion ?? 'Revisá la cotización y esperá la evaluación de los precios antes de confirmar.';
+    if (!cotizacion || cargandoCotizacion || cotizacionCambio || errorEvaluacion || evaluando || versionCatalogo === undefined) {
+      nuevos.cotizacion = errorEvaluacion ?? 'Esperá a que se cargue y evalúe la cotización efectiva de la sucursal antes de confirmar.';
+    }
 
     if (!sucursalId) nuevos.sucursalId = 'Elegí una sucursal.';
 
@@ -294,7 +295,9 @@ export default function VentaForm() {
                 const actual = await recargarCotizacion();
                 if (!actual) return;
                 const stock = await stockClient.obtenerTodos({ operativo: true });
-                const precios = new Map(stock.filter(p => p.sucursalId === sucursalId).map(p => [p.id, p]));
+                const precios = new Map(stock.filter(p => p.sucursalId === sucursalId && p.contextoMonetario?.cotizacion_version === actual.cotizacion_version).map(p => [p.id, p]));
+                const idsSeleccionados = items.map(item => item.productoSucursalId).filter(Boolean);
+                if (idsSeleccionados.some(id => !precios.has(id))) throw new Error('El catálogo cambió mientras se actualizaban los precios. Volvé a intentarlo.');
                 setItems(prev => prev.map(item => ({ ...item, precioUnitArs: precios.get(item.productoSucursalId)?.precioVentaArs ?? item.precioUnitArs, cotizacionVersionCatalogo: actual.cotizacion_version })));
                 setVersionCatalogo(actual.cotizacion_version); setErrorEvaluacion(null);
               } catch (err) { setErrorEvaluacion(err instanceof Error ? err.message : 'No se pudieron actualizar los precios.'); }

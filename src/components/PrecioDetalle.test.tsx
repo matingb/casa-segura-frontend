@@ -8,7 +8,8 @@ describe('Detalle de precio de solo lectura', () => {
     expect(container.querySelector('input, select')).toBeNull();
     expect(screen.getByText('Referencia USD')).toBeInTheDocument();
     expect(screen.getByText('Equivalente ARS')).toBeInTheDocument();
-    expect(screen.getByText(/versión 3/)).toBeInTheDocument();
+    expect(screen.getByText(/cotización general/)).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/versión\s+\w+/i);
   });
   it('señala un par heredado pendiente de revisión', () => {
     render(<PrecioDetalle label="Precio de sucursal" precio={{ moneda_referencia: 'ARS', importe_referencia: '100000.00', ars: '100000.00', usd: null, estado: 'LEGADO_PENDIENTE_REVISION' }} heredado={{ ars: '100000.00', usd: '120.1234' }} />);

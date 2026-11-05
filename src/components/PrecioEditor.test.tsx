@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import PrecioEditor from './PrecioEditor';
 import { PrecioEdicion } from '../lib/utils/precio';
@@ -18,13 +18,16 @@ describe('Edición y adopción de referencias', () => {
     expect(change).toHaveBeenCalledWith({ moneda: 'USD', importe: '100.0000', contexto: anterior, cambiado: true });
   });
   it('conserva el principal ante conflicto y exige revisar la nueva cotización', async () => {
-    contexto.recargar.mockResolvedValue(contexto.datos);
+    contexto.recargar.mockImplementation(async () => {
+      contexto.datos = { ...contexto.datos, cotizacion_version: '2' };
+      return contexto.datos;
+    });
     render(<Formulario />);
     expect(screen.getByLabelText('Precio')).toHaveValue(100000);
     fireEvent.click(screen.getByRole('button', { name: 'Actualizar cotización y revisar' }));
-    await screen.findByText(/versión 2/);
-    expect(screen.queryByRole('button', { name: 'Actualizar cotización y revisar' })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Actualizar cotización y revisar' })).toBeNull());
     expect(screen.getByLabelText('Precio')).toHaveValue(100000);
+    expect(document.body.textContent).not.toMatch(/versión\s+\w+/i);
   });
   it('ofrece el USD original al elegir explícitamente la referencia de un par heredado', () => {
     const change = vi.fn();

@@ -14,7 +14,8 @@ export function metadatosPrecios(contexto: ContextoMonetario | null | undefined,
   return [ ['Origen', cliente ? 'Precios de sucursal con descuentos del cliente' : 'Precios de sucursal sin descuentos de cliente'],
     ['Sucursal', sucursal], ...(cliente ? [['Cliente', cliente]] : []),
     ['1 USD = ARS', contexto?.cotizacion_usd_ars ?? 'Sin cotización: equivalente USD no disponible'],
-    ['Versión de cotización', contexto?.cotizacion_version ?? '0'],
+    ['Origen de cotización', contexto?.origen === 'SUCURSAL' ? 'Propia del PDV' : 'General de la empresa'],
+    ['PDV de la cotización', contexto?.sucursal_nombre ?? (contexto?.sucursal_id ? contexto.sucursal_id : 'Catálogo global')],
     ['Cotización actualizada', formatFecha(contexto?.actualizada_at ?? '')],
     ['Generado (America/Buenos_Aires)', formatFecha(new Date().toISOString())],
     ['Precisión', 'ARS 2 decimales · USD 4 decimales · cotización 6 decimales'],
@@ -22,5 +23,11 @@ export function metadatosPrecios(contexto: ContextoMonetario | null | undefined,
   ];
 }
 export function validarSnapshotPrecios(contextos: Array<ContextoMonetario | undefined>, contexto: ContextoMonetario | null | undefined) {
-  if (contextos.some(c => c && (c.cotizacion_version !== contexto?.cotizacion_version || c.cotizacion_usd_ars !== contexto?.cotizacion_usd_ars))) throw new Error('La lista contiene cotizaciones diferentes. Recargá antes de exportar.');
+  const origen = (c?: ContextoMonetario | null) => c?.origen ?? (c?.sucursal_id ? 'SUCURSAL' : 'TENANT');
+  if (contextos.some(c => c && (
+    c.cotizacion_version !== contexto?.cotizacion_version ||
+    c.cotizacion_usd_ars !== contexto?.cotizacion_usd_ars ||
+    (c.sucursal_id ?? null) !== (contexto?.sucursal_id ?? null) ||
+    origen(c) !== origen(contexto)
+  ))) throw new Error('La lista contiene cotizaciones de distintos contextos. Recargá antes de exportar.');
 }

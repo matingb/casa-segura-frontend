@@ -22,7 +22,11 @@ export function CotizacionProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     const contador = request;
-    const refresh = () => { void recargar(); };
+    const refresh = (event?: Event) => {
+      const detalle = (event as CustomEvent<{ alcance?: string }> | undefined)?.detail;
+      if (detalle?.alcance === 'SUCURSAL') return;
+      void recargar();
+    };
     refresh();
     window.addEventListener('focus', refresh);
     window.addEventListener('cotizacion-actualizada', refresh);

@@ -33,7 +33,7 @@ export function crearPdfListaPrecios(items: StockItem[], sucursalNombre: string,
   const total = doc.getNumberOfPages();
   for (let page = 1; page <= total; page++) {
     doc.setPage(page); doc.setFontSize(8);
-    doc.text(`Página ${page} de ${total} · cotización v${contexto?.cotizacion_version ?? '0'}`, 194, 289, { align: 'right' });
+    doc.text(`Página ${page} de ${total} · 1 USD = ARS ${formatARS(contexto?.cotizacion_usd_ars)} · ${contexto?.origen === 'SUCURSAL' ? 'propia' : 'general'}`, 194, 289, { align: 'right' });
   }
   return doc;
 }

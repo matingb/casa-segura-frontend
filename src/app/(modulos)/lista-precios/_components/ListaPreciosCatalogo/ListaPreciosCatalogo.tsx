@@ -59,11 +59,11 @@ export default function ListaPreciosCatalogo() {
 
   const handleConfirmExport = (selectedKeys: string[]) => {
     setShowExportModal(false);
-    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.items[0]?.contextoMonetario, nuevos.precios); } });
+    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
   };
 
   const handleExportPdf = () => {
-    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.items[0]?.contextoMonetario, nuevos.precios); } });
+    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
   };
 
   // Producto | Clasificación | Precio | Descuento | Precio final | IVA, con las

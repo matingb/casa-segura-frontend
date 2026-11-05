@@ -9,21 +9,27 @@ import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/Con
 import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './SucursalesConfiguracion.module.css';
 import { useCotizacion } from '../../../../context/CotizacionContext';
+import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
+import { Dinero } from '../../../../lib/utils/precio';
 import SucursalUsuariosEditor, { FilaAsignacion } from './SucursalUsuariosEditor';
 
 interface FormState {
   nombre: string;
   valorDolar: string;
+  usarCotizacionPropia: boolean;
+  valorDolarVersion: string;
   descuento: string;
   esCentral: boolean;
 }
 
-const FORM_VACIO: FormState = { nombre: '', valorDolar: '', descuento: '', esCentral: false };
+const FORM_VACIO: FormState = { nombre: '', valorDolar: '', usarCotizacionPropia: false, valorDolarVersion: '0', descuento: '', esCentral: false };
 
 function aFormState(s: Sucursal): FormState {
   return {
     nombre: s.nombre,
-    valorDolar: s.valorDolar ? String(s.valorDolar) : '',
+    valorDolar: s.valorDolar ?? '',
+    usarCotizacionPropia: s.valorDolar !== null,
+    valorDolarVersion: s.valorDolarVersion,
     descuento: s.descuento === null ? '' : String(s.descuento),
     esCentral: s.esCentral,
   };
@@ -41,8 +47,7 @@ interface SucursalesConfiguracionProps {
 export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACotizacion }: SucursalesConfiguracionProps) {
   const { showSuccess, showError } = useToast();
   const { recargarSucursales } = useSucursales();
-  const { datos: cotizacion } = useCotizacion();
-  const usaCentral = cotizacion?.cotizacion_usd_ars != null;
+  const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,10 +134,17 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
       showError('El nombre de la sucursal es obligatorio.');
       return;
     }
-    const valorDolar = form.valorDolar.trim() === '' ? null : Number(form.valorDolar);
-    if (valorDolar !== null && (!Number.isFinite(valorDolar) || valorDolar < 0)) {
-      showError('El valor del dólar debe ser un número positivo.');
-      return;
+    const valorDolar = form.usarCotizacionPropia ? form.valorDolar.trim() : null;
+    if (valorDolar !== null) {
+      if (!/^\d+(?:\.\d+)?$/.test(valorDolar)) {
+        showError('La cotización del PDV debe ser un decimal positivo con hasta 6 decimales.');
+        return;
+      }
+      const tasa = new Dinero(valorDolar);
+      if (!tasa.isFinite() || tasa.lte(0) || tasa.decimalPlaces() > 6 || tasa.gte('1000000000000')) {
+        showError('La cotización del PDV debe ser positiva, menor a 1.000.000.000.000 y tener hasta 6 decimales.');
+        return;
+      }
     }
     const descuento = form.descuento.trim() === '' ? null : Number(form.descuento);
     if (descuento !== null && (!Number.isFinite(descuento) || descuento < 0 || descuento > 100)) {
@@ -142,7 +154,8 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
 
     const body = {
       nombre,
-      ...(!usaCentral ? { valor_dolar: valorDolar } : {}),
+      valor_dolar: valorDolar,
+      ...(editandoId ? { valor_dolar_version_esperada: form.valorDolarVersion } : {}),
       descuento,
       es_central: form.esCentral,
       // Solo un administrador manda la lista; al crear, el backend suma a quien crea.
@@ -165,6 +178,19 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
       // El selector de sucursales del resto del sistema tiene que reflejarlo.
       await recargarSucursales();
     } catch (err) {
+      if (err instanceof CatalogoApiError && err.code === 'COTIZACION_CAMBIO' && editandoId) {
+        try {
+          const actualizadas = await sucursalClient.obtenerParaAdmin();
+          const actualizada = actualizadas.find((s) => s.id === editandoId);
+          setSucursales(actualizadas);
+          if (actualizada) setForm((prev) => ({ ...prev, valorDolarVersion: actualizada.valorDolarVersion }));
+          await recargarCotizacion();
+        } catch {
+          // Se conserva el formulario para que el usuario pueda volver a consultar.
+        }
+        showError('La cotización cambió. Se conservó el borrador y se actualizó la versión; revisá el valor antes de guardar de nuevo.');
+        return;
+      }
       showError(err instanceof Error ? err.message : 'No se pudo guardar la sucursal.');
     } finally {
       setGuardando(false);
@@ -224,35 +250,37 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
             autoFocus
           />
         </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Valor del dólar</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            // Con dólar de empresa se muestra ese valor (solo lectura); al guardar no se envía.
-            value={usaCentral ? String(Number(cotizacion!.cotizacion_usd_ars)) : form.valorDolar}
-            onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
-            placeholder={usaCentral ? undefined : 'Ej: 1200'}
-            disabled={guardando || usaCentral}
-          />
-          {usaCentral && (
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Cotización del PDV</span>
+          <label className={styles.checkboxField}>
+            <input type="radio" name="cotizacion-pdv" checked={!form.usarCotizacionPropia}
+              onChange={() => setForm({ ...form, usarCotizacionPropia: false })} disabled={guardando} />
+            Usar cotización general
+          </label>
+          <label className={styles.checkboxField}>
+            <input type="radio" name="cotizacion-pdv" checked={form.usarCotizacionPropia}
+              onChange={() => setForm({ ...form, usarCotizacionPropia: true })} disabled={guardando} />
+            Usar cotización propia
+          </label>
+          {form.usarCotizacionPropia ? (
+            <>
+              <input aria-label="Cotización propia del PDV" type="number" min="0.000001" step="0.000001"
+                value={form.valorDolar} onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
+                placeholder="Ej: 1200" disabled={guardando} />
+              <span className={styles.hint}>
+                Cotización general vigente: {cotizacion?.cotizacion_usd_ars != null ? `1 USD = ${formatARS(cotizacion.cotizacion_usd_ars)}` : 'sin configurar'}.
+                La tasa efectiva de este PDV será la propia.
+              </span>
+            </>
+          ) : (
             <span className={styles.hint}>
-              El dólar se configura para toda la empresa
-              {onIrACotizacion ? (
-                <>
-                  {' en '}
-                  <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}>
-                    Configuración → Cotización
-                  </button>
-                </>
-              ) : (
-                ' en Configuración → Cotización'
-              )}
-              .
+              {cotizacion?.cotizacion_usd_ars != null
+                ? `Hereda 1 USD = ${formatARS(cotizacion.cotizacion_usd_ars)} de la empresa.`
+                : 'Hereda la cotización general configurada para la empresa.'}
+              {onIrACotizacion && <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}> Configuración → Cotización</button>}
             </span>
           )}
-        </label>
+        </div>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Descuento (%)</span>
           <input
@@ -305,7 +333,7 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
         <div className={styles.toolbarInfo}>
           <h2 className={styles.toolbarTitle}>Sucursales</h2>
           <p className={styles.toolbarDescription}>
-            Administra las sucursales y sus descuentos. La referencia del dólar se configura para toda la empresa.
+            Administra las sucursales, sus descuentos y la cotización propia o heredada de cada PDV.
           </p>
         </div>
         <button
@@ -346,7 +374,9 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                     {!s.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
                   </div>
                   <div className={styles.filaDatos}>
-                    <span>Dólar anterior: {s.valorDolar ? formatARS(s.valorDolar) : '—'}</span>
+                    <span>{s.valorDolar !== null
+                      ? `Efectiva: ${formatARS(s.valorDolar)} · propia del PDV`
+                      : `Efectiva: ${cotizacion?.cotizacion_usd_ars != null ? formatARS(cotizacion.cotizacion_usd_ars) : 'sin configurar'} · general heredada`}</span>
                     <span>
                       Descuento: {s.descuento !== null ? formatPorcentaje(s.descuento) : '—'}
                     </span>

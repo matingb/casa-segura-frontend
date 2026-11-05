@@ -31,7 +31,9 @@ describe('Archivos del catálogo', () => {
     expect(crearPdfListaPrecios(items.slice(0, 2), 'Centro', () => 'Subtipo', contexto, precios).getNumberOfPages()).toBe(1);
   });
   it('rechaza mezclar versiones y usa la fecha de Buenos Aires', () => {
-    expect(() => crearLibroListaPrecios([{ ...items[0], contextoMonetario: { ...contexto, cotizacion_version: '4' } }], ['codigo'], 'Centro', () => '', contexto)).toThrow('cotizaciones diferentes');
+    expect(() => crearLibroListaPrecios([{ ...items[0], contextoMonetario: { ...contexto, cotizacion_version: '4' } }], ['codigo'], 'Centro', () => '', contexto)).toThrow('distintos contextos');
+    const otroPdv = { ...contexto, origen: 'SUCURSAL' as const, sucursal_id: 'sucursal-2', sucursal_nombre: 'Norte' };
+    expect(() => crearLibroListaPrecios([{ ...items[0], contextoMonetario: { ...otroPdv, sucursal_id: 'sucursal-1' } }], ['codigo'], 'Norte', () => '', otroPdv)).toThrow('distintos contextos');
     expect(fechaArchivoBuenosAires(new Date('2026-10-05T01:00:00Z'))).toBe('2026-10-04');
     expect(numeroExcel('1234567890123456')).toBe('1234567890123456');
   });
@@ -39,12 +41,15 @@ describe('Archivos del catálogo', () => {
     const item = { codigo: 'USD', nombre: 'Producto', marca: 'Marca', modelo: 'MD-1', subtipoNombre: 'Subtipo', precioListaArs: '120000.00', descuentoTotalPorcentaje: 10, precioFinalArs: '108000.00', precioFinalUsd: '90.0000', iva: 21, monedaReferencia: 'USD' as const, importeReferencia: '100.0000', importeFinalReferencia: '90.0000', estadoPrecio: 'LEGADO_PENDIENTE_REVISION' as const };
     // Aunque se pidan claves internas, no existen en la lista blanca y no salen.
     const columnas = ['codigo', 'nombre', 'precioClienteArs', 'precioClienteUsd', 'precioListaArs', 'descuentoTotalPorcentaje', 'costoReposicion', 'estadoPrecio'];
-    const params = { filas: [aFilaExportCliente(item)], columnas, cliente: { nombre: 'Cliente' }, sucursalNombre: 'Centro', contexto };
+    const contextoPdv = { ...contexto, origen: 'SUCURSAL' as const, sucursal_id: 's1', sucursal_nombre: 'Centro' };
+    const params = { filas: [aFilaExportCliente(item)], columnas, cliente: { nombre: 'Cliente' }, sucursalNombre: 'Centro', contexto: contextoPdv };
     const libro = crearLibroListaPreciosCliente(params);
     const fila = XLSX.utils.sheet_to_json<Record<string, unknown>>(libro.Sheets['Lista de precios'])[0];
     expect(Object.keys(fila)).toEqual(['Código', 'Nombre', 'Precio cliente ARS', 'Precio cliente USD']);
     expect(fila).toMatchObject({ 'Precio cliente ARS': 108000, 'Precio cliente USD': 90 });
     const todo = JSON.stringify(libro.Sheets);
+    expect(todo).toContain('Propia del PDV');
+    expect(todo).toContain('Cotización actualizada');
     for (const interno of ['120000', 'Descuento', 'Región', 'pendiente', 'LEGADO', 'Costo']) expect(todo).not.toContain(interno);
     expect(crearPdfListaPreciosCliente(params).getNumberOfPages()).toBe(1);
   });

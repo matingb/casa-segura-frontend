@@ -1,5 +1,7 @@
 # CAS-54 — Implementación de las etapas 1 a 3
 
+> **Adenda (4 de noviembre de 2026):** esta implementación documenta el comportamiento anterior de cotización única por empresa. La decisión vigente agrega una cotización propia opcional por PDV; `NULL` hereda la general. Consultar el [plan de cotización general y por PDV](plan-cotizacion-general-y-por-pdv.md). Las descripciones históricas siguientes se conservan para trazar la entrega anterior y no describen por sí solas el comportamiento nuevo.
+
 Fecha: 4 de octubre de 2026, America/Buenos_Aires.
 
 Las tres etapas de catálogo del [plan](CAS-54-plan-implementacion-doble-moneda.md) están implementadas en backend y frontend. Los cambios están en los archivos de trabajo; esta entrega no aplica migraciones a producción ni realiza un despliegue.

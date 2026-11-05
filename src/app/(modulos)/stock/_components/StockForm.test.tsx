@@ -7,11 +7,12 @@ const { cotizacion, toast, push } = vi.hoisted(() => ({ cotizacion: { cotizacion
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../../../../context/ToastContext', () => ({ useToast: () => toast }));
 vi.mock('../../../../context/CotizacionContext', () => ({ useCotizacion: () => ({ datos: cotizacion, recargar: vi.fn(), error: null }) }));
+vi.mock('../../../../lib/hooks/useCotizacionSucursal', () => ({ useCotizacionSucursal: () => ({ datos: cotizacion, recargar: vi.fn(async () => cotizacion), error: null, cargando: false }) }));
 vi.mock('../../../../context/SucursalContext', () => ({ useSucursales: () => ({ sucursales: [] }) }));
 vi.mock('../../../../lib/hooks/useClasificacion', () => ({ useClasificacion: () => ({ getSubtipoNombre: () => 'Subtipo' }) }));
 vi.mock('../_hooks/useStockDetalle', () => ({ useStockDetalle: () => ({ stockItem: null, isLoading: false, error: null, reload: vi.fn() }) }));
 vi.mock('../../../../lib/api/stock.client', () => ({ stockClient: { actualizar: vi.fn() } }));
-const item = { id: 'stock-1', productoId: 'p1', sucursalNombre: 'Centro', nombre: 'Producto', codigo: 'P1', costoReposicion: 1, margenMinimo: 10, iva: 21, activo: true, stockMinimo: 2, cantidadDisponible: 42, cantidadReservada: 3, precioVentaArs: 123.4, precioVentaUsd: 0.1234, contextoMonetario: cotizacion, precio: { moneda_referencia: 'USD', importe_referencia: '0.1234', ars: '123.40', usd: '0.1234', estado: 'VINCULADO' } } as StockItem;
+const item = { id: 'stock-1', productoId: 'p1', sucursalId: 's1', sucursalNombre: 'Centro', nombre: 'Producto', codigo: 'P1', costoReposicion: 1, margenMinimo: 10, iva: 21, activo: true, stockMinimo: 2, cantidadDisponible: 42, cantidadReservada: 3, precioVentaArs: 123.4, precioVentaUsd: 0.1234, contextoMonetario: cotizacion, precio: { moneda_referencia: 'USD', importe_referencia: '0.1234', ars: '123.40', usd: '0.1234', estado: 'VINCULADO' } } as StockItem;
 describe('Guardado del precio de sucursal', () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(stockClient.actualizar).mockResolvedValue(item); });
   it('manda un único principal preciso y omite cantidades sin editar', async () => {

@@ -8,8 +8,9 @@ export async function errorCatalogo(res: Response, fallback: string): Promise<ne
   throw new CatalogoApiError(body.message ?? fallback, body.code, res.status);
 }
 export const cotizacionClient = {
-  async obtener(): Promise<Cotizacion> {
-    const res = await apiFetch('/api/configuracion/cotizacion');
+  async obtener(sucursalId?: string | null): Promise<Cotizacion> {
+    const query = sucursalId ? `?sucursal_id=${encodeURIComponent(sucursalId)}` : '';
+    const res = await apiFetch(`/api/configuracion/cotizacion${query}`);
     if (!res.ok) return errorCatalogo(res, 'No se pudo consultar la cotización.');
     return (await res.json()).data;
   },
@@ -19,7 +20,7 @@ export const cotizacionClient = {
       body: JSON.stringify({ cotizacion_usd_ars: valor, version_esperada: version }),
     });
     if (!res.ok) return errorCatalogo(res, 'No se pudo actualizar la cotización.');
-    window.dispatchEvent(new Event('cotizacion-actualizada'));
+    window.dispatchEvent(new CustomEvent('cotizacion-actualizada', { detail: { alcance: 'TENANT' } }));
     return (await res.json()).data;
   },
 };

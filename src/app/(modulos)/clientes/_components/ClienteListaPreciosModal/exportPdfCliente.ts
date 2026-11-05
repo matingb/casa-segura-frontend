@@ -19,15 +19,21 @@ export interface ExportClienteParams {
 const MARGEN = 14;
 const ANCHO_UTIL = { portrait: 210 - MARGEN * 2, landscape: 297 - MARGEN * 2 };
 
-/** Encabezado que ve el cliente: quién, de qué punto de venta, cuándo y con qué dólar (si hay USD). */
+/** Encabezado del snapshot exportado, con PDV y contexto monetario aplicado. */
 export function encabezadoCliente({ cliente, sucursalNombre, contexto }: ExportClienteParams, incluyeUsd: boolean): Array<[string, string]> {
   const filas: Array<[string, string]> = [
     ['Cliente', [cliente.nombre, cliente.razonSocial].filter(Boolean).join(' · ')],
     ...(cliente.nroDocumento ? [['Documento', cliente.nroDocumento] as [string, string]] : []),
     ['Punto de venta', sucursalNombre],
-    ['Fecha', formatFecha(new Date().toISOString())],
+    ['Snapshot de precios', formatFecha(new Date().toISOString())],
   ];
-  if (incluyeUsd && contexto?.cotizacion_usd_ars) filas.push(['Dólar de referencia', formatARS(contexto.cotizacion_usd_ars)]);
+  if (contexto?.cotizacion_usd_ars) {
+    filas.push(['1 USD = ARS', formatARS(contexto.cotizacion_usd_ars)]);
+    filas.push(['Origen de cotización', contexto.origen === 'SUCURSAL' ? 'Propia del PDV' : 'General de la empresa']);
+    filas.push(['Cotización actualizada', formatFecha(contexto.actualizada_at ?? '')]);
+  } else if (incluyeUsd) {
+    filas.push(['Cotización', 'No disponible']);
+  }
   return filas;
 }
 
