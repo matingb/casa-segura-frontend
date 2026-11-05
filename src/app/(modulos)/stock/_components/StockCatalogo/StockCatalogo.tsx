@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus, AlertTriangle } from 'lucide-react';
+import { Pencil, Eye, Plus, AlertTriangle, Building2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
@@ -13,6 +13,7 @@ import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRec
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
+import Combobox from '../../../../../components/ui/Combobox/Combobox';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
 import { StockItem } from '../../../../../lib/types/Stock';
 import { stockClient } from '../../../../../lib/api/stock.client';
@@ -27,7 +28,6 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] 
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
   { key: 'subtipo', label: 'Subtipo' },
-  { key: 'sucursal', label: 'Sucursal' },
   { key: 'estado', label: 'Estado' },
 ];
 
@@ -189,7 +189,21 @@ export default function StockCatalogo() {
           onFilterChange={onFilterChange}
           filterOptions={filterOptions}
           loading={filtersLoading}
-        />
+        >
+          <div className={styles.sucursalFilter}>
+            <Combobox
+              icon={<Building2 size={15} />}
+              options={[
+                { value: '', label: 'Todas las sucursales' },
+                ...(filterOptions.sucursal ?? []),
+              ]}
+              value={filters.sucursal ?? ''}
+              onChange={(value) => onFilterChange('sucursal', value)}
+              placeholder="Sucursal"
+              loading={filtersLoading}
+            />
+          </div>
+        </FilterBar>
       </div>
 
       {error && <p role="alert">{error}</p>}
