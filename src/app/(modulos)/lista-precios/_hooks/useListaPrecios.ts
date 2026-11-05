@@ -62,29 +62,55 @@ export function useListaPrecios() {
   }, [sucursalId]);
 
   useEffect(() => {
-    if (sucursales.length > 0 && !sucursalId) {
+    const sigueAlcanzable = sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo);
+    if (!sigueAlcanzable && sucursalId) {
+      setStockTotal([]);
+      setPrecios(new Map());
+      setContextoLista(null);
+      setContextoListaSucursalId('');
+      query.setFilters((prev) => ({ ...prev, sucursal: sucursales[0]?.id ?? '' }));
+    } else if (sucursales.length > 0 && !sucursalId) {
       query.setFilters((prev) => ({ ...prev, sucursal: sucursales[0].id }));
     }
   }, [sucursales, sucursalId, query.setFilters]);
 
   const recargar = useCallback(async () => {
     const id = ++request.current;
+    const sucursalSolicitada = sucursalId;
+    if (!sucursalSolicitada || !sucursales.some((sucursal) => sucursal.id === sucursalSolicitada && sucursal.activo)) {
+      setStockTotal([]);
+      setError(null);
+      setIsLoading(false);
+      return [];
+    }
+    setStockTotal([]);
+    setError(null);
     setIsLoading(true);
     try {
-      const stock = await stockClient.obtenerTodos();
-      if (id === request.current) { setStockTotal(stock); setError(null); }
+      const stock = await stockClient.obtenerTodos({ sucursalId: sucursalSolicitada, operativo: true });
+      if (id !== request.current || sucursalActual.current !== sucursalSolicitada) {
+        throw new Error('El punto de venta cambió. Actualizá la lista antes de exportar.');
+      }
+      if (id === request.current && sucursalActual.current === sucursalSolicitada) { setStockTotal(stock); setError(null); }
       return stock;
     } catch (err) {
-      if (id === request.current) setError(err instanceof Error ? err.message : 'No se pudo actualizar la lista.');
+      if (id === request.current && sucursalActual.current === sucursalSolicitada) {
+        setStockTotal([]);
+        setError(err instanceof Error ? err.message : 'No se pudo actualizar la lista.');
+      }
       throw err;
     } finally { if (id === request.current) setIsLoading(false); }
-  }, []);
+  }, [sucursalId, sucursales]);
   useEffect(() => { void recargar().catch(() => {}); return () => { request.current++; }; }, [recargar, cotizacionSucursal.revision]);
 
   const cargarPrecios = useCallback(async (): Promise<{ precios: PreciosSucursal; contexto: ContextoMonetario | null }> => {
     const id = ++requestPrecios.current;
     const sucursalSolicitada = sucursalId;
-    if (!sucursalId) { setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); return { precios: new Map(), contexto: null }; }
+    if (!sucursalId || !sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo)) {
+      setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); setErrorPrecios(null);
+      return { precios: new Map(), contexto: null };
+    }
+    setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); setErrorPrecios(null);
     try {
       const lista = await descuentoEngineClient.listaSucursal(sucursalId);
       const nuevos: PreciosSucursal = new Map(lista.items.map((item) => [item.id, item]));
@@ -96,10 +122,15 @@ export function useListaPrecios() {
       }
       return { precios: nuevos, contexto: lista.contexto_monetario ?? null };
     } catch (err) {
-      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) setErrorPrecios(err instanceof Error ? err.message : 'No se pudieron calcular los descuentos.');
+      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) {
+        setPrecios(new Map());
+        setContextoLista(null);
+        setContextoListaSucursalId('');
+        setErrorPrecios(err instanceof Error ? err.message : 'No se pudieron calcular los descuentos.');
+      }
       throw err;
     }
-  }, [sucursalId]);
+  }, [sucursalId, sucursales]);
   useEffect(() => {
     let vigente = true;
     const contador = requestPrecios;
@@ -107,8 +138,12 @@ export function useListaPrecios() {
     return () => { vigente = false; contador.current++; };
   }, [cargarPrecios, cotizacionSucursal.revision]);
 
-  const contextoActualLista = contextoListaSucursalId === sucursalId ? contextoLista : null;
-  const stockDeSucursal = useMemo(() => stockTotal.filter((item) => item.sucursalId === sucursalId && item.activo), [stockTotal, sucursalId]);
+  const sucursalValida = sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo);
+  const contextoActualLista = sucursalValida && contextoListaSucursalId === sucursalId ? contextoLista : null;
+  const stockDeSucursal = useMemo(
+    () => sucursalValida ? stockTotal.filter((item) => item.sucursalId === sucursalId && item.activo) : [],
+    [stockTotal, sucursalId, sucursalValida]
+  );
   const snapshotCompatible = !contextoActualLista || stockDeSucursal.every((item) => mismoContexto(item.contextoMonetario, contextoActualLista));
 
   useEffect(() => {
@@ -131,9 +166,9 @@ export function useListaPrecios() {
   );
 
   const itemsSucursal = useMemo(() => {
-    if (!sucursalId) return [];
+    if (!sucursalValida) return [];
     return stockTotal.filter((item) => item.sucursalId === sucursalId && item.activo);
-  }, [stockTotal, sucursalId]);
+  }, [stockTotal, sucursalId, sucursalValida]);
 
   const filterOptions = useMemo(() => {
     const options: Record<string, { value: string; label: string }[]> = { sucursal: sucursalOptions };
@@ -161,12 +196,35 @@ export function useListaPrecios() {
       return a.id.localeCompare(b.id);
     });
   }, [query.search, query.filters, query.sort, sucursalId, getSubtipoNombre]);
+  const revalidarAcceso = useCallback(async () => {
+    const solicitada = sucursalId;
+    if (!solicitada || !sucursales.some((sucursal) => sucursal.id === solicitada && sucursal.activo)) {
+      throw new Error('Seleccioná un punto de venta activo dentro de tu alcance antes de exportar.');
+    }
+    try {
+      await descuentoEngineClient.listaSucursal(solicitada);
+      if (sucursalActual.current !== solicitada) throw new Error('El punto de venta cambió. Actualizá la lista antes de exportar.');
+    } catch (err) {
+      if (sucursalActual.current === solicitada) {
+        setStockTotal([]);
+        setPrecios(new Map());
+        setContextoLista(null);
+        setContextoListaSucursalId('');
+        setErrorPrecios(err instanceof Error ? err.message : 'La lista ya no está disponible.');
+      }
+      throw err;
+    }
+  }, [sucursalId, sucursales]);
   const items = useMemo(
-    () => snapshotCompatible ? aplicarSeleccion(stockTotal, precios) : [],
-    [snapshotCompatible, aplicarSeleccion, stockTotal, precios]
+    () => sucursalValida && snapshotCompatible ? aplicarSeleccion(stockTotal, precios) : [],
+    [sucursalValida, snapshotCompatible, aplicarSeleccion, stockTotal, precios]
   );
   const actualizarSeleccion = async () => {
+    if (!sucursalId || !sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo)) {
+      throw new Error('Seleccioná un punto de venta activo dentro de tu alcance antes de actualizar la lista.');
+    }
     const [stock, resultado] = await Promise.all([recargar(), cargarPrecios()]);
+    if (sucursalActual.current !== sucursalId) throw new Error('El punto de venta cambió. Actualizá la lista antes de exportar.');
     const filasSucursal = stock.filter((item) => item.sucursalId === sucursalId && item.activo);
     if (resultado.contexto && !filasSucursal.every((item) => mismoContexto(item.contextoMonetario, resultado.contexto))) {
       throw new Error('La cotización cambió durante la actualización. Volvé a actualizar la lista antes de exportar.');
@@ -184,6 +242,7 @@ export function useListaPrecios() {
   return {
     sucursalId,
     actualizarSeleccion,
+    revalidarAcceso,
     contexto: contextoActualLista,
     error: error ?? errorPrecios ?? cotizacionSucursal.error ?? (!snapshotCompatible ? 'La cotización del PDV cambió mientras se cargaba la lista; actualizando los precios.' : null),
     precios,

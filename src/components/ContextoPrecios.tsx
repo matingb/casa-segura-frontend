@@ -20,7 +20,7 @@ export default function ContextoPrecios({ contexto, error, legado = false }: { c
     </p>}
     {error && <p className={`${styles.aviso} ${styles.error}`} role="alert">
       <AlertCircle size={15} className={styles.icono} aria-hidden="true" />
-      <span>{error} La vista conserva los precios y la referencia de la última carga.</span>
+      <span>{error} Se ocultaron los datos hasta que la lista vuelva a estar disponible.</span>
     </p>}
   </div>;
 }

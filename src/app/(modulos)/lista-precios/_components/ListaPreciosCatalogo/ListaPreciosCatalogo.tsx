@@ -36,7 +36,7 @@ export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
     sucursalOptions,
-    contexto, error, actualizarSeleccion, precios,
+    contexto, error, actualizarSeleccion, revalidarAcceso, precios,
     items,
     pageItems,
     page,
@@ -59,11 +59,11 @@ export default function ListaPreciosCatalogo() {
 
   const handleConfirmExport = (selectedKeys: string[]) => {
     setShowExportModal(false);
-    void comprobar({ contexto, conservar: () => exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
+    void comprobar({ contexto, conservar: async () => { await revalidarAcceso(); exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios); }, actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
   };
 
   const handleExportPdf = () => {
-    void comprobar({ contexto, conservar: () => exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios), actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
+    void comprobar({ contexto, conservar: async () => { await revalidarAcceso(); exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios); }, actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
   };
 
   // Producto | Clasificación | Precio | Descuento | Precio final | IVA, con las

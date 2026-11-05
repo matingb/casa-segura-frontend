@@ -7,7 +7,7 @@ import Modal from '../../components/ui/Modal/Modal';
 import Button from '../../components/ui/Button/Button';
 import { useToast } from '../../context/ToastContext';
 
-interface Solicitud { contexto?: ContextoMonetario | null; conservar: () => void; actualizar: () => Promise<void> }
+interface Solicitud { contexto?: ContextoMonetario | null; conservar: () => void | Promise<void>; actualizar: () => Promise<void> }
 
 export function useExportacionCotizacion() {
   const [pendiente, setPendiente] = useState<Solicitud | null>(null);
@@ -30,7 +30,7 @@ export function useExportacionCotizacion() {
         vigente.sucursal_id === contexto?.sucursal_id && vigente.origen === contexto?.origen &&
         vigente.cotizacion_usd_ars === contexto?.cotizacion_usd_ars;
       if (!sigueVigente) setPendiente(solicitud);
-      else solicitud.conservar();
+      else await solicitud.conservar();
     } catch (err) { showError(err instanceof Error ? err.message : 'No se pudo comprobar la cotización.'); }
     finally { setOcupado(false); }
   };

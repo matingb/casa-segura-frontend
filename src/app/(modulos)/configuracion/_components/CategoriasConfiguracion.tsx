@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { useClasificacion, notifyClasificacionChanged } from '../../../../lib/hooks/useClasificacion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
-import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
+import { ReferenciaSucursalGlobal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import DescuentoEditor from './DescuentoEditor';
 import styles from './CategoriasConfiguracion.module.css';
@@ -38,12 +38,12 @@ export default function CategoriasConfiguracion() {
   const [nombreEdicion, setNombreEdicion] = useState('');
   const [guardandoNombre, setGuardandoNombre] = useState(false);
 
-  // Los descuentos por sucursal se cargan para cualquier sucursal activa de la
-  // empresa, no solo para las asignadas al usuario.
-  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  // Las excepciones de descuentos de categoría pueden aplicar a cualquier PDV
+  // del tenant; esta API devuelve solo referencias mínimas para identificarlos.
+  const [sucursales, setSucursales] = useState<ReferenciaSucursalGlobal[]>([]);
   useEffect(() => {
     sucursalClient
-      .obtenerParaAdmin(false)
+      .obtenerReferenciasGlobales()
       .then(setSucursales)
       .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar sucursales'));
   }, [showError]);

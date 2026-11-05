@@ -16,22 +16,52 @@ export default function ConfiguracionView() {
   const [activeTab, setActiveTab] = useState<TabType>('categorias');
   useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'cotizacion') setActiveTab('cotizacion'); }, []);
   const { tipos } = useClasificacion();
-  // Sucursales activas del tenant: las mismas que lista la pestaña, sin las dadas de baja.
+  // Sucursales activas propias: solo las asignadas al usuario.
   const [sucursalesActivas, setSucursalesActivas] = useState<number | null>(null);
   const contarSucursales = useCallback((lista: Sucursal[]) => {
     setSucursalesActivas(lista.filter((s) => s.activo).length);
   }, []);
   useEffect(() => {
-    sucursalClient.obtenerParaAdmin(false).then(contarSucursales).catch(() => setSucursalesActivas(null));
+    let request = 0;
+    const recargar = () => {
+      const version = ++request;
+      setSucursalesActivas(null);
+      sucursalClient.obtenerParaAdmin(false)
+        .then((lista) => { if (version === request) contarSucursales(lista); })
+        .catch(() => { if (version === request) setSucursalesActivas(null); });
+    };
+    recargar();
+    window.addEventListener('focus', recargar);
+    window.addEventListener('alcance-pdv-revocado', recargar);
+    return () => {
+      request++;
+      window.removeEventListener('focus', recargar);
+      window.removeEventListener('alcance-pdv-revocado', recargar);
+    };
   }, [contarSucursales]);
 
-  // Regiones activas: las que lista la pestaña, sin las dadas de baja.
+  // Regiones activas visibles en los puntos de venta propios.
   const [regionesActivas, setRegionesActivas] = useState<number | null>(null);
   const contarRegiones = useCallback((lista: Region[]) => {
     setRegionesActivas(lista.filter((r) => r.activo).length);
   }, []);
   useEffect(() => {
-    regionClient.obtenerTodas().then(contarRegiones).catch(() => setRegionesActivas(null));
+    let request = 0;
+    const recargar = () => {
+      const version = ++request;
+      setRegionesActivas(null);
+      regionClient.obtenerTodas()
+        .then((lista) => { if (version === request) contarRegiones(lista); })
+        .catch(() => { if (version === request) setRegionesActivas(null); });
+    };
+    recargar();
+    window.addEventListener('focus', recargar);
+    window.addEventListener('alcance-pdv-revocado', recargar);
+    return () => {
+      request++;
+      window.removeEventListener('focus', recargar);
+      window.removeEventListener('alcance-pdv-revocado', recargar);
+    };
   }, [contarRegiones]);
 
   return (

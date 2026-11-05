@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, FileDown, Pencil, User, Percent, Building2, MapPin, ArrowLeft, Trash2 } from 'lucide-react';
 import Card from '../../../../components/ui/Card/Card';
@@ -20,12 +20,14 @@ import {
   tipoClienteLabel,
 } from '../../../../lib/types/Cliente';
 import { clienteClient } from '../../../../lib/api/cliente.client';
+import { CatalogoApiError } from '../../../../lib/api/apiError';
 import { useClienteDetalle } from '../_hooks/useClienteDetalle';
 import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
 import { formatPorcentaje, parseNum } from '../../../../lib/utils/formatters';
 import ClienteDescuentos from './ClienteDescuentos/ClienteDescuentos';
 import ClienteListaPreciosModal from './ClienteListaPreciosModal/ClienteListaPreciosModal';
+import { useSucursales } from '../../../../context/SucursalContext';
 import styles from './ClienteForm.module.css';
 
 interface ClienteFormProps {
@@ -55,21 +57,47 @@ function handleEnterAdvance(e: KeyboardEvent<HTMLInputElement>, formRef: React.R
 export default function ClienteForm({ title, cliente: clienteProp, clienteId, readOnly = false }: ClienteFormProps) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
-  const { cliente: clienteCargado, isLoading, error, reload } = useClienteDetalle(clienteId ?? '');
+  const { sucursales: sucursalesActivasContexto } = useSucursales();
+  const { cliente: clienteCargado, isLoading, error, reload, clear: limpiarClienteCargado } = useClienteDetalle(clienteId ?? '');
   const cliente = clienteId ? clienteCargado ?? undefined : clienteProp;
 
-  // Todas las sucursales de la empresa, no solo las asignadas al usuario. Se
-  // cargan también las dadas de baja para seguir mostrando las que el cliente ya
-  // tiene; para agregar solo se ofrecen las activas.
+  // Solo puntos de venta asignados al usuario. Los inactivos pueden seguir
+  // mostrándose si ya forman parte de este cliente; para agregar se ofrecen activos.
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loadingSucursales, setLoadingSucursales] = useState(true);
+  const requestSucursales = useRef(0);
   useEffect(() => {
-    sucursalClient
-      .obtenerParaAdmin()
-      .then(setSucursales)
-      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar sucursales'))
-      .finally(() => setLoadingSucursales(false));
-  }, [showError]);
+    const cargar = async () => {
+      const version = ++requestSucursales.current;
+      setLoadingSucursales(true);
+      try {
+        const lista = await sucursalClient.obtenerParaAdmin();
+        if (version !== requestSucursales.current) return;
+        setSucursales(lista);
+        setSucursalIds((prev) => prev.filter((id) => lista.some((sucursal) => sucursal.id === id)));
+      } catch (err) {
+        if (version !== requestSucursales.current) return;
+        setSucursales([]);
+        setSucursalIds([]);
+        showError(err instanceof Error ? err.message : 'Error al cargar sucursales');
+      } finally {
+        if (version === requestSucursales.current) setLoadingSucursales(false);
+      }
+    };
+    const recargarPorAlcance = () => {
+      requestSucursales.current++;
+      setSucursales([]);
+      void cargar();
+    };
+    void cargar();
+    window.addEventListener('alcance-pdv-revocado', recargarPorAlcance);
+    window.addEventListener('focus', recargarPorAlcance);
+    return () => {
+      requestSucursales.current++;
+      window.removeEventListener('alcance-pdv-revocado', recargarPorAlcance);
+      window.removeEventListener('focus', recargarPorAlcance);
+    };
+  }, [showError, sucursalesActivasContexto]);
   const [tipoCliente, setTipoCliente] = useState<TipoCliente>('persona');
   const [tipoDocumento, setTipoDocumento] = useState('');
   const [condicionIva, setCondicionIva] = useState('');
@@ -86,11 +114,11 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   // Los chips respetan el orden en que se fueron agregando.
   const sucursalesSeleccionadas = sucursalIds
     .map((id) => sucursales.find((s) => s.id === id))
-    .filter((s): s is (typeof sucursales)[number] => Boolean(s));
+    .filter((s): s is Sucursal => s !== undefined && (!s.activo || sucursalesActivasContexto.some((actual) => actual.id === s.id)));
 
   // El desplegable solo ofrece lo que todavía no está elegido.
   const sucursalesDisponibles = sucursales
-    .filter((s) => s.activo && !sucursalIds.includes(s.id))
+    .filter((s) => s.activo && sucursalesActivasContexto.some((actual) => actual.id === s.id) && !sucursalIds.includes(s.id))
     .map((s) => ({ value: s.id, label: s.nombre }));
 
   const isEditing = Boolean(cliente?.id);
@@ -109,6 +137,10 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const [totalDescuentos, setTotalDescuentos] = useState<number>(0);
   const [focoRegion, setFocoRegion] = useState(0);
   const isDetailView = Boolean(readOnly && cliente);
+  const sucursalesClienteActivas = useMemo(
+    () => (cliente?.sucursales ?? []).filter((asociada) => sucursalesActivasContexto.some((sucursal) => sucursal.id === asociada.id)),
+    [cliente?.sucursales, sucursalesActivasContexto]
+  );
 
   const serializeForm = (): string => {
     if (!formRef.current) return '';
@@ -174,7 +206,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
       return;
     }
 
-    if (sucursalIds.length === 0) {
+    if (!isEditing && sucursalIds.length === 0) {
       const message = 'Seleccioná al menos una sucursal para el cliente.';
       setSubmitError(message);
       showError(message);
@@ -206,7 +238,17 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
       setIsSaving(true);
       setSubmitError(null);
       if (isEditing) {
-        await clienteClient.actualizar(cliente!.id, body);
+        const resultado = await clienteClient.actualizar(cliente!.id, body);
+        if (resultado.accesoRevocado) {
+          limpiarClienteCargado('Ya no tenés puntos de venta asociados a este cliente.');
+          setSucursalIds([]);
+          setTotalDescuentos(0);
+          setShowListaPreciosModal(false);
+          setActiveTab('info');
+          showSuccess('Se guardaron los cambios. Ya no tenés puntos de venta asociados a este cliente.');
+          router.push('/clientes');
+          return;
+        }
         if (readOnly) {
           await reload();
           setInlineEditing(false);
@@ -221,6 +263,11 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
       }
     } catch (err) {
       console.error('Error al guardar cliente:', err);
+      if (isEditing && err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
+        showError(err.message);
+        router.push('/clientes');
+        return;
+      }
       const message = err instanceof Error ? err.message : 'No se pudo guardar el cliente. Intenta nuevamente.';
       setSubmitError(message);
       showError(message);
@@ -249,6 +296,11 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
       showSuccess('Cliente dado de baja correctamente.');
       router.push('/clientes');
     } catch (err) {
+      if (err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
+        showError(err.message);
+        router.push('/clientes');
+        return;
+      }
       showError(err instanceof Error ? err.message : 'No se pudo dar de baja el cliente.');
     } finally {
       setIsDeleting(false);
@@ -300,8 +352,9 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
     >
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>
-          Sucursales<span className={styles.requiredMark}>*</span>
+          Sucursales{!isEditing && <span className={styles.requiredMark}>*</span>}
         </h2>
+        {isEditing && <p className={styles.scopeHint}>Los cambios comerciales del cliente y sus descuentos son comunes para la empresa. Acá podés administrar solo los puntos de venta asignados a tu usuario; si quitás el último punto visible, perderás acceso al cliente.</p>}
         <div className={styles.sucursalesPicker}>
           <Combobox
             label="Agregar sucursal"
@@ -768,7 +821,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
         >
           <ClienteDescuentos
             clienteId={cliente.id}
-            sucursales={cliente.sucursales}
+            sucursales={sucursalesClienteActivas}
             descuentoHabitual={cliente.descuentoPorcentaje}
             onTotalDescuentosChange={setTotalDescuentos}
             visible={activeTab === 'descuentos'}
@@ -796,7 +849,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             clienteRazonSocial={cliente.razonSocial}
             clienteNroDocumento={cliente.nroDocumento}
             descuentoHabitual={cliente.descuentoPorcentaje}
-            sucursales={cliente.sucursales}
+            sucursales={sucursalesClienteActivas}
             onAsignarRegion={() => {
               setShowListaPreciosModal(false);
               setActiveTab('descuentos');

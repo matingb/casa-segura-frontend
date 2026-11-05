@@ -1,10 +1,10 @@
 'use client';
 
 import { Pencil, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Region, regionClient } from '../../../../lib/api/region.client';
-import { Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useToast } from '../../../../context/ToastContext';
+import { useSucursales } from '../../../../context/SucursalContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
 import { formatPorcentaje } from '../../../../lib/utils/formatters';
@@ -25,11 +25,11 @@ interface RegionesConfiguracionProps {
 
 export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesConfiguracionProps) {
   const { showSuccess, showError } = useToast();
+  const { sucursales, isLoading: cargandoSucursales } = useSucursales();
 
-  // Puntos de venta activos de la empresa (no solo los asignados al usuario).
-  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [regiones, setRegiones] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
+  const request = useRef(0);
 
   const [creando, setCreando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -40,28 +40,35 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
   const [eliminando, setEliminando] = useState(false);
 
   const cargar = useCallback(async () => {
+    const version = ++request.current;
     setLoading(true);
+    setRegiones([]);
     try {
       const lista = await regionClient.obtenerTodas();
+      if (version !== request.current) return;
       setRegiones(lista);
       onRegionesCargadas?.(lista);
     } catch (err) {
+      if (version !== request.current) return;
+      setRegiones([]);
+      onRegionesCargadas?.([]);
       showError(err instanceof Error ? err.message : 'Error al cargar regiones');
     } finally {
-      setLoading(false);
+      if (version === request.current) setLoading(false);
     }
   }, [showError, onRegionesCargadas]);
 
   useEffect(() => {
-    cargar();
+    const recargar = () => { void cargar(); };
+    recargar();
+    window.addEventListener('focus', recargar);
+    window.addEventListener('alcance-pdv-revocado', recargar);
+    return () => {
+      request.current++;
+      window.removeEventListener('focus', recargar);
+      window.removeEventListener('alcance-pdv-revocado', recargar);
+    };
   }, [cargar]);
-
-  useEffect(() => {
-    sucursalClient
-      .obtenerParaAdmin(false)
-      .then(setSucursales)
-      .catch((err) => showError(err instanceof Error ? err.message : 'Error al cargar los puntos de venta'));
-  }, [showError]);
 
   const abrirCreacion = () => {
     setEditandoId(null);
@@ -70,6 +77,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
   };
 
   const abrirEdicion = (r: Region) => {
+    if (!r.puedeModificar) return;
     setCreando(false);
     setEditandoId(r.id);
     setForm({
@@ -120,7 +128,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
   };
 
   const confirmarEliminar = async () => {
-    if (!eliminarTarget) return;
+    if (!eliminarTarget || !eliminarTarget.puedeModificar) return;
     setEliminando(true);
     try {
       await regionClient.eliminar(eliminarTarget.id);
@@ -177,7 +185,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
         {(() => {
           // Un punto de venta dado de baja que ya estaba en la región se sigue mostrando.
           const opciones = [
-            ...sucursales.map((s) => ({ id: s.id, nombre: s.nombre })),
+            ...sucursales.filter((s) => s.activo).map((s) => ({ id: s.id, nombre: s.nombre })),
             ...regiones
               .flatMap((r) => (r.id === editandoId ? r.sucursales : []))
               .filter((s) => !sucursales.some((a) => a.id === s.id)),
@@ -205,7 +213,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                     : 'Seleccionar punto de venta'
                 }
                 disabled={guardando || disponibles.length === 0}
-                loading={opciones.length === 0}
+                loading={cargandoSucursales || opciones.length === 0}
               />
               {seleccionados.length > 0 && (
                 <div className={styles.chipsSeleccion}>
@@ -236,7 +244,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
         <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando}>
+          <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando}>
           {guardando ? 'Guardando...' : 'Guardar región'}
         </button>
       </div>
@@ -296,7 +304,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
             editandoId === r.id ? (
               <div key={r.id}>{formulario}</div>
             ) : (
-              <div key={r.id} className={`${styles.fila} ${!r.activo ? styles.filaInactiva : ''}`}>
+                <div key={r.id} className={`${styles.fila} ${!r.activo ? styles.filaInactiva : ''}`}>
                 <div className={styles.filaInfo}>
                   <div className={styles.filaNombre}>
                     <span className={styles.nombre}>{r.nombre}</span>
@@ -306,6 +314,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                       <span className={styles.sinDescuento}>Sin descuento</span>
                     )}
                     {!r.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
+                    {!r.puedeModificar && <span className={styles.badgeCompartida}>Incluye puntos fuera de tu alcance</span>}
                   </div>
                   <div className={styles.chips}>
                     <span className={styles.chipsLabel}>{r.sucursales.length === 1 ? 'Punto de venta:' : 'Puntos de venta:'}</span>
@@ -315,10 +324,11 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                       </span>
                     ))}
                   </div>
+                  {!r.puedeModificar && <p className={styles.avisoCompartida}>Podés usar esta región en clientes de tus puntos de venta, pero su configuración pertenece a varios puntos.</p>}
                 </div>
 
                 <div className={styles.filaAcciones}>
-                  <button
+                  {r.puedeModificar && <button
                     type="button"
                     className={styles.btnIcon}
                     onClick={() => abrirEdicion(r)}
@@ -327,8 +337,8 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                     aria-label={`Editar ${r.nombre}`}
                   >
                     <Pencil size={16} />
-                  </button>
-                  {r.activo && (
+                  </button>}
+                  {r.activo && r.puedeModificar && (
                     <button
                       type="button"
                       className={styles.btnIconDanger}

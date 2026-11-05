@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Eye, Plus, AlertTriangle } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
@@ -56,9 +57,20 @@ const AVISO_STOCK = {
 export default function StockCatalogo() {
   const router = useRouter();
   const { revision } = useCotizacion();
+  const [revisionAlcance, setRevisionAlcance] = useState(0);
+  useEffect(() => {
+    const actualizar = () => setRevisionAlcance((actual) => actual + 1);
+    window.addEventListener('alcance-pdv-revocado', actualizar);
+    window.addEventListener('focus', actualizar);
+    return () => {
+      window.removeEventListener('alcance-pdv-revocado', actualizar);
+      window.removeEventListener('focus', actualizar);
+    };
+  }, []);
   const {
     items: stock,
     loading,
+    error,
     page,
     totalPages,
     setPage,
@@ -70,7 +82,7 @@ export default function StockCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
+  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: `${revision}-${revisionAlcance}` });
 
   // Producto | Sucursal | Precio de venta | Stock | Estado | Acciones,
   // con las mismas celdas que Productos y Clientes.
@@ -179,6 +191,8 @@ export default function StockCatalogo() {
           loading={filtersLoading}
         />
       </div>
+
+      {error && <p role="alert">{error}</p>}
 
       <Table
         columns={columns}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Info, MapPin, Package, Tag } from 'lucide-react';
 import { DescuentosClienteResumen } from '../../../../../lib/types/Region';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
+import { CatalogoApiError } from '../../../../../lib/api/apiError';
 import { formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
 import Select from '../../../../../components/ui/Select/Select';
@@ -34,6 +35,7 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
   const [resumen, setResumen] = useState<DescuentosClienteResumen | null>(null);
   const [abiertas, setAbiertas] = useState<Set<Seccion>>(new Set());
   const [focoAnterior, setFocoAnterior] = useState(focoRegion);
+  const request = useRef(0);
   const lista = useListaPreciosCliente({ clienteId, sucursales, activo: visible });
 
   // Pedido de "Asignar región" desde otra parte de la pantalla.
@@ -46,11 +48,20 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
   }, [focoRegion]);
 
   const cargar = useCallback(async () => {
+    const version = ++request.current;
+    setResumen(null);
     try {
       const data = await clienteDescuentoClient.obtenerDescuentos(clienteId);
+      if (version !== request.current) return;
       setResumen(data);
       onTotalDescuentosChange?.(data.regiones.length + data.categorias.length + data.productos.length);
     } catch (err) {
+      if (version !== request.current) return;
+      setResumen(null);
+      onTotalDescuentosChange?.(0);
+      if (err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
+        window.dispatchEvent(new CustomEvent('alcance-pdv-revocado'));
+      }
       showError(err instanceof Error ? err.message : 'No se pudieron cargar los descuentos del cliente.');
     }
   }, [clienteId, showError, onTotalDescuentosChange]);
@@ -59,7 +70,7 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
     if (!clienteId) return;
     let vigente = true;
     void Promise.resolve().then(() => (vigente ? cargar() : undefined));
-    return () => { vigente = false; };
+    return () => { vigente = false; request.current += 1; };
   }, [clienteId, cargar]);
 
   const alCambiar = useCallback(async () => {

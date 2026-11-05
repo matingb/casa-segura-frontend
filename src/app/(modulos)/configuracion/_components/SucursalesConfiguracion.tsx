@@ -2,7 +2,7 @@
 
 import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { OpcionesAsignacion, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
+import { OpcionesAsignacion, ReferenciaSucursalGlobal, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
@@ -50,7 +50,9 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [referenciasGlobales, setReferenciasGlobales] = useState<ReferenciaSucursalGlobal[]>([]);
   const [loading, setLoading] = useState(true);
+  const requestListado = useRef(0);
 
   const [creando, setCreando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -68,20 +70,42 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
   const [dandoBaja, setDandoBaja] = useState(false);
 
   const cargar = useCallback(async () => {
+    const version = ++requestListado.current;
     setLoading(true);
+    setSucursales([]);
+    setReferenciasGlobales([]);
     try {
-      const lista = await sucursalClient.obtenerParaAdmin();
+      const [lista, referencias] = await Promise.all([
+        sucursalClient.obtenerParaAdmin(),
+        sucursalClient.obtenerReferenciasGlobales(),
+      ]);
+      if (version !== requestListado.current) return;
       setSucursales(lista);
+      setReferenciasGlobales(referencias);
       onSucursalesCargadas?.(lista);
     } catch (err) {
+      if (version !== requestListado.current) return;
+      setSucursales([]);
+      setReferenciasGlobales([]);
+      onSucursalesCargadas?.([]);
       showError(err instanceof Error ? err.message : 'Error al cargar sucursales');
     } finally {
-      setLoading(false);
+      if (version === requestListado.current) setLoading(false);
     }
   }, [showError, onSucursalesCargadas]);
 
+  const casaCentralGlobal = referenciasGlobales.find((sucursal) => sucursal.esCentral) ?? null;
+
   useEffect(() => {
-    cargar();
+    const recargar = () => { void cargar(); };
+    recargar();
+    window.addEventListener('focus', recargar);
+    window.addEventListener('alcance-pdv-revocado', recargar);
+    return () => {
+      requestListado.current++;
+      window.removeEventListener('focus', recargar);
+      window.removeEventListener('alcance-pdv-revocado', recargar);
+    };
   }, [cargar]);
 
   useEffect(() => {
@@ -343,6 +367,9 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
           <h2 className={styles.toolbarTitle}>Sucursales</h2>
           <p className={styles.toolbarDescription}>
             Administra las sucursales, sus descuentos y la cotización propia o heredada de cada PDV.
+          </p>
+          <p className={styles.toolbarDescription}>
+            Casa central actual: {casaCentralGlobal?.nombre ?? 'sin definir'}.
           </p>
         </div>
         <button

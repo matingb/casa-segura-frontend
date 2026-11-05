@@ -7,6 +7,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import { Sucursal, sucursalClient } from '../lib/api/sucursal.client';
@@ -30,24 +31,38 @@ export const SucursalProvider = ({ children }: { children: ReactNode }) => {
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   const cargarSucursales = useCallback(async () => {
+    const version = ++requestVersion.current;
     setIsLoading(true);
     setError(null);
+    setSucursales([]);
     try {
       const data = await sucursalClient.obtenerTodas();
+      if (version !== requestVersion.current) return;
       setSucursales(data);
     } catch (err: unknown) {
+      if (version !== requestVersion.current) return;
       console.error('[SucursalProvider] Error cargando sucursales:', err);
       const msg = err instanceof Error ? err.message : 'Error al cargar sucursales';
+      setSucursales([]);
       setError(msg);
     } finally {
-      setIsLoading(false);
+      if (version === requestVersion.current) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    cargarSucursales();
+    void cargarSucursales();
+    const recargarAlVolver = () => { void cargarSucursales(); };
+    window.addEventListener('focus', recargarAlVolver);
+    window.addEventListener('alcance-pdv-revocado', recargarAlVolver);
+    return () => {
+      requestVersion.current += 1;
+      window.removeEventListener('focus', recargarAlVolver);
+      window.removeEventListener('alcance-pdv-revocado', recargarAlVolver);
+    };
   }, [cargarSucursales]);
 
   const sucursalOptions: SucursalOption[] = useMemo(() => {

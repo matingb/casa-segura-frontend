@@ -1,5 +1,5 @@
 import { apiFetch } from '../apiFetch';
-import { CatalogoApiError } from './cotizacion.client';
+import { CatalogoApiError, respuestaApi } from './apiError';
 
 export interface Sucursal {
   id: string;
@@ -21,6 +21,14 @@ export interface Sucursal {
 export interface SucursalUso {
   productosConStock: number;
   usuarios: number;
+}
+
+/** Referencia mínima del tenant usada solo por las excepciones globales acordadas. */
+export interface ReferenciaSucursalGlobal {
+  id: string;
+  nombre: string;
+  activo: boolean;
+  esCentral: boolean;
 }
 
 /** Un usuario asignado a una sucursal, con su rol en ella. */
@@ -71,19 +79,11 @@ function mapApiSucursal(s: Record<string, unknown>): Sucursal {
 }
 
 async function respuestaSucursal(res: Response, fallback: string): Promise<Record<string, unknown>> {
-  const contenido: unknown = await res.json().catch(() => ({}));
-  const json = typeof contenido === 'object' && contenido !== null ? contenido as Record<string, unknown> : {};
-  if (!res.ok || json.status !== 'success') {
-    throw new CatalogoApiError(
-      typeof json.message === 'string' ? json.message : fallback,
-      typeof json.code === 'string' ? json.code : undefined,
-      res.status
-    );
-  }
-  if (typeof json.data !== 'object' || json.data === null || Array.isArray(json.data)) {
+  const data = await respuestaApi<unknown>(res, fallback);
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     throw new CatalogoApiError(fallback, undefined, res.status);
   }
-  return json.data as Record<string, unknown>;
+  return data as Record<string, unknown>;
 }
 
 export function notificarCotizacionSucursal(sucursalId: string) {
@@ -98,23 +98,30 @@ export const sucursalClient = {
   /** Las sucursales a las que el usuario tiene acceso. */
   obtenerTodas: async (): Promise<Sucursal[]> => {
     const res = await apiFetch('/api/sucursales');
-    if (!res.ok) throw new Error('Error al cargar sucursales');
-    const json = await res.json();
-    if (json.status === 'success' && Array.isArray(json.data)) {
-      return json.data.map(mapApiSucursal);
-    }
-    return [];
+    const data = await respuestaApi<unknown>(res, 'Error al cargar los puntos de venta propios');
+    if (!Array.isArray(data)) throw new CatalogoApiError('Respuesta inválida al cargar puntos de venta.', undefined, res.status);
+    return data.map(mapApiSucursal);
   },
 
-  /** Todas las del tenant, para administrarlas desde Configuración. */
+  /** Fichas completas de los puntos de venta propios; incluye inactivos si se solicita. */
   obtenerParaAdmin: async (incluirInactivas = true): Promise<Sucursal[]> => {
     const res = await apiFetch(`/api/sucursales/admin${incluirInactivas ? '?todas=true' : ''}`);
-    if (!res.ok) throw new Error('Error al cargar sucursales');
-    const json = await res.json();
-    if (json.status === 'success' && Array.isArray(json.data)) {
-      return json.data.map(mapApiSucursal);
-    }
-    return [];
+    const data = await respuestaApi<unknown>(res, 'Error al cargar los puntos de venta propios');
+    if (!Array.isArray(data)) throw new CatalogoApiError('Respuesta inválida al cargar puntos de venta.', undefined, res.status);
+    return data.map(mapApiSucursal);
+  },
+
+  /** Referencias globales mínimas para categorías y designación de casa central. */
+  obtenerReferenciasGlobales: async (): Promise<ReferenciaSucursalGlobal[]> => {
+    const res = await apiFetch('/api/sucursales/referencias-globales');
+    const data = await respuestaApi<unknown>(res, 'Error al cargar referencias de puntos de venta');
+    if (!Array.isArray(data)) throw new CatalogoApiError('Respuesta inválida al cargar referencias.', undefined, res.status);
+    return data.map((s: Record<string, unknown>) => ({
+      id: String(s.id ?? ''),
+      nombre: typeof s.nombre === 'string' ? s.nombre : '',
+      activo: s.activo === true,
+      esCentral: s.es_central === true,
+    }));
   },
 
   crear: async (data: Record<string, unknown>): Promise<Sucursal> => {
@@ -142,17 +149,14 @@ export const sucursalClient = {
   /** Baja lógica: la sucursal queda inactiva pero conserva su stock e historial. */
   desactivar: async (id: string): Promise<void> => {
     const res = await apiFetch(`/api/sucursales/${id}`, { method: 'DELETE' });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'No se pudo dar de baja la sucursal');
-    }
+    await respuestaApi<unknown>(res, 'No se pudo dar de baja el punto de venta');
   },
 
   obtenerUsuarios: async (id: string): Promise<AsignacionSucursal[]> => {
     const res = await apiFetch(`/api/sucursales/${id}/usuarios`);
-    if (!res.ok) throw new Error('Error al cargar los usuarios de la sucursal');
-    const json = await res.json();
-    return (json.data ?? []).map((a: Record<string, unknown>) => ({
+    const data = await respuestaApi<unknown>(res, 'Error al cargar los usuarios del punto de venta');
+    if (!Array.isArray(data)) throw new CatalogoApiError('Respuesta inválida al cargar usuarios.', undefined, res.status);
+    return data.map((a: Record<string, unknown>) => ({
       usuarioId: a.usuario_id as string,
       nombre: (a.nombre as string) ?? '',
       email: (a.email as string | null) ?? null,
@@ -165,27 +169,25 @@ export const sucursalClient = {
   /** Usuarios y roles del tenant para asignar, y si el usuario autenticado puede hacerlo. */
   obtenerOpcionesAsignacion: async (): Promise<OpcionesAsignacion> => {
     const res = await apiFetch('/api/sucursales/opciones-asignacion');
-    if (!res.ok) throw new Error('Error al cargar los usuarios');
-    const json = await res.json();
+    const data = await respuestaApi<Record<string, unknown>>(res, 'Error al cargar opciones de asignación');
     return {
-      puedeAdministrar: json.data?.puede_administrar === true,
-      usuarios: (json.data?.usuarios ?? []).map((u: Record<string, unknown>) => ({
+      puedeAdministrar: data.puede_administrar === true,
+      usuarios: (Array.isArray(data.usuarios) ? data.usuarios : []).map((u: Record<string, unknown>) => ({
         id: u.id as string,
         nombre: (u.nombre as string) ?? '',
         email: (u.email as string | null) ?? null,
         esActual: u.es_actual === true,
       })),
-      roles: json.data?.roles ?? [],
+      roles: Array.isArray(data.roles) ? data.roles : [],
     };
   },
 
   obtenerUso: async (id: string): Promise<SucursalUso> => {
     const res = await apiFetch(`/api/sucursales/${id}/uso`);
-    if (!res.ok) throw new Error('Error al consultar el uso de la sucursal');
-    const json = await res.json();
+    const data = await respuestaApi<Record<string, unknown>>(res, 'Error al consultar el uso del punto de venta');
     return {
-      productosConStock: json.data?.productosConStock ?? 0,
-      usuarios: json.data?.usuarios ?? 0,
+      productosConStock: Number(data.productosConStock ?? 0),
+      usuarios: Number(data.usuarios ?? 0),
     };
   },
 };

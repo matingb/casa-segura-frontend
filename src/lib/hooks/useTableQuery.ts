@@ -107,6 +107,7 @@ export function useCatalogoPaginado<T>(
     }
     let active = true;
     setFiltersLoading(true);
+    setFilterOptions({});
 
     Promise.all(filterFields.map((campo) => clientRef.current.obtenerValoresUnicos!(campo)))
       .then((results) => {
@@ -117,7 +118,11 @@ export function useCatalogoPaginado<T>(
         });
         setFilterOptions(opts);
       })
-      .catch((err) => console.error('[useCatalogoPaginado] Error cargando valores únicos:', err))
+      .catch((err) => {
+        if (!active) return;
+        setFilterOptions({});
+        console.error('[useCatalogoPaginado] Error cargando valores únicos:', err);
+      })
       .finally(() => {
         if (active) setFiltersLoading(false);
       });
@@ -126,7 +131,7 @@ export function useCatalogoPaginado<T>(
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterFields.join(',')]);
+  }, [filterFields.join(','), refreshKey]);
 
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -135,6 +140,9 @@ export function useCatalogoPaginado<T>(
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setItems([]);
+    setTotalPages(1);
+    setError(null);
 
     const baseFiltros = {
       ...query.filters,
@@ -162,7 +170,12 @@ export function useCatalogoPaginado<T>(
           setError(null);
         }
       })
-      .catch((err) => { if (active) setError(err instanceof Error ? err.message : 'No se pudo recargar la lista.'); })
+      .catch((err) => {
+        if (!active) return;
+        setItems([]);
+        setTotalPages(1);
+        setError(err instanceof Error ? err.message : 'No se pudo recargar la lista.');
+      })
       .finally(() => {
         if (active) setLoading(false);
       });

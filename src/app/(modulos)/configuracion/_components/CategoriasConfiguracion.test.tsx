@@ -17,12 +17,12 @@ vi.mock('../../../../lib/api/clasificacion.client', () => ({
   },
 }));
 
-// Las sucursales de la empresa, incluida una a la que el usuario no está asignado.
+// Referencias mínimas de los puntos de venta permitidos para las excepciones globales.
 vi.mock('../../../../lib/api/sucursal.client', () => ({
   sucursalClient: {
-    obtenerParaAdmin: vi.fn().mockResolvedValue([
-      { id: 'suc1', nombre: 'Casa Central', esCentral: true, valorDolar: 0, descuento: null, activo: true },
-      { id: 'suc2', nombre: 'Sucursal Mendoza', esCentral: false, valorDolar: 0, descuento: null, activo: true },
+    obtenerReferenciasGlobales: vi.fn().mockResolvedValue([
+      { id: 'suc1', nombre: 'Casa Central', esCentral: true, activo: true },
+      { id: 'suc2', nombre: 'Sucursal Mendoza', esCentral: false, activo: true },
     ]),
   },
 }));

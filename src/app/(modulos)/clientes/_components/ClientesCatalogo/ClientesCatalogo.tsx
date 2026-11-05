@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Eye, Plus, Phone, Mail } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
@@ -29,9 +30,20 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select'; opt
 
 export default function ClientesCatalogo() {
   const router = useRouter();
+  const [revisionAlcance, setRevisionAlcance] = useState(0);
+  useEffect(() => {
+    const actualizar = () => setRevisionAlcance((actual) => actual + 1);
+    window.addEventListener('alcance-pdv-revocado', actualizar);
+    window.addEventListener('focus', actualizar);
+    return () => {
+      window.removeEventListener('alcance-pdv-revocado', actualizar);
+      window.removeEventListener('focus', actualizar);
+    };
+  }, []);
   const {
     items: clientes,
     loading,
+    error,
     page,
     totalPages,
     setPage,
@@ -43,7 +55,7 @@ export default function ClientesCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(clienteClient, SELECT_FILTER_FIELDS);
+  } = useCatalogoPaginado(clienteClient, SELECT_FILTER_FIELDS, { refreshKey: revisionAlcance });
 
   // Cliente | Datos fiscales | Contacto | Sucursales | Estado | Acciones, con el
   // mismo criterio que Productos: agrupar datos en pocas columnas.
@@ -180,6 +192,8 @@ export default function ClientesCatalogo() {
           loading={filtersLoading}
         />
       </div>
+
+      {error && <p role="alert">{error}</p>}
 
       <Table
         columns={columns}

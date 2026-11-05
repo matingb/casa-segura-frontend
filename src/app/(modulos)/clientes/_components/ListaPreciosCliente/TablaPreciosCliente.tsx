@@ -77,7 +77,7 @@ export default function TablaPreciosCliente({ lista, sucursales, onAsignarRegion
       {error && (
         <div className={`${styles.banner} ${styles.bannerError}`} role="alert">
           <AlertTriangle size={16} aria-hidden />
-          <span className={styles.bannerTexto}>{error} Se siguen mostrando los precios de la última carga.</span>
+          <span className={styles.bannerTexto}>{error} Se ocultaron los datos hasta que la lista vuelva a estar disponible.</span>
           <button type="button" className={styles.bannerBoton} onClick={() => void lista.recargar().catch(() => {})}>Reintentar</button>
         </div>
       )}

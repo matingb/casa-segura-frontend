@@ -31,9 +31,16 @@ export default function RegionSelector({ clienteId, sucursales, regionesAsignada
 
   useEffect(() => {
     let cancelado = false;
+    setCargando(true);
+    setRegionesPorSucursal({});
     Promise.all(sucursales.map(async s => [s.id, await regionClient.obtenerPorSucursal(s.id, true)] as const))
       .then(pares => { if (!cancelado) setRegionesPorSucursal(Object.fromEntries(pares)); })
-      .catch(() => { if (!cancelado) showError('No se pudieron cargar las regiones de los puntos de venta.'); })
+      .catch(() => {
+        if (!cancelado) {
+          setRegionesPorSucursal({});
+          showError('No se pudieron cargar las regiones de los puntos de venta.');
+        }
+      })
       .finally(() => { if (!cancelado) setCargando(false); });
     return () => { cancelado = true; };
   }, [sucursales, showError]);

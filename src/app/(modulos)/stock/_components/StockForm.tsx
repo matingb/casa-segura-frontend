@@ -244,6 +244,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       }
     } catch (err) {
       if (err instanceof CatalogoApiError && err.code === 'COTIZACION_CAMBIO') await recargarCotizacion();
+      if (isEditing && err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
+        showError(err.message);
+        router.push('/stock');
+        return;
+      }
       if (!(err instanceof CatalogoApiError)) console.error('Error al guardar stock:', err);
       const message = err instanceof Error ? err.message : 'No se pudo guardar la configuración de stock. Intenta nuevamente.';
       setSubmitError(message);
@@ -272,6 +277,11 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
       showSuccess('Configuración de stock eliminada correctamente.');
       router.push('/stock');
     } catch (err) {
+      if (err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
+        showError(err.message);
+        router.push('/stock');
+        return;
+      }
       showError(err instanceof Error ? err.message : 'No se pudo eliminar la configuración de stock.');
     } finally {
       setIsDeleting(false);

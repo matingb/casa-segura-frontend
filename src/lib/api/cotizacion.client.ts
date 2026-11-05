@@ -1,12 +1,7 @@
 import { apiFetch } from '../apiFetch';
 import { Cotizacion } from '../types/Moneda';
-export class CatalogoApiError extends Error {
-  constructor(message: string, public code?: string, public status?: number) { super(message); }
-}
-export async function errorCatalogo(res: Response, fallback: string): Promise<never> {
-  const body = await res.json().catch(() => ({}));
-  throw new CatalogoApiError(body.message ?? fallback, body.code, res.status);
-}
+import { errorCatalogo } from './apiError';
+export { CatalogoApiError, errorCatalogo } from './apiError';
 export const cotizacionClient = {
   async obtener(sucursalId?: string | null): Promise<Cotizacion> {
     const query = sucursalId ? `?sucursal_id=${encodeURIComponent(sucursalId)}` : '';

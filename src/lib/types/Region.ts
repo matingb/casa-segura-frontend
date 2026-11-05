@@ -6,6 +6,8 @@ export interface Region {
   nombre: string;
   descuento: number;
   activo: boolean;
+  puedeModificar: boolean;
+  motivoBloqueo: 'REGION_COMPARTIDA_FUERA_DE_ALCANCE' | null;
   createdAt?: string;
   updatedAt?: string;
 }

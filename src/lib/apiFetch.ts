@@ -9,6 +9,14 @@ export async function apiFetch(
 ): Promise<Response> {
   const res = await fetch(input, { credentials: 'include', ...init });
 
+  if (res.status === 403 && typeof window !== 'undefined') {
+    void res.clone().json().then((body: unknown) => {
+      if (typeof body === 'object' && body !== null && 'code' in body && body.code === 'SUCURSAL_FUERA_DE_ALCANCE') {
+        window.dispatchEvent(new CustomEvent('alcance-pdv-revocado', { detail: body }));
+      }
+    }).catch(() => undefined);
+  }
+
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       window.location.replace('/login');

@@ -1,6 +1,6 @@
 import { StockItem } from '../types/Stock';
 import { apiFetch } from '../apiFetch';
-import { errorCatalogo } from './cotizacion.client';
+import { errorCatalogo } from './apiError';
 
 export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
   return {
@@ -40,10 +40,14 @@ export function mapApiProductoSucursalToStockItem(apiData: any): StockItem {
 }
 
 export const stockClient = {
-  obtenerTodos: async (params?: { operativo?: boolean }): Promise<StockItem[]> => {
-    const query = params?.operativo ? '?operativo=true' : '';
-    const res = await apiFetch(`/api/producto-sucursal${query}`);
-    if (!res.ok) throw new Error('Error al cargar stock');
+  obtenerTodos: async (params?: { operativo?: boolean; sucursalId?: string }): Promise<StockItem[]> => {
+    const query = new URLSearchParams();
+    if (params?.operativo) query.set('operativo', 'true');
+    if (params?.sucursalId) query.set('sucursalId', params.sucursalId);
+    const serialized = query.toString();
+    const suffix = serialized ? `?${serialized}` : '';
+    const res = await apiFetch(`/api/producto-sucursal${suffix}`);
+    if (!res.ok) return errorCatalogo(res, 'Error al cargar stock');
     
     const json = await res.json();
     if (json.status === 'success' && Array.isArray(json.data)) {
@@ -54,7 +58,7 @@ export const stockClient = {
 
   obtenerPorId: async (id: string): Promise<StockItem | null> => {
     const res = await apiFetch(`/api/producto-sucursal/${id}`);
-    if (!res.ok) return null;
+    if (!res.ok) return errorCatalogo(res, 'El recurso de stock no está disponible.');
 
     const json = await res.json();
     if (json.status === 'success' && json.data) {
@@ -78,7 +82,7 @@ export const stockClient = {
     if (params.operativo) searchParams.set('operativo', 'true');
 
     const res = await apiFetch(`/api/producto-sucursal?${searchParams}`);
-    if (!res.ok) throw new Error('Error al cargar stock');
+    if (!res.ok) return errorCatalogo(res, 'Error al cargar stock');
 
     const json = await res.json();
     return {
@@ -111,7 +115,7 @@ export const stockClient = {
     }
 
     const res = await apiFetch(`/api/producto-sucursal?${searchParams}`);
-    if (!res.ok) throw new Error('Error al cargar stock');
+    if (!res.ok) return errorCatalogo(res, 'Error al cargar stock');
 
     const json = await res.json();
     return {
@@ -124,7 +128,7 @@ export const stockClient = {
 
   obtenerValoresUnicos: async (campo: string): Promise<string[]> => {
     const res = await apiFetch(`/api/producto-sucursal/valores-unicos?campo=${encodeURIComponent(campo)}`);
-    if (!res.ok) throw new Error('Error al cargar valores únicos');
+    if (!res.ok) return errorCatalogo(res, 'Error al cargar valores únicos');
     const json = await res.json();
     return Array.isArray(json.data) ? json.data : [];
   },

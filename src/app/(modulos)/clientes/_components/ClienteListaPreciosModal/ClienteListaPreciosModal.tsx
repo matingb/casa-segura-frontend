@@ -37,7 +37,7 @@ export default function ClienteListaPreciosModal({
   const { showError, showSuccess } = useToast();
   const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
   const lista = useListaPreciosCliente({ clienteId, sucursales, activo: isOpen });
-  const { datos, itemsFiltrados, cargando, hayCotizacion, filtroActivo } = lista;
+  const { datos, itemsFiltrados, cargando, hayCotizacion, filtroActivo, revalidarAcceso } = lista;
   const [formatoExportacion, setFormatoExportacion] = useState<'pdf' | 'excel' | null>(null);
   useEffect(() => {
     const cerrar = (e: KeyboardEvent) => {
@@ -77,7 +77,10 @@ export default function ClienteListaPreciosModal({
     }
     void comprobar({
       contexto: datos.contexto_monetario,
-      conservar: () => exportar(formato, datos, columnas),
+      conservar: async () => {
+        await revalidarAcceso();
+        exportar(formato, datos, columnas);
+      },
       actualizar: async () => exportar(formato, await lista.recargar(), columnas),
     });
   };
