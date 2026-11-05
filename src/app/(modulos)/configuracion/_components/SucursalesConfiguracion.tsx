@@ -250,37 +250,6 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
             autoFocus
           />
         </label>
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>Cotización del PDV</span>
-          <label className={styles.checkboxField}>
-            <input type="radio" name="cotizacion-pdv" checked={!form.usarCotizacionPropia}
-              onChange={() => setForm({ ...form, usarCotizacionPropia: false })} disabled={guardando} />
-            Usar cotización general
-          </label>
-          <label className={styles.checkboxField}>
-            <input type="radio" name="cotizacion-pdv" checked={form.usarCotizacionPropia}
-              onChange={() => setForm({ ...form, usarCotizacionPropia: true })} disabled={guardando} />
-            Usar cotización propia
-          </label>
-          {form.usarCotizacionPropia ? (
-            <>
-              <input aria-label="Cotización propia del PDV" type="number" min="0.000001" step="0.000001"
-                value={form.valorDolar} onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
-                placeholder="Ej: 1200" disabled={guardando} />
-              <span className={styles.hint}>
-                Cotización general vigente: {cotizacion?.cotizacion_usd_ars != null ? `1 USD = ${formatARS(cotizacion.cotizacion_usd_ars)}` : 'sin configurar'}.
-                La tasa efectiva de este PDV será la propia.
-              </span>
-            </>
-          ) : (
-            <span className={styles.hint}>
-              {cotizacion?.cotizacion_usd_ars != null
-                ? `Hereda 1 USD = ${formatARS(cotizacion.cotizacion_usd_ars)} de la empresa.`
-                : 'Hereda la cotización general configurada para la empresa.'}
-              {onIrACotizacion && <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}> Configuración → Cotización</button>}
-            </span>
-          )}
-        </div>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Descuento (%)</span>
           <input
@@ -294,6 +263,46 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
             disabled={guardando}
           />
         </label>
+      </div>
+
+      <div className={styles.cotizacionRow}>
+        <label className={styles.cotizacionSwitch}>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={form.usarCotizacionPropia}
+            onChange={(e) => setForm({ ...form, usarCotizacionPropia: e.target.checked })}
+            disabled={guardando}
+          />
+          <span>Cotización del PDV</span>
+        </label>
+        <input
+          className={styles.cotizacionInput}
+          aria-label="Cotización en pesos por dólar"
+          type="number"
+          min="0.000001"
+          step="0.000001"
+          value={form.usarCotizacionPropia ? form.valorDolar : (cotizacion?.cotizacion_usd_ars ?? '')}
+          onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
+          placeholder={form.usarCotizacionPropia ? 'Ej: 1200' : 'Sin configurar'}
+          disabled={guardando || !form.usarCotizacionPropia}
+        />
+        <span className={styles.hint}>
+          {form.usarCotizacionPropia ? (
+            <>
+              Cotización general vigente: {cotizacion?.cotizacion_usd_ars != null ? `1 USD = ${formatARS(cotizacion.cotizacion_usd_ars)}` : 'sin configurar'}.
+              La tasa efectiva de este PDV será la propia.
+            </>
+          ) : cotizacion?.cotizacion_usd_ars != null ? (
+            <>La tasa efectiva de este PDV hereda la cotización general de la empresa.
+              {onIrACotizacion && <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}> Configuración → Cotización</button>}
+            </>
+          ) : (
+            <>La empresa todavía no tiene una cotización general configurada.
+              {onIrACotizacion && <button type="button" className={`${styles.btnLink} ${styles.hintLink}`} onClick={onIrACotizacion}> Configuración → Cotización</button>}
+            </>
+          )}
+        </span>
       </div>
 
       <label className={styles.checkboxField}>

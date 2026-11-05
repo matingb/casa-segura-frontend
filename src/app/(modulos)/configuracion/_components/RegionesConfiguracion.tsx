@@ -166,7 +166,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
             onChange={(e) => setForm((prev) => ({ ...prev, descuento: e.target.value }))}
             placeholder="Ej: 5"
           />
-          <span className={styles.hint}>% sobre el saldo tras descuentos de producto. Puede ser 0%.</span>
+          <span className={styles.hint}>% sobre el saldo tras descuentos de producto.</span>
         </label>
       </div>
 

@@ -94,8 +94,110 @@
 
 .formGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 0.75rem 1rem;
+}
+
+.cotizacionRow {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.8fr) minmax(12rem, 14rem) minmax(16rem, 1.4fr);
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.cotizacionSwitch {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.25rem;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cotizacionSwitch input {
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 1.35rem;
+  margin: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.cotizacionSwitch input::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0.15rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%);
+  transition: transform 0.15s ease;
+}
+
+.cotizacionSwitch input:checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.cotizacionSwitch input:checked::before {
+  transform: translate(1.2rem, -50%);
+}
+
+.cotizacionSwitch input:focus-visible {
+  outline: 3px solid var(--color-primary-soft);
+  outline-offset: 2px;
+}
+
+.cotizacionSwitch input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cotizacionSwitch:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.cotizacionInput {
+  width: 100%;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cotizacionInput:disabled {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-muted);
+  border-color: var(--color-border-strong);
+  cursor: not-allowed;
+}
+
+.cotizacionInput:hover:not(:disabled) {
+  border-color: var(--color-input-border-hover);
+}
+
+.cotizacionInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .field {
@@ -328,9 +430,27 @@
     grid-template-columns: 1fr;
   }
 
+  .cotizacionRow {
+    grid-template-columns: minmax(10rem, auto) minmax(12rem, 1fr);
+  }
+
+  .cotizacionRow > .hint {
+    grid-column: 2;
+  }
+
   .fila {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .cotizacionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .cotizacionRow > .hint {
+    grid-column: auto;
   }
 }
 
