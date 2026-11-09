@@ -7,7 +7,7 @@ import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
-import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
+import { CeldaPrecioCompacta } from '../../../../../components/ui/Table/CeldaPrecio';
 import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
 import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
 import Badge from '../../../../../components/ui/Badge/Badge';
@@ -19,7 +19,6 @@ import { StockItem } from '../../../../../lib/types/Stock';
 import { stockClient } from '../../../../../lib/api/stock.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import styles from './StockCatalogo.module.css';
-import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
 import { useCotizacion } from '../../../../../context/CotizacionContext';
 
 const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'] as const;
@@ -84,8 +83,6 @@ export default function StockCatalogo() {
     filtersLoading,
   } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: `${revision}-${revisionAlcance}` });
 
-  // Producto | Sucursal | Precio de venta | Stock | Estado | Acciones,
-  // con las mismas celdas que Productos y Clientes.
   const columns: TableColumn<StockItem>[] = [
     {
       // Ordena por nombre, el dato principal de la celda.
@@ -103,13 +100,24 @@ export default function StockCatalogo() {
       sortable: true,
     },
     {
+      key: 'costoReposicion',
+      header: 'Costo de reposición',
+      render: (item) => (
+        <CeldaPrecioCompacta
+          ars={item.costo ? item.costo.ars : item.costoReposicion}
+          usd={item.costo?.usd}
+        />
+      ),
+      sortable: true,
+    },
+    {
       // Ordena por el precio en ARS (como la columna Venta ARS anterior).
       key: 'precioVentaArs',
       header: 'Precio de venta',
       render: (item) => (
-        <CeldaPrecio
-          ars={formatARS(item.precio?.ars ?? item.precioVentaArs)}
-          usd={formatUSD(item.precio?.usd ?? item.precioVentaUsd)}
+        <CeldaPrecioCompacta
+          ars={item.precio?.ars ?? item.precioVentaArs}
+          usd={item.precio?.usd ?? item.precioVentaUsd}
         />
       ),
       sortable: true,

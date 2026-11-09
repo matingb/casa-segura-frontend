@@ -7,7 +7,7 @@ import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
-import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
+import { CeldaPrecioCompacta } from '../../../../../components/ui/Table/CeldaPrecio';
 import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
@@ -19,7 +19,6 @@ import { Producto } from '../../../../../lib/types/Producto';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { productoClient } from '../../../../../lib/api/producto.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
-import { formatARS, formatUSD } from '../../../../../lib/utils/formatters';
 import { useCotizacion } from '../../../../../context/CotizacionContext';
 import styles from './ProductosCatalogo.module.css';
 
@@ -72,8 +71,6 @@ export default function ProductosCatalogo() {
     }
   };
 
-  // Producto | Subtipo | Precio base | Estado | Acciones. Se agrupan datos en
-  // pocas columnas para que la tabla siga siendo legible con zoom alto.
   const columns: TableColumn<Producto>[] = [
     {
       // Ordena por nombre, el dato principal de la celda.
@@ -98,13 +95,24 @@ export default function ProductosCatalogo() {
       sortable: true,
     },
     {
+      key: 'costoReposicionBase',
+      header: 'Costo base',
+      render: (producto) => (
+        <CeldaPrecioCompacta
+          ars={producto.costo ? producto.costo.ars : producto.costoReposicionBase}
+          usd={producto.costo?.usd}
+        />
+      ),
+      sortable: true,
+    },
+    {
       // Ordena por el precio en ARS (como la columna Base ARS anterior).
       key: 'precioBase',
       header: 'Precio base',
       render: (producto) => (
-        <CeldaPrecio
-          ars={formatARS(producto.precio?.ars ?? producto.precioBase)}
-          usd={formatUSD(producto.precio?.usd ?? producto.precioBaseUsd)}
+        <CeldaPrecioCompacta
+          ars={producto.precio?.ars ?? producto.precioBase}
+          usd={producto.precio?.usd ?? producto.precioBaseUsd}
         />
       ),
       sortable: true,

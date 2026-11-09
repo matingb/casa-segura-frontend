@@ -14,8 +14,17 @@
 .importe {
   font-weight: 600;
   color: var(--color-text);
+}
+
+.importe,
+.importeUsd {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.importeUsd {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .moneda {

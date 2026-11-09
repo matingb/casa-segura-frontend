@@ -23,14 +23,18 @@ export function formatARS(value: number | string | null | undefined): string {
   return value == null ? '—' : formatMonto(Number(value));
 }
 
-export function formatUSD(value: number | string | null | undefined): string {
+export function formatUSD(value: number | string | null | undefined, conCodigo = false): string {
   if (value == null) return '—';
-  return new Intl.NumberFormat('es-AR', {
+  const formatter = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 4,
-  }).format(Number(value));
+  });
+  if (!conCodigo) return formatter.format(Number(value));
+  return formatter.formatToParts(Number(value))
+    .map((parte) => parte.type === 'currency' ? 'USD $' : parte.value)
+    .join('');
 }
 
 export function formatPrecio(moneda: 'ARS' | 'USD', value: number | string | null | undefined): string {
