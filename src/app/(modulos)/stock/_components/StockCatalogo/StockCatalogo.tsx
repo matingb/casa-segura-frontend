@@ -172,9 +172,14 @@ export default function StockCatalogo() {
     <Card
       title="Catálogo de stock"
       actions={
-        <Button variant="primary" onClick={() => router.push('/stock/nuevo')}>
-          <Plus size={16} aria-hidden="true" /> Nuevo stock
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => router.push('/productos/aumento-masivo?alcance=stock')}>
+            Aumento masivo
+          </Button>
+          <Button variant="primary" onClick={() => router.push('/stock/nuevo')}>
+            <Plus size={16} aria-hidden="true" /> Nuevo stock
+          </Button>
+        </>
       }
     >
       <div className={styles.toolbar}>
