@@ -35,6 +35,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  const descuentoInput = useRef<HTMLInputElement>(null);
 
   const [eliminarTarget, setEliminarTarget] = useState<Region | null>(null);
   const [eliminando, setEliminando] = useState(false);
@@ -100,7 +101,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
       return;
     }
     const descuento = Number(form.descuento);
-    if (form.descuento.trim() === '' || !Number.isFinite(descuento) || descuento < 0 || descuento > 100) {
+    if (descuentoInput.current?.validity.badInput || !Number.isFinite(descuento) || descuento < 0 || descuento > 100) {
       showError('El descuento debe ser un porcentaje entre 0% y 100%.');
       return;
     }
@@ -162,19 +163,18 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
         </label>
 
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>
-            Descuento (%)<span className={styles.required}>*</span>
-          </span>
+          <span className={styles.fieldLabel}>Descuento (%)</span>
           <input
+            ref={descuentoInput}
             type="number"
             min="0"
             max="100"
             step="0.01"
             value={form.descuento}
             onChange={(e) => setForm((prev) => ({ ...prev, descuento: e.target.value }))}
-            placeholder="Ej: 5"
+            placeholder="0"
           />
-          <span className={styles.hint}>% sobre el saldo tras descuentos de producto.</span>
+          <span className={styles.hint}>Si lo dejás vacío, se guarda 0%. Se aplica sobre el saldo tras descuentos de producto.</span>
         </label>
       </div>
 
