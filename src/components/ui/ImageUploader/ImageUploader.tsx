@@ -1,179 +1,98 @@
 'use client';
 
-import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react';
+import { ImageIcon, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import Button from '../Button/Button';
 import styles from './ImageUploader.module.css';
 
+const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const LIMITE_IMAGEN = 5 * 1024 * 1024;
+
 interface ImageUploaderProps {
-  label?: string;
-  initialImageUrl?: string;
-  productoId?: string;
-  onUpload?: (url: string) => void;
+  imagenUrl?: string;
+  disabled?: boolean;
+  onSeleccionar: (archivo: File) => void;
+  onEliminar: () => void;
 }
 
-type UploadState = 'idle' | 'uploading' | 'success' | 'error';
-
-export default function ImageUploader({
-  label = 'Imagen',
-  initialImageUrl,
-  productoId,
-  onUpload,
-}: ImageUploaderProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(initialImageUrl);
-  const [uploadState, setUploadState] = useState<UploadState>('idle');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+export default function ImageUploader({ imagenUrl: previewUrl, disabled, onSeleccionar, onEliminar }: ImageUploaderProps) {
+  const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const objectUrlRef = useRef<string | null>(null);
-  useEffect(() => {
-    return () => {
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    };
-  }, []);
-
-  const uploadFile = async (file: File) => {
-    // Mostrar preview local inmediatamente
-    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    const localUrl = URL.createObjectURL(file);
-    objectUrlRef.current = localUrl;
-    setPreviewUrl(localUrl);
-    setErrorMsg(null);
-
-    // Si no hay productoId, no se puede subir (ej: producto nuevo aún no creado)
-    if (!productoId) {
-      console.warn('[ImageUploader] productoId no provisto, imagen no subida al servidor');
+  const seleccionar = (file?: File) => {
+    if (!file || disabled) return;
+    if (!TIPOS_IMAGEN.includes(file.type)) {
+      setError('Elegí una imagen JPG, PNG, WebP o GIF.');
       return;
     }
-
-    // Subir al backend
-    setUploadState('uploading');
-
-    try {
-      const formData = new FormData();
-      formData.append('imagen', file);
-
-      const response = await fetch(`/api/productos/${productoId}/imagen`, {
-        method: 'PATCH',
-        body: formData,
-        credentials: 'include', // envía la cookie de auth
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        throw new Error(json.message ?? 'Error al subir la imagen');
-      }
-
-      const signedUrl: string = json.data.imagen_url;
-
-      // Reemplazar el preview local por la signed URL del servidor
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
-      setPreviewUrl(signedUrl);
-      setUploadState('success');
-      onUpload?.(signedUrl);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido';
-      setErrorMsg(msg);
-      setUploadState('error');
-      console.error('[ImageUploader] Error al subir imagen:', err);
+    if (file.size > LIMITE_IMAGEN) {
+      setError('La imagen debe pesar hasta 5 MB.');
+      return;
     }
+    setError(null);
+    onSeleccionar(file);
   };
-
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadFile(file);
-    // Limpiar el input para permitir re-subir el mismo archivo
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (isUploading) return;
-    const file = e.dataTransfer.files?.[0];
-    if (file) await uploadFile(file);
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (!isUploading) setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => setIsDragOver(false);
-
-  const isUploading = uploadState === 'uploading';
 
   return (
     <div className={styles.uploader}>
-      {label && <span className={styles.label}>{label}</span>}
-
-      <div
+      <button
+        type="button"
         className={`${styles.dropzone} ${isDragOver ? styles.dragOver : ''} ${previewUrl ? styles.hasImage : ''}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => !isUploading && fileInputRef.current?.click()}
-        role="button"
-        tabIndex={0}
+        aria-label={previewUrl ? 'Cambiar imagen' : 'Seleccionar imagen'}
+        disabled={disabled}
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!disabled) setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          seleccionar(e.dataTransfer.files[0]);
+        }}
       >
         {previewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={previewUrl}
-            alt="Vista previa del producto"
-            className={`${styles.previewImage} ${isUploading ? styles.uploading : ''}`}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt="Vista previa del producto" className={styles.previewImage} />
+            <span className={styles.hoverOverlay}>Cambiar imagen</span>
+          </>
         ) : (
-          <div className={styles.emptyState}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className={styles.emptyIcon}>
-              <path
-                d="M4 16.5V6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v10.5M4 16.5A1.75 1.75 0 0 0 5.75 18h12.5A1.75 1.75 0 0 0 20 16.5M4 16.5l4.72-4.72a1.5 1.5 0 0 1 2.12 0L13 13.94m7-2.94-2.72-2.72a1.5 1.5 0 0 0-2.12 0L13 13.94m0 0 1.5 1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <span className={styles.emptyState}>
+            <ImageIcon size={32} className={styles.emptyIcon} aria-hidden="true" />
             <span className={styles.emptyText}>Arrastrá una imagen o hacé clic para subir</span>
-          </div>
+          </span>
         )}
+      </button>
 
-        {previewUrl && !isUploading && (
-          <div className={styles.hoverOverlay}>
-            <span>Cambiar imagen</span>
-          </div>
-        )}
-
-        {isUploading && (
-          <div className={styles.uploadingOverlay}>
-            <svg className={styles.spinner} width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray="31.4 31.4"
-              />
-            </svg>
-            <span>Subiendo...</span>
-          </div>
-        )}
-      </div>
-
-      {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
+      {previewUrl && (
+        <Button
+          type="button"
+          variant="dangerOutline"
+          disabled={disabled}
+          onClick={() => {
+            setError(null);
+            onEliminar();
+          }}
+        >
+          <Trash2 size={15} aria-hidden="true" />
+          Eliminar imagen
+        </Button>
+      )}
+      {error && <p className={styles.errorMsg} role="alert">{error}</p>}
 
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        onChange={handleFileChange}
+        accept={TIPOS_IMAGEN.join(',')}
+        onChange={(e) => {
+          seleccionar(e.currentTarget.files?.[0]);
+          e.currentTarget.value = '';
+        }}
         className={styles.hiddenInput}
-        disabled={isUploading}
+        disabled={disabled}
       />
     </div>
   );

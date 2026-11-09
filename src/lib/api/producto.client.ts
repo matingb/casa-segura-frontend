@@ -2,6 +2,16 @@ import { Producto } from '../types/Producto';
 import { apiFetch } from '../apiFetch';
 import { errorCatalogo } from './cotizacion.client';
 
+function cuerpoProducto(data: Record<string, unknown>, imagen?: File): RequestInit {
+  if (imagen) {
+    const body = new FormData();
+    body.append('datos', JSON.stringify(data));
+    body.append('imagen', imagen);
+    return { body };
+  }
+  return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+}
+
 export function mapApiProductoToProducto(apiProd: any): Producto {
   return {
     id: apiProd.id,
@@ -119,11 +129,10 @@ export const productoClient = {
     return Array.isArray(json.data) ? json.data : [];
   },
 
-  crear: async (data: Record<string, unknown>): Promise<Producto> => {
+  crear: async (data: Record<string, unknown>, imagen?: File): Promise<Producto> => {
     const res = await apiFetch('/api/productos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      ...cuerpoProducto(data, imagen),
     });
     if (!res.ok) {
       return errorCatalogo(res, 'Error al crear producto');
@@ -132,11 +141,10 @@ export const productoClient = {
     return mapApiProductoToProducto(json.data);
   },
 
-  actualizar: async (id: string, data: Record<string, unknown>): Promise<Producto> => {
+  actualizar: async (id: string, data: Record<string, unknown>, imagen?: File): Promise<Producto> => {
     const res = await apiFetch(`/api/productos/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      ...cuerpoProducto(data, imagen),
     });
     if (!res.ok) {
       return errorCatalogo(res, 'Error al actualizar producto');

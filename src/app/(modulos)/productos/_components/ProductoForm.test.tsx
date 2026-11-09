@@ -20,9 +20,8 @@ vi.mock('../../../../lib/hooks/useClasificacion', () => ({
   }),
 }));
 vi.mock('../_hooks/useProductoDetalle', () => ({ useProductoDetalle: () => ({ producto: null, isLoading: false, error: null, reload: vi.fn() }) }));
-vi.mock('../../../../components/ui/ImageUploader/ImageUploader', () => ({ default: () => null }));
 vi.mock('../../../../lib/api/producto.client', () => ({
-  productoClient: { obtenerTodos: vi.fn(), obtenerPorId: vi.fn(), crear: vi.fn() },
+  productoClient: { obtenerTodos: vi.fn(), obtenerPorId: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
 }));
 
 const original = {
@@ -32,6 +31,20 @@ const original = {
   unidadPesoUnitario: 'kg', imagenUrl: '', codigoQr: '', descuentoBase: null, precioBase: 5000, costoReposicionBase: null,
   precio: { moneda_referencia: 'ARS', importe_referencia: '5000.00', ars: '5000.00', usd: '5.0000', estado: 'VINCULADO' },
 } as unknown as Producto;
+
+it('muestra la imagen existente y la quita al guardar', async () => {
+  const producto = { ...original, imagenUrl: '/camara.png' };
+  vi.mocked(productoClient.actualizar).mockResolvedValue({ ...producto, imagenUrl: '' });
+  render(<ProductoForm title="Editar producto" producto={producto} />);
+
+  expect(screen.getByRole('img', { name: 'Vista previa del producto' })).toHaveAttribute('src', '/camara.png');
+  fireEvent.click(screen.getByRole('button', { name: 'Eliminar imagen' }));
+  expect(screen.queryByRole('img', { name: 'Vista previa del producto' })).not.toBeInTheDocument();
+  expect(productoClient.actualizar).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+  await waitFor(() => expect(productoClient.actualizar).toHaveBeenCalledWith('p1', expect.objectContaining({ imagen_url: null }), undefined));
+});
 
 describe('Nuevo producto copiando otro', () => {
   beforeEach(() => {
@@ -88,6 +101,6 @@ describe('Nuevo producto copiando otro', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     fireEvent.click(guardar);
     await waitFor(() => expect(push).toHaveBeenCalledWith('/productos'));
-    expect(productoClient.crear).toHaveBeenLastCalledWith(expect.objectContaining({ codigo: 'CAM-002' }));
+    expect(productoClient.crear).toHaveBeenLastCalledWith(expect.objectContaining({ codigo: 'CAM-002' }), undefined);
   });
 });

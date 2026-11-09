@@ -74,7 +74,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const [tipoId, setTipoId] = useState('');
   const [subtipoId, setSubtipoId] = useState('');
   const subtipos = tipoId ? getSubtiposPorTipo(tipoId) : [];
-  const [imagenUrl, setImagenUrl] = useState<string | undefined>(undefined);
+  const [imagen, setImagen] = useState<{ archivo: File; url: string } | null>();
   const [codigoQr, setCodigoQr] = useState('');
 
   // Unidades
@@ -106,12 +106,16 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const [montosOrigen, setMontosOrigen] = useState<{ precio: PrecioEdicion; costo: PrecioEdicion } | null>(null);
   const snapshotCopiaPendiente = useRef(false);
   const base = producto ?? origen ?? undefined;
+  const imagenUrl = imagen === null ? undefined : imagen?.url ?? base?.imagenUrl;
+
+  useEffect(() => {
+    if (imagen) return () => URL.revokeObjectURL(imagen.url);
+  }, [imagen]);
 
   const serializeForm = (): string => {
     if (!formRef.current) return '';
     const formData = new FormData(formRef.current);
     const entries = Array.from(formData.entries()).map(([k, v]) => [k, String(v)]);
-    entries.push(['imagenUrl', imagenUrl ?? '']);
     entries.push(['subtipoId', subtipoId]);
     entries.push(['codigoQr', codigoQr]);
     entries.push(['unidadAlto', unidadAlto]);
@@ -137,7 +141,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       setCosto({ moneda: 'ARS', importe: '', contexto: cotizacion, cambiado: false });
       setTipoId('');
       setSubtipoId('');
-      setImagenUrl(undefined);
+      setImagen(undefined);
       setCodigoQr('');
       setUnidadAlto('cm');
       setUnidadAncho('cm');
@@ -160,6 +164,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       snapshotCopiaPendiente.current = true;
       setSubmitError(null);
       setCodigoError(null);
+      setImagen(undefined);
       setOrigen(copia);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'No se pudo copiar el producto.');
@@ -191,11 +196,11 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     snapshotCopiaPendiente.current = false;
     setHasChanges(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [origen, subtipoId, codigoQr, imagenUrl, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
+  }, [origen, subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
 
   const mismoMonto = (a: PrecioEdicion, b: PrecioEdicion) => a.moneda === b.moneda && a.importe.trim() === b.importe.trim();
   const copiaSinCambios = Boolean(
-    origen && montosOrigen && !hasChanges &&
+    origen && montosOrigen && !hasChanges && imagen === undefined &&
     mismoMonto(precio, montosOrigen.precio) && mismoMonto(costo, montosOrigen.costo)
   );
 
@@ -207,7 +212,6 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     if (base) {
       setTipoId(getTipoIdDeSubtipo(base.subtipoId) ?? '');
       setSubtipoId(base.subtipoId ?? '');
-      setImagenUrl(base.imagenUrl);
       setCodigoQr(base.codigoQr ?? '');
       setUnidadAlto(base.unidadAlto ?? 'cm');
       setUnidadAncho(base.unidadAncho ?? 'cm');
@@ -229,7 +233,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       checkForChanges();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagenUrl, subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
+  }, [subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -259,7 +263,6 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       unidad_peso_unitario:   unidadPeso,
       descripcion:            formData.get('descripcion'),
       activo:                 formData.get('activo') === 'true',
-      imagen_url:             imagenUrl ?? null,
       descuento_base:         parseNum(formData.get('descuentoBase'), 2),
       codigo_qr:              codigoQr || null,
     };
@@ -273,20 +276,23 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       const costoInput = costoParaGuardar(costo, cotizacion);
       const payload = {
         ...body,
+        ...(!isEditing && imagen === undefined && base?.imagenUrl ? { imagen_url: base.imagenUrl } : {}),
+        ...(imagen === null ? { imagen_url: null } : {}),
         ...(precioInput !== undefined ? { precio: precioInput } : {}),
         ...(costoInput !== undefined ? { costo: costoInput } : {}),
       };
       if (isEditing) {
-        await productoClient.actualizar(producto!.id, payload);
+        await productoClient.actualizar(producto!.id, payload, imagen?.archivo);
         if (readOnly) {
           await reload();
+          setImagen(undefined);
           setInlineEditing(false);
         } else {
           router.push(`/productos/${producto!.id}`);
         }
         showSuccess('Producto actualizado correctamente.');
       } else {
-        await productoClient.crear(payload);
+        await productoClient.crear(payload, imagen?.archivo);
         router.push('/productos');
         showSuccess('Producto creado correctamente.');
       }
@@ -314,7 +320,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     resetCosto();
     setTipoId(getTipoIdDeSubtipo(producto.subtipoId) ?? '');
     setSubtipoId(producto.subtipoId ?? '');
-    setImagenUrl(producto.imagenUrl);
+    setImagen(undefined);
     setCodigoQr(producto.codigoQr ?? '');
     setUnidadAlto(producto.unidadAlto ?? 'cm');
     setUnidadAncho(producto.unidadAncho ?? 'cm');
@@ -779,10 +785,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             <h2 className={styles.sectionTitle}>Imagen</h2>
             <div className={styles.imageCard}>
               <ImageUploader
-                label=""
-                initialImageUrl={imagenUrl}
-                productoId={producto?.id}
-                onUpload={(url) => setImagenUrl(url)}
+                imagenUrl={imagenUrl}
+                disabled={isSaving}
+                onSeleccionar={(archivo) => setImagen({ archivo, url: URL.createObjectURL(archivo) })}
+                onEliminar={() => setImagen(base?.imagenUrl ? null : undefined)}
               />
             </div>
           </div>
@@ -816,7 +822,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || copiaSinCambios || (isEditing && !hasChanges && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
+            <Button type="submit" variant="primary" disabled={isSaving || copiaSinCambios || (isEditing && !hasChanges && imagen === undefined && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
               {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
