@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Eye, Plus, Phone, Mail, Building2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
@@ -30,19 +29,10 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select'; opt
 
 export default function ClientesCatalogo() {
   const router = useRouter();
-  const [revisionAlcance, setRevisionAlcance] = useState(0);
-  useEffect(() => {
-    const actualizar = () => setRevisionAlcance((actual) => actual + 1);
-    window.addEventListener('alcance-pdv-revocado', actualizar);
-    window.addEventListener('focus', actualizar);
-    return () => {
-      window.removeEventListener('alcance-pdv-revocado', actualizar);
-      window.removeEventListener('focus', actualizar);
-    };
-  }, []);
   const {
     items: clientes,
-    loading,
+    initialLoading,
+    refreshing,
     error,
     page,
     totalPages,
@@ -55,7 +45,7 @@ export default function ClientesCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(clienteClient, SELECT_FILTER_FIELDS, { refreshKey: revisionAlcance });
+  } = useCatalogoPaginado(clienteClient, SELECT_FILTER_FIELDS);
 
   // Cliente | Datos fiscales | Contacto | Sucursales | Estado | Acciones, con el
   // mismo criterio que Productos: agrupar datos en pocas columnas.
@@ -213,15 +203,16 @@ export default function ClientesCatalogo() {
         columns={columns}
         data={clientes}
         getRowKey={(cliente) => cliente.id}
-        emptyMessage={loading ? 'Cargando clientes...' : 'No se encontraron clientes.'}
+        emptyMessage={initialLoading ? 'Cargando clientes...' : 'No se encontraron clientes.'}
         sort={sort}
         onSortChange={onSortChange}
         onRowClick={(cliente) => router.push(`/clientes/${cliente.id}`)}
         stickyHeader
         ajustarAncho
+        busy={refreshing}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={refreshing} />
     </Card>
   );
 }

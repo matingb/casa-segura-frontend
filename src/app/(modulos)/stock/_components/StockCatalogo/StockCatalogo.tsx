@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Eye, Plus, AlertTriangle, Building2 } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
@@ -56,19 +55,10 @@ const AVISO_STOCK = {
 export default function StockCatalogo() {
   const router = useRouter();
   const { revision } = useCotizacion();
-  const [revisionAlcance, setRevisionAlcance] = useState(0);
-  useEffect(() => {
-    const actualizar = () => setRevisionAlcance((actual) => actual + 1);
-    window.addEventListener('alcance-pdv-revocado', actualizar);
-    window.addEventListener('focus', actualizar);
-    return () => {
-      window.removeEventListener('alcance-pdv-revocado', actualizar);
-      window.removeEventListener('focus', actualizar);
-    };
-  }, []);
   const {
     items: stock,
-    loading,
+    initialLoading,
+    refreshing,
     error,
     page,
     totalPages,
@@ -81,7 +71,7 @@ export default function StockCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: `${revision}-${revisionAlcance}` });
+  } = useCatalogoPaginado(stockClient, SELECT_FILTER_FIELDS, { refreshKey: revision });
 
   const columns: TableColumn<StockItem>[] = [
     {
@@ -220,15 +210,16 @@ export default function StockCatalogo() {
         columns={columns}
         data={stock}
         getRowKey={(item) => item.id}
-        emptyMessage={loading ? 'Cargando stock...' : 'No se encontraron items de stock.'}
+        emptyMessage={initialLoading ? 'Cargando stock...' : 'No se encontraron items de stock.'}
         sort={sort}
         onSortChange={onSortChange}
         onRowClick={(item) => router.push(`/stock/${item.id}`)}
         stickyHeader
         ajustarAncho
+        busy={refreshing}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={refreshing} />
     </Card>
   );
 }

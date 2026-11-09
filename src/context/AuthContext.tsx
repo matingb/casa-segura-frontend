@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { apiUrl } from '../lib/api';
+import { apiFetch } from '../lib/apiFetch';
 
 interface User {
   id: string;
@@ -33,26 +34,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const response = await fetch(apiUrl('/api/auth/me'), {
+        const response = await apiFetch(apiUrl('/api/auth/me'), {
           method: 'GET',
-          credentials: 'include',
         });
 
         if (isMounted) {
           if (response.ok) {
             const data = await response.json();
             setUser(data.data.user);
-          } else {
+          } else if (response.status === 401) {
             setUser(null);
             router.replace('/login');
           }
         }
       } catch (error: unknown) {
         console.error('Session check failed', error);
-        if (isMounted) {
-          setUser(null);
-          router.replace('/login');
-        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -65,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [pathname]);
+  }, [pathname, router]);
 
   const logout = useCallback(async () => {
     try {
@@ -77,8 +73,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Logout error', error);
     } finally {
       setUser(null);
+      router.replace('/login');
     }
-  }, []);
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, logout }}>

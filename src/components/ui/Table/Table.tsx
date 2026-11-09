@@ -47,6 +47,11 @@ interface TableProps<T> {
    * Opcional: por defecto la tabla se comporta como siempre.
    */
   ajustarAncho?: boolean;
+  /**
+   * Indica que la tabla está refrescando datos (revalidación o cambio de página).
+   * Mantiene los datos visibles pero atenúa las filas e inhabilita interacciones.
+   */
+  busy?: boolean;
 }
 
 export default function Table<T>({
@@ -59,10 +64,15 @@ export default function Table<T>({
   onRowClick,
   stickyHeader,
   ajustarAncho = false,
+  busy = false,
 }: TableProps<T>) {
   return (
-    <div className={styles.tableWrapper}>
-      <table className={ajustarAncho ? `${styles.table} ${styles.tableAjustada}` : styles.table}>
+    <div className={styles.tableWrapper} aria-busy={busy}>
+      <table
+        className={`${ajustarAncho ? `${styles.table} ${styles.tableAjustada}` : styles.table}${
+          busy ? ` ${styles.tableBusy}` : ''
+        }`}
+      >
         <thead className={stickyHeader ? styles.stickyHead : undefined}>
           <tr>
             {columns.map((column) => {
