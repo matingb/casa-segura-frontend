@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Plus, AlertTriangle } from 'lucide-react';
 import Button from '../../../../../components/ui/Button/Button';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
+import MarcaObligatoria from '../../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import Combobox from '../../../../../components/ui/Combobox/Combobox';
 import Input from '../../../../../components/ui/Input/Input';
 import { stockClient } from '../../../../../lib/api/stock.client';
@@ -160,7 +161,7 @@ export default function ItemsEditor({
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Productos</h3>
+        <h3 className={styles.title}>Productos<MarcaObligatoria /></h3>
       </div>
 
       {!sucursalId && <p className={styles.hint}>Seleccioná una sucursal primero.</p>}
@@ -173,11 +174,12 @@ export default function ItemsEditor({
         <table className={styles.tabla}>
           <thead>
             <tr>
-              <th scope="col" className={styles.colProducto}>Producto</th>
-              <th scope="col" className={styles.colNumero}>Cantidad</th>
+              <th scope="col" className={styles.colProducto}>Producto<MarcaObligatoria /></th>
+              <th scope="col" className={styles.colNumero}>Cantidad<MarcaObligatoria /></th>
               <th scope="col" className={styles.colNumero}>Impactar ahora</th>
               <th scope="col" className={styles.colNumero}>
                 {modo === 'compra' ? 'Costo unit.' : 'Precio unit.'}
+                <MarcaObligatoria />
               </th>
               <th scope="col" className={styles.colNumero}>Importe</th>
               <th scope="col" className={styles.colAccion} aria-label="Acciones" />
@@ -213,6 +215,7 @@ export default function ItemsEditor({
                 <tr key={index}>
                   <td className={styles.colProducto}>
                     <Combobox
+                      required
                       options={productoOptions}
                       value={item.productoSucursalId}
                       onChange={(value) => {
@@ -235,6 +238,7 @@ export default function ItemsEditor({
                       min="0"
                       step="1"
                       aria-label={`Cantidad de la fila ${index + 1}`}
+                      aria-required="true"
                       value={item.cantidad ?? ''}
                       onChange={(e) => {
                         onCampoEditado?.(`items.${index}.cantidad`);
@@ -273,6 +277,7 @@ export default function ItemsEditor({
                       min="0"
                       step="0.01"
                       aria-label={`${modo === 'compra' ? 'Costo' : 'Precio'} unitario de la fila ${index + 1}`}
+                      aria-required="true"
                       value={unitario ?? ''}
                       onChange={(e) => {
                         onCampoEditado?.(`items.${index}.unitario`);
@@ -334,6 +339,7 @@ export default function ItemsEditor({
             <div key={index} className={styles.row}>
               <Combobox
                 label="Producto"
+                required
                 options={productoOptions}
                 value={item.productoSucursalId}
                 onChange={(value) => seleccionarProducto(index, value)}
@@ -342,6 +348,7 @@ export default function ItemsEditor({
               />
               <Input
                 label="Cantidad"
+                aria-required="true"
                 type="number"
                 min={1}
                 step="1"

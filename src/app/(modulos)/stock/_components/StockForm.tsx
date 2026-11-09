@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
+import BotonConMotivo from '../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
@@ -465,6 +466,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                   <input type="hidden" name="productoId" value={productoSeleccionadoId} />
                   <Combobox
                     label="Producto"
+                    required
                     options={productos.map((p) => ({
                       value: p.id,
                       label: `${p.codigo ? `[${p.codigo}] ` : ''}${p.nombre}`,
@@ -582,6 +584,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             <div className={styles.grid}>
               <Input
                 label={isEditing ? 'Cantidad disponible' : 'Cantidad disponible inicial'}
+                aria-required={isEditing || undefined}
                 name="cantidadDisponible"
                 type="number"
                 step="1"
@@ -592,6 +595,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               {isEditing && (
                 <Input
                   label="Cantidad reservada"
+                  aria-required="true"
                   name="cantidadReservada"
                   type="number"
                   step="1"
@@ -602,6 +606,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
               )}
               <Input
                 label="Stock mínimo"
+                aria-required={isEditing || undefined}
                 name="stockMinimo"
                 type="number"
                 step="1"
@@ -623,9 +628,15 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
             <Button type="button" variant="secondary" onClick={readOnly ? cancelInlineEdit : () => router.push('/stock')} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || margenInvalido}>
+            <BotonConMotivo
+              type="submit"
+              disabled={isSaving}
+              motivo={hayValorInvalido
+                ? 'Revisá los valores de costo, precio y margen.'
+                : margenInvalido ? 'El precio no alcanza el margen mínimo.' : undefined}
+            >
               {isSaving ? 'Guardando...' : 'Guardar'}
-            </Button>
+            </BotonConMotivo>
           </div>
         </form>
       </Card>

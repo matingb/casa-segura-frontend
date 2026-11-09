@@ -90,6 +90,7 @@ export default function MovimientoForm() {
             <Select
               id="sucursal"
               label="Sucursal"
+              aria-required="true"
               value={sucursalId}
               onChange={(e) => {
                 limpiarError('sucursalId');
@@ -106,6 +107,7 @@ export default function MovimientoForm() {
 
           <Select
             label="Tipo"
+            aria-required="true"
             value={tipoMovimiento}
             onChange={(e) => setTipoMovimiento(e.target.value as 'ingreso' | 'egreso')}
           >

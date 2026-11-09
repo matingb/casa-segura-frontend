@@ -7,6 +7,7 @@ import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
 import { formatARS, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
+import BotonConMotivo, { SIN_CAMBIOS } from '../../../../../components/ui/Button/BotonConMotivo';
 import Select from '../../../../../components/ui/Select/Select';
 import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import InputPorcentaje, { validarPorcentaje } from '../../../../../components/ui/InputPorcentaje/InputPorcentaje';
@@ -59,13 +60,16 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
   const ejemplo = afectados[0];
   const vistaPrevia = ejemplo && valor != null ? simularPrecio(ejemplo, { 'categoria-cliente': valor }) : null;
   const debajoDelMargen = valor != null ? afectados.filter(i => simularPrecio(i, { 'categoria-cliente': valor }).debajoDelMargen).length : 0;
-  const puedeAsignar = Boolean(destino) && valor != null && !guardando && valor !== (existente ? Number(existente.porcentaje) : null);
+  let motivoAsignar: string | undefined;
+  if (!destino) motivoAsignar = modo === 'tipo' ? 'Elegí una categoría.' : 'Elegí una subcategoría.';
+  else if (valor == null) motivoAsignar = error ?? 'Ingresá el descuento.';
+  else if (existente && valor === Number(existente.porcentaje)) motivoAsignar = SIN_CAMBIOS;
 
   const limpiar = () => { setTipoId(''); setSubtipoId(''); setPorcentaje(''); setNota(''); };
 
   const asignar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!puedeAsignar || !destino || valor == null) return;
+    if (guardando || motivoAsignar || !destino || valor == null) return;
     setGuardando(true);
     try {
       await clienteDescuentoClient.asignarCategoria(clienteId, {
@@ -135,14 +139,14 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
         <div className={styles.formGrid}>
           {modo === 'tipo' ? (
             <div className={styles.campoAncho}>
-              <Select id="descuento-categoria" label="Categoría" value={tipoId} onChange={(e) => setTipoId(e.target.value)} disabled={guardando}>
+              <Select id="descuento-categoria" label="Categoría" aria-required="true" value={tipoId} onChange={(e) => setTipoId(e.target.value)} disabled={guardando}>
                 <option value="">Elegí una categoría</option>
                 {tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
               </Select>
             </div>
           ) : (
             <div className={styles.campoAncho}>
-              <Select id="descuento-subcategoria" label="Subcategoría" value={subtipoId} onChange={(e) => setSubtipoId(e.target.value)} disabled={guardando}>
+              <Select id="descuento-subcategoria" label="Subcategoría" aria-required="true" value={subtipoId} onChange={(e) => setSubtipoId(e.target.value)} disabled={guardando}>
                 <option value="">Elegí una subcategoría</option>
                 {tipos.map(t => {
                   const hijos = getSubtiposPorTipo(t.id);
@@ -156,14 +160,14 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
               </Select>
             </div>
           )}
-          <InputPorcentaje id="descuento-categoria-pct" label="Descuento" placeholder="Ej: 10" value={porcentaje} onChange={setPorcentaje} error={error} disabled={guardando} />
+          <InputPorcentaje id="descuento-categoria-pct" label="Descuento" aria-required="true" placeholder="Ej: 10" value={porcentaje} onChange={setPorcentaje} error={error} disabled={guardando} />
           <label className={styles.campo}>
             <span className={styles.campoLabel}>Nota (opcional)</span>
             <input className={styles.input} placeholder="Ej: Instalador frecuente" value={nota} onChange={(e) => setNota(e.target.value)} maxLength={200} disabled={guardando} />
           </label>
-          <button type="submit" className={styles.btnAsignar} disabled={!puedeAsignar}>
-            {existente ? 'Reemplazar' : 'Asignar'}
-          </button>
+          <BotonConMotivo nativo type="submit" className={styles.btnAsignar} disabled={guardando} motivo={motivoAsignar}>
+            {guardando ? 'Guardando…' : existente ? 'Reemplazar' : 'Asignar'}
+          </BotonConMotivo>
         </div>
 
         {destino && (

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Pencil } from 'lucide-react';
+import BotonConMotivo from '../../../../components/ui/Button/BotonConMotivo';
+import MarcaObligatoria from '../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import { useClasificacion, notifyClasificacionChanged } from '../../../../lib/hooks/useClasificacion';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
 import { ReferenciaSucursalGlobal, sucursalClient } from '../../../../lib/api/sucursal.client';
@@ -136,23 +138,29 @@ export default function CategoriasConfiguracion() {
         if (e.key === 'Escape') cancelarEdicion();
       }}
     >
-      <input
-        type="text"
-        className={styles.subInput}
-        value={nombreEdicion}
-        onChange={(e) => setNombreEdicion(e.target.value)}
-        aria-label={etiqueta}
-        autoFocus
-        disabled={guardandoNombre}
-      />
-      <button
+      <label className={styles.nombreCampo}>
+        <span>{etiqueta}<MarcaObligatoria /></span>
+        <input
+          type="text"
+          className={styles.subInput}
+          value={nombreEdicion}
+          onChange={(e) => setNombreEdicion(e.target.value)}
+          aria-required="true"
+          autoFocus
+          disabled={guardandoNombre}
+        />
+      </label>
+      <BotonConMotivo
+        nativo
+        tooltip
         type="submit"
         className={styles.btnPrimary}
-        disabled={guardandoNombre || !nombreEdicion.trim()}
+        disabled={guardandoNombre}
+        motivo={!nombreEdicion.trim() ? 'Ingresá un nombre.' : undefined}
         style={{ padding: '0.45rem 0.85rem' }}
       >
         {guardandoNombre ? 'Guardando...' : 'Guardar'}
-      </button>
+      </BotonConMotivo>
       <button
         type="button"
         className={styles.btnSecondary}
@@ -281,22 +289,29 @@ export default function CategoriasConfiguracion() {
       {isAddingTipo && (
         <div className={styles.newCategoryCard}>
           <form className={styles.newCategoryForm} onSubmit={handleCreateTipo}>
-            <input
-              type="text"
-              className={styles.inputField}
-              placeholder="Nombre de la categoría (ej. Seguridad, Herramientas...)"
-              value={newTipoNombre}
-              onChange={(e) => setNewTipoNombre(e.target.value)}
-              autoFocus
-              disabled={isCreatingTipo}
-            />
-            <button
+            <label className={`${styles.nombreCampo} ${styles.nombreCategoria}`}>
+              <span>Nombre de la categoría<MarcaObligatoria /></span>
+              <input
+                type="text"
+                className={styles.inputField}
+                placeholder="Ej. Seguridad, Herramientas..."
+                value={newTipoNombre}
+                onChange={(e) => setNewTipoNombre(e.target.value)}
+                aria-required="true"
+                autoFocus
+                disabled={isCreatingTipo}
+              />
+            </label>
+            <BotonConMotivo
+              nativo
+              tooltip
               type="submit"
               className={styles.btnPrimary}
-              disabled={isCreatingTipo || !newTipoNombre.trim()}
+              disabled={isCreatingTipo}
+              motivo={!newTipoNombre.trim() ? 'Ingresá el nombre de la categoría.' : undefined}
             >
               {isCreatingTipo ? 'Creando...' : 'Crear categoría'}
-            </button>
+            </BotonConMotivo>
             <button
               type="button"
               className={styles.btnSecondary}
@@ -562,23 +577,30 @@ export default function CategoriasConfiguracion() {
                         className={styles.newSubForm}
                         onSubmit={(e) => handleCreateSubtipo(tipo.id, e)}
                       >
-                        <input
-                          type="text"
-                          className={styles.subInput}
-                          placeholder="Nombre de la subcategoría..."
-                          value={newSubtipoNombre}
-                          onChange={(e) => setNewSubtipoNombre(e.target.value)}
-                          autoFocus
-                          disabled={isCreatingSubtipo}
-                        />
-                        <button
+                        <label className={styles.nombreCampo}>
+                          <span>Nombre de la subcategoría<MarcaObligatoria /></span>
+                          <input
+                            type="text"
+                            className={styles.subInput}
+                            placeholder="Ej. Cámaras IP"
+                            value={newSubtipoNombre}
+                            onChange={(e) => setNewSubtipoNombre(e.target.value)}
+                            aria-required="true"
+                            autoFocus
+                            disabled={isCreatingSubtipo}
+                          />
+                        </label>
+                        <BotonConMotivo
+                          nativo
+                          tooltip
                           type="submit"
                           className={styles.btnPrimary}
-                          disabled={isCreatingSubtipo || !newSubtipoNombre.trim()}
+                          disabled={isCreatingSubtipo}
+                          motivo={!newSubtipoNombre.trim() ? 'Ingresá el nombre de la subcategoría.' : undefined}
                           style={{ padding: '0.45rem 0.85rem' }}
                         >
                           {isCreatingSubtipo ? 'Guardando...' : 'Guardar'}
-                        </button>
+                        </BotonConMotivo>
                         <button
                           type="button"
                           className={styles.btnSecondary}

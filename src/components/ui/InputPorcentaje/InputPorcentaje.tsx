@@ -1,6 +1,7 @@
 'use client';
 
 import { InputHTMLAttributes } from 'react';
+import MarcaObligatoria from '../MarcaObligatoria/MarcaObligatoria';
 import styles from './InputPorcentaje.module.css';
 
 /** Valida un porcentaje escrito por el usuario (acepta coma o punto decimal). */
@@ -24,9 +25,10 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' |
 
 /** Input de porcentaje con el "%" visible adentro; solo deja escribir números. */
 export default function InputPorcentaje({ value, onChange, label, error, compacto, id, className, ...rest }: Props) {
+  const obligatorio = rest.required || String(rest['aria-required']) === 'true';
   return (
     <div className={`${styles.campo} ${className ?? ''}`}>
-      {label && <label htmlFor={id} className={styles.label}>{label}</label>}
+      {label && <label htmlFor={id} className={styles.label}>{label}{obligatorio && <MarcaObligatoria />}</label>}
       <div className={`${styles.control} ${error ? styles.conError : ''} ${compacto ? styles.compacto : ''}`}>
         <input
           id={id}

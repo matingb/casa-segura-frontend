@@ -184,11 +184,6 @@
   font-size: 0.78rem;
 }
 
-.requiredMark {
-  color: var(--color-primary);
-  margin-left: 0.15rem;
-}
-
 .qrRow {
   display: flex;
   align-items: flex-end;
@@ -214,6 +209,7 @@
 
 .actions {
   display: flex;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: 0.75rem;
   padding-top: 0.9rem;

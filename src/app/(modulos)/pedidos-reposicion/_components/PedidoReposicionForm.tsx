@@ -96,6 +96,7 @@ export default function PedidoReposicionForm() {
 
             <Combobox
               label="Producto"
+              required
               options={productoOptions}
               value={productoSucursalId}
               onChange={setProductoSucursalId}

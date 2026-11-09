@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
+import BotonConMotivo from '../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../components/ui/Input/Input';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { cotizacionClient, CatalogoApiError } from '../../../../lib/api/cotizacion.client';
@@ -27,6 +28,10 @@ export default function CotizacionConfiguracion() {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const conflicto = editado && datos && version !== datos.cotizacion_version;
   const puedeActualizar = datos?.puede_actualizar ?? false;
+  let motivoGuardar: string | undefined;
+  if (!datos) motivoGuardar = error ? 'No se pudo cargar la cotización.' : 'Cargando la cotización…';
+  else if (!puedeActualizar) motivoGuardar = 'Necesitás el permiso de administración de cotización para modificar este valor.';
+  else if (conflicto) motivoGuardar = 'Revisá la cotización vigente para guardar.';
   return <Card title="Cotización del dólar">
     <div className={styles.contenido}>
       <p className={styles.intro}>
@@ -62,7 +67,7 @@ export default function CotizacionConfiguracion() {
       </section>
 
       <form className={styles.formulario} aria-labelledby="cotizacion-actualizar" onSubmit={async e => {
-        e.preventDefault(); if (guardando) return;
+        e.preventDefault(); if (guardando || motivoGuardar) return;
         setGuardando(true); setMensaje(null);
         try { await cotizacionClient.actualizar(valor, version); setBorrador(null); await recargar(); showSuccess('Cotización actualizada.'); }
         catch (err) { setMensaje(err instanceof Error ? err.message : 'No se pudo guardar.'); if (err instanceof CatalogoApiError && err.code === 'COTIZACION_CAMBIO') await recargar(); }
@@ -70,7 +75,6 @@ export default function CotizacionConfiguracion() {
       }}>
         <div className={styles.formularioEncabezado}>
           <h3 id="cotizacion-actualizar" className={styles.seccionTitulo}>Actualizar cotización</h3>
-          {!puedeActualizar && <p className={styles.aviso}>Necesitás el permiso de administración de cotización para modificar este valor.</p>}
         </div>
 
         <div className={styles.campo}>
@@ -85,7 +89,9 @@ export default function CotizacionConfiguracion() {
         {mensaje && <p role="alert" className={styles.alertaError}>{mensaje}</p>}
 
         <div className={styles.acciones}>
-          <Button type="submit" disabled={!puedeActualizar || guardando || !!conflicto}>{guardando ? 'Guardando…' : 'Guardar cotización'}</Button>
+          <BotonConMotivo type="submit" disabled={guardando} motivo={motivoGuardar}>
+            {guardando ? 'Guardando…' : 'Guardar cotización'}
+          </BotonConMotivo>
         </div>
       </form>
     </div>

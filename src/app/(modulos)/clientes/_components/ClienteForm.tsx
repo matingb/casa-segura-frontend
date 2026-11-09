@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { X, FileDown, Pencil, User, Percent, Building2, MapPin, ArrowLeft, Trash2 } from 'lucide-react';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
+import BotonConMotivo, { SIN_CAMBIOS } from '../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
@@ -397,7 +398,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
         <div className={styles.grid}>
           <Input
             ref={nombreInputRef}
-            label={<>Nombre<span className={styles.requiredMark}>*</span></>}
+            label="Nombre"
             name="nombre"
             defaultValue={cliente?.nombre}
             placeholder="Ej: Juan Pérez"
@@ -578,14 +579,15 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
         >
           Cancelar
         </Button>
-        <Button
+        <BotonConMotivo
           type="submit"
           variant="primary"
-          disabled={isSaving || (isEditing && !hasChanges)}
+          disabled={isSaving}
+          motivo={isEditing && !hasChanges ? SIN_CAMBIOS : undefined}
           tabIndex={18}
         >
           {isSaving ? 'Guardando...' : isInline ? 'Guardar cambios' : 'Guardar'}
-        </Button>
+        </BotonConMotivo>
       </div>
       {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
     </form>

@@ -309,6 +309,7 @@ export default function VentaForm() {
             <Select
               id="sucursal"
               label="Sucursal"
+              aria-required="true"
               value={sucursalId}
               onChange={(e) => {
                 limpiarError('sucursalId');

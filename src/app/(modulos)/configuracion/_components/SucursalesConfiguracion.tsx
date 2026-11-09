@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { OpcionesAsignacion, ReferenciaSucursalGlobal, Sucursal, sucursalClient } from '../../../../lib/api/sucursal.client';
 import { useSucursales } from '../../../../context/SucursalContext';
 import { useToast } from '../../../../context/ToastContext';
+import BotonConMotivo from '../../../../components/ui/Button/BotonConMotivo';
+import MarcaObligatoria from '../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
 import styles from './SucursalesConfiguracion.module.css';
@@ -300,17 +302,20 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
           />
           <span>Cotización del PDV</span>
         </label>
-        <input
-          className={styles.cotizacionInput}
-          aria-label="Cotización en pesos por dólar"
-          type="number"
-          min="0.000001"
-          step="0.000001"
-          value={form.usarCotizacionPropia ? form.valorDolar : (cotizacion?.cotizacion_usd_ars ?? '')}
-          onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
-          placeholder={form.usarCotizacionPropia ? 'Ej: 1200' : 'Sin configurar'}
-          disabled={guardando || !form.usarCotizacionPropia}
-        />
+        <label className={styles.field}>
+          <span>Pesos argentinos por 1 USD{form.usarCotizacionPropia && <MarcaObligatoria />}</span>
+          <input
+            className={styles.cotizacionInput}
+            type="number"
+            min="0.000001"
+            step="0.000001"
+            value={form.usarCotizacionPropia ? form.valorDolar : (cotizacion?.cotizacion_usd_ars ?? '')}
+            onChange={(e) => setForm({ ...form, valorDolar: e.target.value })}
+            placeholder={form.usarCotizacionPropia ? 'Ej: 1200' : 'Sin configurar'}
+            aria-required={form.usarCotizacionPropia || undefined}
+            disabled={guardando || !form.usarCotizacionPropia}
+          />
+        </label>
         <span className={styles.hint}>
           {form.usarCotizacionPropia ? (
             <>
@@ -353,9 +358,18 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
         <button type="button" className={styles.btnSecondary} onClick={cerrarForm} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className={styles.btnPrimary} onClick={guardar} disabled={guardando || cargandoAsignaciones || !opcionesAsignacion}>
+        <BotonConMotivo
+          nativo
+          type="button"
+          className={styles.btnPrimary}
+          onClick={guardar}
+          disabled={guardando}
+          motivo={cargandoAsignaciones
+            ? 'Cargando las asignaciones de usuarios…'
+            : !opcionesAsignacion ? 'Las opciones de asignación de usuarios no están disponibles.' : undefined}
+        >
           {guardando ? 'Guardando...' : 'Guardar'}
-        </button>
+        </BotonConMotivo>
       </div>
     </div>
   );

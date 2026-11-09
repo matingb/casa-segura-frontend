@@ -8,6 +8,7 @@ import { productoClient } from '../../../../../lib/api/producto.client';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
 import { formatARS, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
+import BotonConMotivo, { SIN_CAMBIOS } from '../../../../../components/ui/Button/BotonConMotivo';
 import Combobox from '../../../../../components/ui/Combobox/Combobox';
 import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import InputPorcentaje, { validarPorcentaje } from '../../../../../components/ui/InputPorcentaje/InputPorcentaje';
@@ -56,13 +57,17 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
   const existente = productos.find(p => p.productoId === productoId);
   const sinProducto = item ? simularPrecio(item, { 'producto-cliente': null }) : null;
   const vistaPrevia = item && valor != null ? simularPrecio(item, { 'producto-cliente': valor }) : null;
-  const puedeAsignar = Boolean(productoId) && valor != null && !guardando && valor !== (existente ? Number(existente.porcentaje) : null);
+  let motivoAsignar: string | undefined;
+  if (cargandoCatalogo) motivoAsignar = 'Cargando los productos…';
+  else if (!productoId) motivoAsignar = opciones.length ? 'Elegí un producto.' : 'No hay productos disponibles.';
+  else if (valor == null) motivoAsignar = error ?? 'Ingresá el descuento.';
+  else if (existente && valor === Number(existente.porcentaje)) motivoAsignar = SIN_CAMBIOS;
 
   const limpiar = () => { setProductoId(''); setPorcentaje(''); setNota(''); };
 
   const asignar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!puedeAsignar || valor == null) return;
+    if (guardando || motivoAsignar || valor == null) return;
     setGuardando(true);
     try {
       await clienteDescuentoClient.asignarProducto(clienteId, { producto_id: productoId, porcentaje: valor, nota: nota.trim() || existente?.nota || undefined });
@@ -112,6 +117,7 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
           <div className={styles.campoAncho}>
             <Combobox
               label="Producto"
+              required
               options={opciones}
               value={productoId}
               onChange={setProductoId}
@@ -120,14 +126,14 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
               loading={cargandoCatalogo}
             />
           </div>
-          <InputPorcentaje id="descuento-producto" label="Descuento" placeholder="Ej: 15" value={porcentaje} onChange={setPorcentaje} error={error} disabled={guardando} />
+          <InputPorcentaje id="descuento-producto" label="Descuento" aria-required="true" placeholder="Ej: 15" value={porcentaje} onChange={setPorcentaje} error={error} disabled={guardando} />
           <label className={styles.campo}>
             <span className={styles.campoLabel}>Nota (opcional)</span>
             <input className={styles.input} placeholder="Ej: Licitación municipal" value={nota} onChange={(e) => setNota(e.target.value)} maxLength={200} disabled={guardando} />
           </label>
-          <button type="submit" className={styles.btnAsignar} disabled={!puedeAsignar}>
-            {existente ? 'Reemplazar' : 'Asignar'}
-          </button>
+          <BotonConMotivo nativo type="submit" className={styles.btnAsignar} disabled={guardando} motivo={motivoAsignar}>
+            {guardando ? 'Guardando…' : existente ? 'Reemplazar' : 'Asignar'}
+          </BotonConMotivo>
         </div>
 
         {productoId && (

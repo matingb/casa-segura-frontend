@@ -8,6 +8,7 @@ import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento
 import { formatARS, formatPorcentaje } from '../../../../../lib/utils/formatters';
 import { useToast } from '../../../../../context/ToastContext';
 import Select from '../../../../../components/ui/Select/Select';
+import BotonConMotivo from '../../../../../components/ui/Button/BotonConMotivo';
 import ConfirmActionModal from '../../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import { ListaPreciosClienteEstado } from '../ListaPreciosCliente/useListaPreciosCliente';
 import { simularPrecio } from '../ListaPreciosCliente/simularPrecio';
@@ -92,7 +93,11 @@ export default function RegionSelector({ clienteId, sucursales, regionesAsignada
           const elegidaId = eleccion[sucursal.id] ?? '';
           const elegida = opciones.find(o => o.id === elegidaId);
           const guardando = guardandoId === sucursal.id;
-          const puedeAsignar = Boolean(elegida) && elegidaId !== asignada?.regionId && !guardando;
+          let motivoAsignar: string | undefined;
+          if (cargando) motivoAsignar = 'Cargando las regiones…';
+          else if (!opciones.length) motivoAsignar = 'Este punto de venta no tiene regiones disponibles.';
+          else if (!elegida) motivoAsignar = 'Elegí una región.';
+          else if (elegidaId === asignada?.regionId) motivoAsignar = 'Esta región ya está asignada.';
           // La vista previa usa los precios del punto de venta que se está mirando.
           const ejemplo = lista.sucursalId === sucursal.id ? lista.items[0] : undefined;
           const vistaPrevia = ejemplo && elegida ? simularPrecio(ejemplo, { 'region-cliente': Number(elegida.descuento) || null }) : null;
@@ -110,7 +115,9 @@ export default function RegionSelector({ clienteId, sucursales, regionesAsignada
                 <div className={styles.regionSelect}>
                   <Select
                     id={`region-${sucursal.id}`}
+                    label="Región"
                     aria-label={`Región para ${sucursal.nombre}`}
+                    aria-required="true"
                     value={elegidaId}
                     onChange={(e) => setEleccion(prev => ({ ...prev, [sucursal.id]: e.target.value }))}
                     disabled={cargando || guardando || opciones.length === 0}
@@ -119,9 +126,16 @@ export default function RegionSelector({ clienteId, sucursales, regionesAsignada
                     {opciones.map(o => <option key={o.id} value={o.id}>{o.nombre} ({formatPorcentaje(Number(o.descuento))})</option>)}
                   </Select>
                 </div>
-                <button type="button" className={styles.btnAsignar} disabled={!puedeAsignar} onClick={() => elegida && void asignar(sucursal.id, elegida.id, Boolean(asignada))}>
-                  {asignada ? 'Reemplazar' : 'Asignar'}
-                </button>
+                <BotonConMotivo
+                  nativo
+                  type="button"
+                  className={styles.btnAsignar}
+                  disabled={guardando}
+                  motivo={motivoAsignar}
+                  onClick={() => elegida && void asignar(sucursal.id, elegida.id, Boolean(asignada))}
+                >
+                  {guardando ? 'Guardando…' : asignada ? 'Reemplazar' : 'Asignar'}
+                </BotonConMotivo>
                 {asignada && (
                   <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(asignada)} disabled={guardando}><Trash2 size={14} aria-hidden="true" />Quitar</button>
                 )}

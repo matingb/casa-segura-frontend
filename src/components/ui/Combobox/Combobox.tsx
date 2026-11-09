@@ -1,6 +1,7 @@
 'use client';
 
-import { KeyboardEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
+import MarcaObligatoria from '../MarcaObligatoria/MarcaObligatoria';
 import styles from './Combobox.module.css';
 
 export interface ComboboxOption {
@@ -17,6 +18,7 @@ interface ComboboxProps {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  required?: boolean;
   tabIndex?: number;
   onNavigateNext?: () => void;
 }
@@ -30,9 +32,11 @@ export default function Combobox({
   placeholder = 'Buscar...',
   disabled,
   loading,
+  required,
   tabIndex,
   onNavigateNext,
 }: ComboboxProps) {
+  const inputId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -122,7 +126,7 @@ export default function Combobox({
 
   return (
     <div className={styles.comboboxGroup} ref={containerRef}>
-      {label && <label>{label}</label>}
+      {label && <label htmlFor={inputId}>{label}{required && <MarcaObligatoria />}</label>}
       <div className={styles.inputWrapper}>
         {icon && <span className={styles.iconBadge}>{icon}</span>}
         <input
@@ -142,6 +146,8 @@ export default function Combobox({
           }}
           onKeyDown={handleKeyDown}
           role="combobox"
+          id={inputId}
+          aria-required={required || undefined}
           aria-expanded={isOpen}
           aria-autocomplete="list"
         />

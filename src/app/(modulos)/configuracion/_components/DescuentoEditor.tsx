@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
+import BotonConMotivo, { SIN_CAMBIOS } from '../../../../components/ui/Button/BotonConMotivo';
+import MarcaObligatoria from '../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import { DescuentoSucursal } from '../../../../lib/types/Tipo';
 import { clasificacionClient } from '../../../../lib/api/clasificacion.client';
 import { useToast } from '../../../../context/ToastContext';
@@ -194,6 +196,8 @@ export default function DescuentoEditor({
         {filas.map((fila, i) => (
           <div key={fila.id ?? `nueva-${i}`} className={styles.filaSucursal}>
             <Combobox
+              label="Sucursal"
+              required
               options={opcionesPara(fila)}
               value={fila.sucursalId}
               onChange={(val) =>
@@ -205,19 +209,23 @@ export default function DescuentoEditor({
               placeholder="Seleccionar sucursal"
               disabled={guardando}
             />
-            <div className={styles.percentInput}>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={fila.porcentaje}
-                onChange={(e) => actualizarFila(i, { porcentaje: e.target.value })}
-                placeholder="0"
-                disabled={guardando}
-              />
-              <span className={styles.percentSign}>%</span>
-            </div>
+            <label className={styles.label}>
+              <span>Descuento<MarcaObligatoria /></span>
+              <span className={styles.percentInput}>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={fila.porcentaje}
+                  onChange={(e) => actualizarFila(i, { porcentaje: e.target.value })}
+                  placeholder="0"
+                  aria-required="true"
+                  disabled={guardando}
+                />
+                <span className={styles.percentSign} aria-hidden="true">%</span>
+              </span>
+            </label>
             <button
               type="button"
               className={styles.btnQuitarFila}
@@ -257,14 +265,16 @@ export default function DescuentoEditor({
             Descartar cambios
           </button>
         )}
-        <button
+        <BotonConMotivo
+          nativo
           type="button"
           className={styles.btnSave}
           onClick={guardar}
-          disabled={guardando || !hayCambios}
+          disabled={guardando}
+          motivo={!hayCambios ? SIN_CAMBIOS : undefined}
         >
           {guardando ? 'Guardando...' : 'Guardar'}
-        </button>
+        </BotonConMotivo>
       </div>
     </div>
   );

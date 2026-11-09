@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
+import MarcaObligatoria from '../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import { useState } from 'react';
 import { OpcionesAsignacion } from '../../../../lib/api/sucursal.client';
 import styles from './SucursalUsuariosEditor.module.css';
@@ -137,35 +138,41 @@ export default function SucursalUsuariosEditor({
           {puedeAdministrar ? (
             disponibles.length > 0 ? (
               <div className={styles.agregar}>
-                <select
-                  className={styles.select}
-                  value={nuevoUsuarioId}
-                  onChange={(e) => setNuevoUsuarioId(e.target.value)}
-                  disabled={disabled}
-                  aria-label="Usuario a asignar"
-                >
-                  <option value="">Elegí un usuario</option>
-                  {disponibles.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.nombre}
-                      {u.email ? ` (${u.email})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={styles.select}
-                  value={nuevoRolId}
-                  onChange={(e) => setNuevoRolId(e.target.value)}
-                  disabled={disabled}
-                  aria-label="Rol en la sucursal"
-                >
-                  <option value="">Elegí un rol</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nombre}
-                    </option>
-                  ))}
-                </select>
+                <label className={styles.campoAgregar}>
+                  <span>Usuario a asignar<MarcaObligatoria /></span>
+                  <select
+                    className={styles.select}
+                    value={nuevoUsuarioId}
+                    onChange={(e) => setNuevoUsuarioId(e.target.value)}
+                    disabled={disabled}
+                    aria-required="true"
+                  >
+                    <option value="">Elegí un usuario</option>
+                    {disponibles.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nombre}
+                        {u.email ? ` (${u.email})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.campoAgregar}>
+                  <span>Rol en la sucursal<MarcaObligatoria /></span>
+                  <select
+                    className={styles.select}
+                    value={nuevoRolId}
+                    onChange={(e) => setNuevoRolId(e.target.value)}
+                    disabled={disabled}
+                    aria-required="true"
+                  >
+                    <option value="">Elegí un rol</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <button
                   type="button"
                   className={styles.btnAgregar}

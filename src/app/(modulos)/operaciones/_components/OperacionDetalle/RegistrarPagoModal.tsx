@@ -3,6 +3,7 @@
 import { Plus } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Button from '../../../../../components/ui/Button/Button';
+import BotonConMotivo from '../../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../../components/ui/Input/Input';
 import Modal from '../../../../../components/ui/Modal/Modal';
 import Select from '../../../../../components/ui/Select/Select';
@@ -120,9 +121,14 @@ export default function RegistrarPagoModal({ operacion, onClose, onRegistered }:
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>Cancelar</Button>
-          <Button type="submit" form="registrar-pago-form" disabled={submitting || totalIngresado <= 0}>
+          <BotonConMotivo
+            type="submit"
+            form="registrar-pago-form"
+            disabled={submitting}
+            motivo={totalIngresado <= 0 ? 'Ingresá un monto mayor a cero.' : undefined}
+          >
             {submitting ? 'Guardando...' : `${verboAccion} ${formatMonto(totalIngresado)}`}
-          </Button>
+          </BotonConMotivo>
         </>
       }
     >
@@ -143,8 +149,9 @@ export default function RegistrarPagoModal({ operacion, onClose, onRegistered }:
             <section className={styles.movimiento} key={linea.id}>
               <div className={styles.camposMovimiento}>
                 <Select
-                  label=""
+                  label="Cuenta financiera"
                   aria-label={`Cuenta financiera ${index + 1}`}
+                  aria-required="true"
                   value={linea.cuentaId}
                   onChange={(event) => actualizarLinea(linea.id, { cuentaId: event.target.value })}
                 >
@@ -152,8 +159,9 @@ export default function RegistrarPagoModal({ operacion, onClose, onRegistered }:
                   {cuentas.map((cuenta) => <option key={cuenta.id} value={cuenta.id}>{cuenta.nombre}</option>)}
                 </Select>
                 <Input
-                  label=""
+                  label="Monto"
                   aria-label={`Monto del ${accion} ${index + 1}`}
+                  aria-required="true"
                   type="number"
                   inputMode="decimal"
                   min="0.01"

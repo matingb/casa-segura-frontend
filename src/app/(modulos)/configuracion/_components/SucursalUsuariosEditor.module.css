@@ -90,7 +90,17 @@
 .agregar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 11rem auto;
+  align-items: end;
   gap: 0.75rem;
+}
+
+.campoAgregar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .btnQuitar,

@@ -157,6 +157,7 @@ export default function CompraForm() {
             <Select
               id="sucursal"
               label="Sucursal"
+              aria-required="true"
               value={sucursalId}
               onChange={(e) => {
                 limpiarError('sucursalId');
@@ -174,6 +175,7 @@ export default function CompraForm() {
           <div>
             <Select
               label="Proveedor"
+              aria-required="true"
               value={proveedorId}
               onChange={(e) => {
                 limpiarError('proveedorId');
@@ -191,6 +193,7 @@ export default function CompraForm() {
           <div>
             <Input
               label="Número de remito"
+            aria-required="true"
               value={numeroRemito}
               onChange={(e) => {
                 limpiarError('numeroRemito');

@@ -53,13 +53,18 @@
   white-space: nowrap;
 }
 
-.btnPrimary:hover {
+.btnPrimary:hover:not(:disabled) {
   background: var(--color-primary-hover);
   box-shadow: 0 4px 6px -1px rgba(29, 78, 216, 0.2);
 }
 
-.btnPrimary:active {
+.btnPrimary:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── Formulario para nueva categoría ───────────────────────── */
@@ -76,8 +81,23 @@
 
 .newCategoryForm {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.nombreCampo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.nombreCategoria {
+  flex: 1 1 12rem;
+  max-width: 400px;
 }
 
 .inputField {
@@ -283,7 +303,7 @@
 /* Renombrar en línea, en el lugar del nombre. */
 .editNameForm {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
@@ -403,7 +423,8 @@
 /* Formulario inline para agregar subcategoría */
 .newSubForm {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.35rem;
 }

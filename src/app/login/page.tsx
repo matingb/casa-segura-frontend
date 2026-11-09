@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
+import MarcaObligatoria from '../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import { apiUrl } from '../../lib/api';
 import { appVersion } from '../../lib/appVersion';
 import styles from './login.module.css';
@@ -64,7 +65,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Email<MarcaObligatoria /></label>
             <input
               type="email"
               id="email"
@@ -76,7 +77,7 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.inputGroup}>
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">Contraseña<MarcaObligatoria /></label>
             <input
               type="password"
               id="password"

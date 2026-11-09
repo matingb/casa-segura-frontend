@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Card from '../../../../components/ui/Card/Card';
 import Button from '../../../../components/ui/Button/Button';
+import BotonConMotivo, { SIN_CAMBIOS } from '../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../components/ui/Input/Input';
 import Select from '../../../../components/ui/Select/Select';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
@@ -203,6 +204,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     origen && montosOrigen && !hasChanges && imagen === undefined &&
     mismoMonto(precio, montosOrigen.precio) && mismoMonto(costo, montosOrigen.costo)
   );
+  const sinCambios = isEditing && !hasChanges && imagen === undefined && !precio.cambiado && !costo.cambiado;
 
   useEffect(() => {
     if (!isReadOnlyView) codigoInputRef.current?.focus();
@@ -536,7 +538,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               <div className={styles.codigoField}>
                 <Input
                   ref={codigoInputRef}
-                  label={<>Código<span className={styles.requiredMark}>*</span></>}
+                  label="Código"
                   name="codigo"
                   defaultValue={base?.codigo}
                   placeholder="Ej: CAM-001"
@@ -560,7 +562,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
               <Input
-                label={<>Nombre<span className={styles.requiredMark}>*</span></>}
+                label="Nombre"
                 name="nombre"
                 defaultValue={base?.nombre}
                 placeholder="Ej: Cámara domo 4MP"
@@ -822,11 +824,10 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={isSaving || copiaSinCambios || (isEditing && !hasChanges && imagen === undefined && !precio.cambiado && !costo.cambiado)} tabIndex={21}>
+            <BotonConMotivo type="submit" disabled={isSaving} motivo={copiaSinCambios ? MENSAJE_COPIA_SIN_CAMBIOS : sinCambios ? SIN_CAMBIOS : undefined} tabIndex={21}>
               {isSaving ? 'Guardando...' : 'Guardar'}
-            </Button>
+            </BotonConMotivo>
           </div>
-          {copiaSinCambios && <p className={styles.hintDescuento}>{MENSAJE_COPIA_SIN_CAMBIOS}</p>}
           {submitError && <p className={styles.validationError} role="alert">{submitError}</p>}
         </form>
       </Card>

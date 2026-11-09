@@ -80,7 +80,7 @@ describe('CategoriasConfiguracion', () => {
     // Clic en el botón superior "+ Nueva categoría"
     fireEvent.click(screen.getByRole('button', { name: /nueva categoría/i }));
 
-    const input = screen.getByPlaceholderText(/nombre de la categoría/i);
+    const input = screen.getByLabelText('Nombre de la categoría');
     fireEvent.change(input, { target: { value: 'Iluminación' } });
     fireEvent.click(screen.getByRole('button', { name: /crear categoría/i }));
 
@@ -119,7 +119,7 @@ describe('CategoriasConfiguracion', () => {
     // Clic en "+ Subcategoría" en la tarjeta de Herramientas
     fireEvent.click(screen.getByLabelText('Agregar subcategoría a Herramientas'));
 
-    const input = screen.getByPlaceholderText(/nombre de la subcategoría/i);
+    const input = screen.getByLabelText('Nombre de la subcategoría');
     fireEvent.change(input, { target: { value: 'Eléctricas' } });
     // El editor de descuentos tiene su propio "Guardar": buscamos el del formulario
     // de la subcategoría, que es el submit que acompaña a este input.

@@ -2,7 +2,9 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import Button from '../../../../../components/ui/Button/Button';
+import BotonConMotivo from '../../../../../components/ui/Button/BotonConMotivo';
 import Input from '../../../../../components/ui/Input/Input';
+import MarcaObligatoria from '../../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import Modal from '../../../../../components/ui/Modal/Modal';
 import { operacionesClient } from '../../../../../lib/api/operaciones.client';
 import { OperacionDetalle } from '../../../../../lib/types/OperacionDetalle';
@@ -98,9 +100,16 @@ export default function RegistrarImpactoStockModal({
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>Cancelar</Button>
-          <Button type="submit" form="registrar-impacto-stock-form" disabled={submitting || totalAImpactar <= 0 || hayCantidadInvalida}>
+          <BotonConMotivo
+            type="submit"
+            form="registrar-impacto-stock-form"
+            disabled={submitting}
+            motivo={hayCantidadInvalida
+              ? 'Revisá las cantidades marcadas.'
+              : totalAImpactar <= 0 ? 'Ingresá una cantidad mayor a cero.' : undefined}
+          >
             {submitting ? 'Guardando...' : `Registrar ${accion}`}
-          </Button>
+          </BotonConMotivo>
         </>
       }
     >
@@ -117,7 +126,7 @@ export default function RegistrarImpactoStockModal({
                 <th>Impactado</th>
                 <th>Pendiente</th>
                 <th>Última modificación</th>
-                <th>Cantidad a impactar ahora</th>
+                <th>Cantidad a impactar ahora<MarcaObligatoria /></th>
               </tr>
             </thead>
             <tbody>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Trash2, Plus, Check } from 'lucide-react';
 import IconButton from '../../../../../components/ui/IconButton/IconButton';
+import MarcaObligatoria from '../../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import { cuentaFinancieraClient } from '../../../../../lib/api/cuenta-financiera.client';
 import { CuentaFinanciera } from '../../../../../lib/types/CuentaFinanciera';
 import { formatARS, formatPorcentaje } from '../../../../../lib/utils/formatters';
@@ -183,7 +184,7 @@ export default function PagoEditor({
 
   return (
     <div className={styles.wrapper}>
-      <h3 className={styles.title}>{titulo}</h3>
+      <h3 className={styles.title}>{titulo}{habilitado && <MarcaObligatoria />}</h3>
 
       {!habilitado && (
         <p className={styles.hint}>Agregá un producto para definir cómo se {etiquetaAccion}.</p>
@@ -312,11 +313,13 @@ export default function PagoEditor({
           <table className={styles.tabla}>
             <thead>
               <tr>
-                <th scope="col" className={styles.colCuenta}>Cuenta</th>
+                <th scope="col" className={styles.colCuenta}>Cuenta<MarcaObligatoria /></th>
                 {modo === 'dividido' && unidad === 'porcentaje' && (
-                  <th scope="col" className={styles.colPorcentaje}>%</th>
+                  <th scope="col" className={styles.colPorcentaje}>%<MarcaObligatoria /></th>
                 )}
-                <th scope="col" className={styles.colNumero}>{etiquetaBase}</th>
+                <th scope="col" className={styles.colNumero}>
+                  {etiquetaBase}{(modo === 'derivado' || unidad === 'monto') && <MarcaObligatoria />}
+                </th>
                 <th scope="col" className={styles.colNumero}>Recargo</th>
                 <th scope="col" className={styles.colNumero}>{etiquetaDebita}</th>
                 <th scope="col" className={styles.colAccion} aria-label="Acciones" />
@@ -336,6 +339,7 @@ export default function PagoEditor({
                         className={sinCuenta ? styles.selectCuentaError : styles.selectCuenta}
                         value={fila.cuentaFinancieraId}
                         aria-label={`Cuenta de la fila ${index + 1}`}
+                        aria-required="true"
                         onChange={(e) => {
                           onCampoEditado?.('pago');
                           actualizarFila(index, { cuentaFinancieraId: e.target.value });
@@ -366,6 +370,7 @@ export default function PagoEditor({
                             min="0"
                             max={maximoPorcentajeParaFila(mercaderia, filas, index)}
                             aria-label={`Porcentaje de la fila ${index + 1}`}
+                            aria-required="true"
                             value={baseAPorcentaje(fila.baseArs, mercaderia) ?? ''}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -409,6 +414,7 @@ export default function PagoEditor({
                               step="0.01"
                               min="0"
                               aria-label={`Base de la fila ${index + 1}`}
+                              aria-required="true"
                               value={fila.baseArs ?? ''}
                               onChange={(e) => {
                                 const v = e.target.value;

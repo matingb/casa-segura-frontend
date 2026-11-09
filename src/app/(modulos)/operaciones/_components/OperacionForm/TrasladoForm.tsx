@@ -137,6 +137,7 @@ export default function TrasladoForm() {
             <Select
               id="sucursalOrigen"
               label="Sucursal origen"
+              aria-required="true"
               value={sucursalId}
               onChange={(e) => {
                 limpiarError('sucursalId');
@@ -155,6 +156,7 @@ export default function TrasladoForm() {
             <Select
               id="sucursalDestino"
               label="Sucursal destino"
+              aria-required="true"
               value={sucursalDestinoId}
               onChange={(e) => {
                 limpiarError('sucursalDestinoId');

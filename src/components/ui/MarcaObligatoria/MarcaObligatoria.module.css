@@ -1,0 +1,6 @@
+.marca::after {
+  content: '*';
+  margin-inline-start: 0.15rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
