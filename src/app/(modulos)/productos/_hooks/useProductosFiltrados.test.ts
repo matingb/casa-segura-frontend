@@ -94,6 +94,18 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
     expect(result.current.items).toEqual(mockProductos);
   });
 
+  it('precarga el código en la búsqueda y filtra desde la primera consulta', async () => {
+    const { result } = renderHook(() => useCatalogoPaginado(productoClient, [], { initialSearch: 'PROD-002' }));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.search).toBe('PROD-002');
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenCalledTimes(1);
+    expect(productoClient.obtenerPaginadoConTotal).toHaveBeenCalledWith(expect.objectContaining({ page: 1, search: 'PROD-002' }));
+  });
+
   it('debería ordenar por columna: click asc, click desc, click sin orden (ciclo de 3 estados)', async () => {
     const { result } = renderHook(() => useProductosFiltrados());
 

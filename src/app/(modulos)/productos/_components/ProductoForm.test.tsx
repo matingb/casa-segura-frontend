@@ -34,7 +34,7 @@ const original = {
 
 it('muestra la imagen existente y la quita al guardar', async () => {
   const producto = { ...original, imagenUrl: '/camara.png' };
-  vi.mocked(productoClient.actualizar).mockResolvedValue({ ...producto, imagenUrl: '' });
+  vi.mocked(productoClient.actualizar).mockResolvedValue({ ...producto, codigo: 'CAM + 001/Ñ', imagenUrl: '' });
   render(<ProductoForm title="Editar producto" producto={producto} />);
 
   expect(screen.getByRole('img', { name: 'Vista previa del producto' })).toHaveAttribute('src', '/camara.png');
@@ -44,6 +44,7 @@ it('muestra la imagen existente y la quita al guardar', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
   await waitFor(() => expect(productoClient.actualizar).toHaveBeenCalledWith('p1', expect.objectContaining({ imagen_url: null }), undefined));
+  expect(push).toHaveBeenCalledWith('/productos?buscar=CAM+%2B+001%2F%C3%91');
 });
 
 describe('Nuevo producto copiando otro', () => {
@@ -83,7 +84,9 @@ describe('Nuevo producto copiando otro', () => {
 
   it('marca el código duplicado y permite guardar después de corregirlo', async () => {
     const mensaje = 'Ya existe un producto con el código "CAM-001". Usá otro código.';
-    vi.mocked(productoClient.crear).mockRejectedValueOnce(new CatalogoApiError(mensaje, 'CODIGO_PRODUCTO_DUPLICADO', 409));
+    vi.mocked(productoClient.crear)
+      .mockRejectedValueOnce(new CatalogoApiError(mensaje, 'CODIGO_PRODUCTO_DUPLICADO', 409))
+      .mockResolvedValueOnce({ ...original, codigo: 'CAM-002' });
     render(<ProductoForm title="Nuevo producto" copiarDeId="p1" />);
     const codigo = await screen.findByDisplayValue('CAM-001');
     fireEvent.change(screen.getByDisplayValue('Cámara domo'), { target: { value: 'Cámara nueva' } });
@@ -100,7 +103,7 @@ describe('Nuevo producto copiando otro', () => {
     fireEvent.change(codigo, { target: { value: 'CAM-002' } });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     fireEvent.click(guardar);
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/productos'));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/productos?buscar=CAM-002'));
     expect(productoClient.crear).toHaveBeenLastCalledWith(expect.objectContaining({ codigo: 'CAM-002' }), undefined);
   });
 });

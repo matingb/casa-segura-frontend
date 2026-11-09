@@ -31,7 +31,7 @@ const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] 
   { key: 'estado', label: 'Estado' },
 ];
 
-export default function ProductosCatalogo() {
+export default function ProductosCatalogo({ busquedaInicial }: { busquedaInicial: string }) {
   const router = useRouter();
   const { revision } = useCotizacion();
   const { getSubtipoNombre } = useClasificacion();
@@ -54,7 +54,10 @@ export default function ProductosCatalogo() {
     onFilterChange,
     filterOptions,
     filtersLoading,
-  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS, { refreshKey: `${revision}-${recargas}` });
+  } = useCatalogoPaginado(productoClient, SELECT_FILTER_FIELDS, {
+    initialSearch: busquedaInicial,
+    refreshKey: `${revision}-${recargas}`,
+  });
 
   const confirmarEliminar = async () => {
     if (!aEliminar) return;

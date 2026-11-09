@@ -65,7 +65,7 @@ function handleEnterAdvance(e: KeyboardEvent<HTMLInputElement>, formRef: React.R
 export default function ProductoForm({ title, producto: productoProp, productoId, readOnly = false, copiarDeId }: ProductoFormProps) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
-  const { producto: productoCargado, isLoading, error, reload } = useProductoDetalle(productoId ?? '');
+  const { producto: productoCargado, isLoading, error } = useProductoDetalle(productoId ?? '');
   const producto = productoId ? productoCargado ?? undefined : productoProp;
   const { precio, setPrecio, resetPrecio } = usePrecioEdicion(producto);
   const { monto: costo, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(producto, producto?.costo, producto?.costoReposicionBase, producto?.contextoMonetario);
@@ -283,21 +283,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
         ...(precioInput !== undefined ? { precio: precioInput } : {}),
         ...(costoInput !== undefined ? { costo: costoInput } : {}),
       };
-      if (isEditing) {
-        await productoClient.actualizar(producto!.id, payload, imagen?.archivo);
-        if (readOnly) {
-          await reload();
-          setImagen(undefined);
-          setInlineEditing(false);
-        } else {
-          router.push(`/productos/${producto!.id}`);
-        }
-        showSuccess('Producto actualizado correctamente.');
-      } else {
-        await productoClient.crear(payload, imagen?.archivo);
-        router.push('/productos');
-        showSuccess('Producto creado correctamente.');
-      }
+      const guardado = producto
+        ? await productoClient.actualizar(producto.id, payload, imagen?.archivo)
+        : await productoClient.crear(payload, imagen?.archivo);
+      const busqueda = new URLSearchParams({ buscar: guardado.codigo });
+      router.push(`/productos?${busqueda}`);
+      showSuccess(isEditing ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.');
     } catch (err) {
       const codigoInput = codigoInputRef.current;
       if (err instanceof CatalogoApiError && err.code === 'CODIGO_PRODUCTO_DUPLICADO' && codigoInput?.value === body.codigo) {

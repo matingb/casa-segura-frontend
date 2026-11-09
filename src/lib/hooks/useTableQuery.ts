@@ -19,10 +19,10 @@ export interface TableQueryState {
   resetQuery: (newFilters?: Record<string, string>) => void;
 }
 
-export function useTableQuery(initialFilters: Record<string, string> = {}): TableQueryState {
+export function useTableQuery(initialFilters: Record<string, string> = {}, initialSearch = ''): TableQueryState {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortCriterion[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState<Record<string, string>>(initialFilters);
 
   const onSortChange = useCallback((columnKey: string) => {
@@ -73,6 +73,7 @@ export interface CatalogoPaginadoOptions {
   pageSize?: number;
   searchField?: string;
   initialFilters?: Record<string, string>;
+  initialSearch?: string;
   transformParams?: (params: {
     page: number;
     limit: number;
@@ -87,7 +88,7 @@ export function useCatalogoPaginado<T>(
   filterFields: readonly string[] = [],
   options: CatalogoPaginadoOptions = {}
 ) {
-  const { pageSize = 10, searchField, initialFilters, refreshKey } = options;
+  const { pageSize = 10, searchField, initialFilters, initialSearch, refreshKey } = options;
   const [items, setItems] = useState<T[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -95,7 +96,7 @@ export function useCatalogoPaginado<T>(
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
   const [filtersLoading, setFiltersLoading] = useState(filterFields.length > 0);
 
-  const query = useTableQuery(initialFilters);
+  const query = useTableQuery(initialFilters, initialSearch);
   const clientRef = useRef(client);
   clientRef.current = client;
 
