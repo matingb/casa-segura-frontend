@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SortCriterion, toggleSortCriterion } from '../../components/ui/Table/Table';
+import { getGlobalStaleTimeMs } from '../config/staleTime';
 
 export { toggleSortCriterion };
 export type { SortCriterion };
@@ -64,15 +65,20 @@ export function useTableQuery(initialFilters: Record<string, string> = {}): Tabl
 }
 
 export interface CatalogoClient<T> {
-  obtenerPaginadoConTotal: (params: any) => Promise<{ data: T[]; totalPages: number }>;
-  obtenerValoresUnicos?: (campo: string) => Promise<string[]>;
+  obtenerPaginadoConTotal: (params: any, options?: { signal?: AbortSignal }) => Promise<{ data: T[]; totalPages: number }>;
+  obtenerValoresUnicos?: (campo: string, options?: { signal?: AbortSignal }) => Promise<string[]>;
 }
+
+export const DEFAULT_CATALOGO_STALE_TIME_MS = getGlobalStaleTimeMs();
 
 export interface CatalogoPaginadoOptions {
   refreshKey?: number | string;
   pageSize?: number;
   searchField?: string;
   initialFilters?: Record<string, string>;
+  revalidateOnFocus?: boolean;
+  staleTimeMs?: number;
+  refreshOnEvents?: string[];
   transformParams?: (params: {
     page: number;
     limit: number;
@@ -87,27 +93,77 @@ export function useCatalogoPaginado<T>(
   filterFields: readonly string[] = [],
   options: CatalogoPaginadoOptions = {}
 ) {
-  const { pageSize = 10, searchField, initialFilters, refreshKey } = options;
+  const {
+    pageSize = 10,
+    searchField,
+    initialFilters,
+    refreshKey,
+    refreshOnEvents = ['alcance-pdv-revocado'],
+  } = options;
+
   const [items, setItems] = useState<T[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
   const [filtersLoading, setFiltersLoading] = useState(filterFields.length > 0);
+  const [eventRevision, setEventRevision] = useState(0);
+  const [filtrosRevision, setFiltrosRevision] = useState(0);
 
   const query = useTableQuery(initialFilters);
   const clientRef = useRef(client);
   clientRef.current = client;
 
-  // Carga concurrente de opciones de filtros únicos
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  const queryRef = useRef(query);
+  queryRef.current = query;
+
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+
+  const totalPagesRef = useRef(totalPages);
+  totalPagesRef.current = totalPages;
+
+  const filterOptionsRef = useRef(filterOptions);
+  filterOptionsRef.current = filterOptions;
+
+  const hasLoadedOnceRef = useRef(false);
+  const inFlightRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
+
+  // Escuchar eventos de dominio para recarga inmediata (por defecto alcance-pdv-revocado)
+  const refreshOnEventsKey = refreshOnEvents.join(',');
+  useEffect(() => {
+    if (!refreshOnEventsKey) return;
+    const events = refreshOnEventsKey.split(',').filter(Boolean);
+    if (events.length === 0) return;
+
+    const handler = (event: Event) => {
+      setEventRevision((n) => n + 1);
+      if (event.type === 'alcance-pdv-revocado') {
+        setFiltrosRevision((n) => n + 1);
+      }
+    };
+
+    events.forEach((ev) => window.addEventListener(ev, handler));
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, handler));
+    };
+  }, [refreshOnEventsKey]);
+
+  const filterFieldsKey = filterFields.join(',');
   useEffect(() => {
     if (!clientRef.current.obtenerValoresUnicos || filterFields.length === 0) {
       setFiltersLoading(false);
       return;
     }
     let active = true;
-    setFiltersLoading(true);
-    setFilterOptions({});
+    if (Object.keys(filterOptionsRef.current).length === 0) {
+      setFiltersLoading(true);
+    }
 
     Promise.all(filterFields.map((campo) => clientRef.current.obtenerValoresUnicos!(campo)))
       .then((results) => {
@@ -117,10 +173,10 @@ export function useCatalogoPaginado<T>(
           opts[campo] = (results[i] ?? []).map((v) => ({ value: v, label: v }));
         });
         setFilterOptions(opts);
+        filterOptionsRef.current = opts;
       })
       .catch((err) => {
         if (!active) return;
-        setFilterOptions({});
         console.error('[useCatalogoPaginado] Error cargando valores únicos:', err);
       })
       .finally(() => {
@@ -131,17 +187,19 @@ export function useCatalogoPaginado<T>(
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterFields.join(','), refreshKey]);
-
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+  }, [filterFieldsKey, filtrosRevision]);
 
   // Carga de datos paginados
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setItems([]);
-    setTotalPages(1);
+    const abortController = new AbortController();
+    inFlightRef.current = true;
+
+    if (!hasLoadedOnceRef.current) {
+      setInitialLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
 
     const baseFiltros = {
@@ -164,30 +222,156 @@ export function useCatalogoPaginado<T>(
     void clientRef.current
       .obtenerPaginadoConTotal(params)
       .then((result) => {
-        if (active) {
-          setItems(result.data);
-          setTotalPages(result.totalPages);
-          setError(null);
+        if (!active) return;
+        lastFetchAtRef.current = Date.now();
+        hasLoadedOnceRef.current = true;
+
+        // Corrección de página: si page > totalPages y totalPages > 0, ajustar page
+        if (result.totalPages > 0 && query.page > result.totalPages) {
+          query.setPage(result.totalPages);
+          return;
         }
+
+        setItems(result.data);
+        setTotalPages(Math.max(1, result.totalPages));
+        setError(null);
       })
       .catch((err) => {
-        if (!active) return;
-        setItems([]);
-        setTotalPages(1);
+        if (!active || err?.name === 'AbortError') return;
+        hasLoadedOnceRef.current = true;
+        // Solo vaciar items y resetear totalPages si fue error en carga inicial
+        if (itemsRef.current.length === 0) {
+          setItems([]);
+          setTotalPages(1);
+        }
         setError(err instanceof Error ? err.message : 'No se pudo recargar la lista.');
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) {
+          inFlightRef.current = false;
+          setInitialLoading(false);
+          setRefreshing(false);
+        }
       });
 
     return () => {
       active = false;
+      inFlightRef.current = false;
+      abortController.abort();
     };
-  }, [query.page, query.sort, query.filters, query.search, pageSize, searchField, refreshKey]);
+  }, [
+    query.page,
+    query.sort,
+    query.filters,
+    query.search,
+    pageSize,
+    searchField,
+    refreshKey,
+    eventRevision,
+  ]);
+
+  // Revalidación silenciosa por foco de ventana o cambio de visibilidad
+  const ejecutarRevalidacionSilenciosa = useCallback(async () => {
+    const currentOptions = optionsRef.current;
+    const revalOnFocus = currentOptions.revalidateOnFocus ?? true;
+    const staleTime = currentOptions.staleTimeMs ?? getGlobalStaleTimeMs();
+
+    if (!revalOnFocus) return;
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+    if (Date.now() - lastFetchAtRef.current < staleTime) return;
+    if (inFlightRef.current) return;
+    if (!hasLoadedOnceRef.current) return;
+
+    const q = queryRef.current;
+    const currentSearchField = currentOptions.searchField;
+    const currentPageSize = currentOptions.pageSize ?? 10;
+
+    const baseFiltros = {
+      ...q.filters,
+      ...(currentSearchField && q.search ? { [currentSearchField]: q.search } : {}),
+    };
+
+    const baseParams = {
+      page: q.page,
+      limit: currentPageSize,
+      search: currentSearchField ? undefined : (q.search || undefined),
+      sort: q.sort,
+      filtros: baseFiltros,
+    };
+
+    const params = currentOptions.transformParams
+      ? currentOptions.transformParams(baseParams)
+      : baseParams;
+
+    const paramsSnapshot = JSON.stringify(params);
+
+    inFlightRef.current = true;
+    try {
+      const result = await clientRef.current.obtenerPaginadoConTotal(params);
+
+      // Verificar si los parámetros cambiaron mientras el request volaba
+      const qNow = queryRef.current;
+      const nowFiltros = {
+        ...qNow.filters,
+        ...(currentSearchField && qNow.search ? { [currentSearchField]: qNow.search } : {}),
+      };
+      const nowBase = {
+        page: qNow.page,
+        limit: currentPageSize,
+        search: currentSearchField ? undefined : (qNow.search || undefined),
+        sort: qNow.sort,
+        filtros: nowFiltros,
+      };
+      const nowParams = currentOptions.transformParams
+        ? currentOptions.transformParams(nowBase)
+        : nowBase;
+
+      if (JSON.stringify(nowParams) !== paramsSnapshot) {
+        return;
+      }
+
+      lastFetchAtRef.current = Date.now();
+
+      // Corrección de página
+      if (result.totalPages > 0 && qNow.page > result.totalPages) {
+        qNow.setPage(result.totalPages);
+        return;
+      }
+
+      const newTotalPages = Math.max(1, result.totalPages);
+      const dataChanged = JSON.stringify(result.data) !== JSON.stringify(itemsRef.current);
+      const pagesChanged = newTotalPages !== totalPagesRef.current;
+
+      if (dataChanged) {
+        setItems(result.data);
+      }
+      if (pagesChanged) {
+        setTotalPages(newTotalPages);
+      }
+    } catch (err) {
+      console.warn('[useCatalogoPaginado] Error en revalidación silenciosa:', err);
+    } finally {
+      inFlightRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      void ejecutarRevalidacionSilenciosa();
+    };
+    window.addEventListener('focus', handler);
+    document.addEventListener('visibilitychange', handler);
+    return () => {
+      window.removeEventListener('focus', handler);
+      document.removeEventListener('visibilitychange', handler);
+    };
+  }, [ejecutarRevalidacionSilenciosa]);
 
   return {
     items,
-    loading,
+    initialLoading,
+    refreshing,
+    loading: initialLoading || refreshing,
     error,
     totalPages,
     ...query,

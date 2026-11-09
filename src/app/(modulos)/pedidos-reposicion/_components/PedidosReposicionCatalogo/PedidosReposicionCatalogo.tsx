@@ -35,6 +35,8 @@ export default function PedidosReposicionCatalogo() {
   const router = useRouter();
   const {
     items: pedidos,
+    initialLoading,
+    refreshing,
     loading,
     page,
     totalPages,
@@ -101,12 +103,13 @@ export default function PedidosReposicionCatalogo() {
         columns={columns}
         data={pedidos}
         getRowKey={(p) => p.id}
-        emptyMessage={loading ? 'Cargando pedidos...' : 'No se encontraron pedidos de reposición.'}
+        emptyMessage={initialLoading ? 'Cargando pedidos...' : 'No se encontraron pedidos de reposición.'}
         sort={sort}
         onSortChange={onSortChange}
+        busy={refreshing}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={refreshing} />
     </Card>
   );
 }

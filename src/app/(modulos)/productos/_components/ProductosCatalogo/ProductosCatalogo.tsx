@@ -43,7 +43,8 @@ export default function ProductosCatalogo() {
   const [recargas, setRecargas] = useState(0);
   const {
     items: productos,
-    loading,
+    initialLoading,
+    refreshing,
     page,
     totalPages,
     setPage,
@@ -165,15 +166,16 @@ export default function ProductosCatalogo() {
         columns={columns}
         data={productos}
         getRowKey={(producto) => producto.id}
-        emptyMessage={loading ? 'Cargando productos...' : 'No se encontraron productos.'}
+        emptyMessage={initialLoading ? 'Cargando productos...' : 'No se encontraron productos.'}
         sort={sort}
         onSortChange={onSortChange}
         onRowClick={(producto) => router.push(`/productos/${producto.id}`)}
         stickyHeader
         ajustarAncho
+        busy={refreshing}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={refreshing} />
 
       {aEliminar && (
         <ConfirmActionModal

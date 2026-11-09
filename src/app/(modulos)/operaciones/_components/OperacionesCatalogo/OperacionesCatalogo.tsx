@@ -51,7 +51,8 @@ export default function OperacionesCatalogo() {
   const [showNuevaOperacion, setShowNuevaOperacion] = useState(false);
   const {
     operaciones,
-    loading,
+    initialLoading,
+    refreshing,
     page,
     totalPages,
     setPage,
@@ -183,14 +184,15 @@ export default function OperacionesCatalogo() {
           columns={columns}
           data={operaciones}
           getRowKey={(op) => op.id}
-          emptyMessage={loading ? 'Cargando operaciones...' : 'No se encontraron operaciones con los filtros aplicados.'}
+          emptyMessage={initialLoading ? 'Cargando operaciones...' : 'No se encontraron operaciones con los filtros aplicados.'}
           sort={sort}
           onSortChange={onSortChange}
           onRowClick={(op) => router.push(`/operaciones/${op.id}`)}
           stickyHeader
+          busy={refreshing}
         />
 
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={loading} />
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} disabled={refreshing} />
       </Card>
 
       {showNuevaOperacion && (

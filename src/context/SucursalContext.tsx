@@ -11,11 +11,14 @@ import React, {
   ReactNode,
 } from 'react';
 import { Sucursal, sucursalClient } from '../lib/api/sucursal.client';
+import { getGlobalStaleTimeMs } from '../lib/config/staleTime';
 
 export interface SucursalOption {
   value: string;
   label: string;
 }
+
+export const SUCURSALES_STALE_TIME_MS = getGlobalStaleTimeMs();
 
 interface SucursalContextType {
   sucursales: Sucursal[];
@@ -32,21 +35,28 @@ export const SucursalProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestVersion = useRef(0);
+  const sucursalesRef = useRef<Sucursal[]>([]);
+  sucursalesRef.current = sucursales;
+  const ultimaConsultaRef = useRef(0);
 
   const cargarSucursales = useCallback(async () => {
     const version = ++requestVersion.current;
-    setIsLoading(true);
+    ultimaConsultaRef.current = Date.now();
+    if (sucursalesRef.current.length === 0) {
+      setIsLoading(true);
+    }
     setError(null);
-    setSucursales([]);
     try {
       const data = await sucursalClient.obtenerTodas();
       if (version !== requestVersion.current) return;
-      setSucursales(data);
+      setSucursales((prev) => (JSON.stringify(prev) === JSON.stringify(data) ? prev : data));
     } catch (err: unknown) {
       if (version !== requestVersion.current) return;
       console.error('[SucursalProvider] Error cargando sucursales:', err);
       const msg = err instanceof Error ? err.message : 'Error al cargar sucursales';
-      setSucursales([]);
+      if (sucursalesRef.current.length === 0) {
+        setSucursales([]);
+      }
       setError(msg);
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
@@ -55,13 +65,25 @@ export const SucursalProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     void cargarSucursales();
-    const recargarAlVolver = () => { void cargarSucursales(); };
-    window.addEventListener('focus', recargarAlVolver);
-    window.addEventListener('alcance-pdv-revocado', recargarAlVolver);
+
+    const onFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (Date.now() - ultimaConsultaRef.current < getGlobalStaleTimeMs()) return;
+      void cargarSucursales();
+    };
+
+    const onAlcanceRevocado = () => {
+      void cargarSucursales();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('alcance-pdv-revocado', onAlcanceRevocado);
     return () => {
       requestVersion.current += 1;
-      window.removeEventListener('focus', recargarAlVolver);
-      window.removeEventListener('alcance-pdv-revocado', recargarAlVolver);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('alcance-pdv-revocado', onAlcanceRevocado);
     };
   }, [cargarSucursales]);
 
