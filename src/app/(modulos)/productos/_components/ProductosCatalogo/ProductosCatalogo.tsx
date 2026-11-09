@@ -155,14 +155,9 @@ export default function ProductosCatalogo({ busquedaInicial }: { busquedaInicial
     <Card
       title="Catálogo de productos"
       actions={
-        <>
-          <Button variant="secondary" onClick={() => router.push('/productos/aumento-masivo')}>
-            Aumento masivo
-          </Button>
-          <Button variant="primary" onClick={() => router.push('/productos/nuevo')}>
-            <Plus size={16} aria-hidden="true" /> Nuevo producto
-          </Button>
-        </>
+        <Button variant="primary" onClick={() => router.push('/productos/nuevo')}>
+          <Plus size={16} aria-hidden="true" /> Nuevo producto
+        </Button>
       }
     >
       <div className={styles.toolbar}>
