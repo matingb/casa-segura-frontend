@@ -106,23 +106,6 @@ export default function ConfiguracionView() {
 
         <button
           type="button"
-          className={`${styles.tabButton} ${activeTab === 'sucursales' ? styles.active : ''}`}
-          onClick={() => setActiveTab('sucursales')}
-          role="tab"
-          aria-selected={activeTab === 'sucursales'}
-          id="tab-sucursales"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 21h18" />
-            <path d="M5 21V7l7-4 7 4v14" />
-            <path d="M10 21v-6h4v6" />
-          </svg>
-          <span>Sucursales</span>
-          {sucursalesActivas !== null && <span className={styles.tabBadge}>{sucursalesActivas}</span>}
-        </button>
-
-        <button
-          type="button"
           className={`${styles.tabButton} ${activeTab === 'regiones' ? styles.active : ''}`}
           onClick={() => setActiveTab('regiones')}
           role="tab"
@@ -137,6 +120,23 @@ export default function ConfiguracionView() {
           <span>Regiones</span>
           {regionesActivas !== null && <span className={styles.tabBadge}>{regionesActivas}</span>}
         </button>
+
+        <button
+          type="button"
+          className={`${styles.tabButton} ${activeTab === 'sucursales' ? styles.active : ''}`}
+          onClick={() => setActiveTab('sucursales')}
+          role="tab"
+          aria-selected={activeTab === 'sucursales'}
+          id="tab-sucursales"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 21h18" />
+            <path d="M5 21V7l7-4 7 4v14" />
+            <path d="M10 21v-6h4v6" />
+          </svg>
+          <span>Sucursales</span>
+          {sucursalesActivas !== null && <span className={styles.tabBadge}>{sucursalesActivas}</span>}
+        </button>
       </nav>
 
       {/* Contenido de la subpestaña */}
@@ -146,8 +146,8 @@ export default function ConfiguracionView() {
         aria-labelledby={`tab-${activeTab}`}
       >
         {activeTab === 'categorias' && <CategoriasConfiguracion />}
-        {activeTab === 'sucursales' && <SucursalesConfiguracion onSucursalesCargadas={contarSucursales} onIrACotizacion={() => setActiveTab('cotizacion')} />}
         {activeTab === 'regiones' && <RegionesConfiguracion onRegionesCargadas={contarRegiones} />}
+        {activeTab === 'sucursales' && <SucursalesConfiguracion onSucursalesCargadas={contarSucursales} onIrACotizacion={() => setActiveTab('cotizacion')} />}
         {activeTab === 'cotizacion' && <CotizacionConfiguracion />}
       </main>
     </div>
