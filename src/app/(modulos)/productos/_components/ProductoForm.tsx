@@ -1,7 +1,7 @@
 'use client';
 
 import { Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Card from '../../../../components/ui/Card/Card';
@@ -92,6 +92,8 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [codigoError, setCodigoError] = useState<string | null>(null);
+  const codigoErrorId = useId();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isReadOnlyView = readOnly && !inlineEditing;
@@ -127,6 +129,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
 
   const copiarDe = async (id: string) => {
     if (!id) {
+      setCodigoError(null);
       setOrigen(null);
       setMontosOrigen(null);
       snapshotRef.current = null;
@@ -156,6 +159,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       setCosto(montos.costo);
       snapshotCopiaPendiente.current = true;
       setSubmitError(null);
+      setCodigoError(null);
       setOrigen(copia);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'No se pudo copiar el producto.');
@@ -264,6 +268,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       savingRef.current = true;
       setIsSaving(true);
       setSubmitError(null);
+      setCodigoError(null);
       const precioInput = precioParaGuardar(precio, cotizacion);
       const costoInput = costoParaGuardar(costo, cotizacion);
       const payload = {
@@ -286,6 +291,12 @@ export default function ProductoForm({ title, producto: productoProp, productoId
         showSuccess('Producto creado correctamente.');
       }
     } catch (err) {
+      const codigoInput = codigoInputRef.current;
+      if (err instanceof CatalogoApiError && err.code === 'CODIGO_PRODUCTO_DUPLICADO' && codigoInput?.value === body.codigo) {
+        setCodigoError(err.message);
+        codigoInput.focus();
+        return;
+      }
       if (err instanceof CatalogoApiError && err.code === 'COTIZACION_CAMBIO') await recargarCotizacion();
       if (!(err instanceof CatalogoApiError)) console.error('Error al guardar producto:', err);
       const message = err instanceof Error ? err.message : 'No se pudo guardar el producto. Intenta nuevamente.';
@@ -311,6 +322,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     setUnidadPeso(producto.unidadPesoUnitario ?? 'kg');
     setHasChanges(false);
     setSubmitError(null);
+    setCodigoError(null);
     setInlineEditing(false);
   };
 
@@ -515,16 +527,24 @@ export default function ProductoForm({ title, producto: productoProp, productoId
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Identificación</h2>
             <div className={styles.grid}>
-              <Input
-                ref={codigoInputRef}
-                label={<>Código<span className={styles.requiredMark}>*</span></>}
-                name="codigo"
-                defaultValue={base?.codigo}
-                placeholder="Ej: CAM-001"
-                required
-                tabIndex={1}
-                onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-              />
+              <div className={styles.codigoField}>
+                <Input
+                  ref={codigoInputRef}
+                  label={<>Código<span className={styles.requiredMark}>*</span></>}
+                  name="codigo"
+                  defaultValue={base?.codigo}
+                  placeholder="Ej: CAM-001"
+                  required
+                  tabIndex={1}
+                  aria-invalid={codigoError ? true : undefined}
+                  aria-describedby={codigoError ? codigoErrorId : undefined}
+                  onChange={() => setCodigoError(null)}
+                  onKeyDown={(e) => handleEnterAdvance(e, formRef)}
+                />
+                {codigoError && (
+                  <p id={codigoErrorId} className={styles.validationError} role="alert">{codigoError}</p>
+                )}
+              </div>
               <Input
                 label="Código de barra proveedor"
                 name="codigoBarraProveedor"

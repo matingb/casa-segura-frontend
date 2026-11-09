@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductoForm from './ProductoForm';
+import { CatalogoApiError } from '../../../../lib/api/apiError';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { Producto } from '../../../../lib/types/Producto';
 
@@ -65,5 +66,28 @@ describe('Nuevo producto copiando otro', () => {
     const payload = vi.mocked(productoClient.crear).mock.calls[0][0];
     expect(payload).toMatchObject({ codigo: 'CAM-002', nombre: 'Cámara domo', marca: 'Hikvision', descripcion: 'Exterior' });
     expect(payload.precio).toEqual({ moneda_referencia: 'ARS', importe_referencia: '5000.00', cotizacion_version: '3' });
+  });
+
+  it('marca el código duplicado y permite guardar después de corregirlo', async () => {
+    const mensaje = 'Ya existe un producto con el código "CAM-001". Usá otro código.';
+    vi.mocked(productoClient.crear).mockRejectedValueOnce(new CatalogoApiError(mensaje, 'CODIGO_PRODUCTO_DUPLICADO', 409));
+    render(<ProductoForm title="Nuevo producto" copiarDeId="p1" />);
+    const codigo = await screen.findByDisplayValue('CAM-001');
+    fireEvent.change(screen.getByDisplayValue('Cámara domo'), { target: { value: 'Cámara nueva' } });
+    const guardar = screen.getByRole('button', { name: 'Guardar' });
+    await waitFor(() => expect(guardar).toBeEnabled());
+    fireEvent.click(guardar);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(mensaje);
+    expect(codigo).toHaveAttribute('aria-invalid', 'true');
+    expect(codigo).toHaveAccessibleDescription(mensaje);
+    expect(codigo).toHaveFocus();
+    expect(push).not.toHaveBeenCalled();
+
+    fireEvent.change(codigo, { target: { value: 'CAM-002' } });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.click(guardar);
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/productos'));
+    expect(productoClient.crear).toHaveBeenLastCalledWith(expect.objectContaining({ codigo: 'CAM-002' }));
   });
 });

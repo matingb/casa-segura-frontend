@@ -228,6 +228,16 @@
   padding-top: 0.25rem;
 }
 
+.codigoField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.codigoField input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
 .validationError {
   margin: 0;
   color: var(--color-danger);
