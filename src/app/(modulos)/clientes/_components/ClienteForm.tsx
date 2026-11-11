@@ -30,6 +30,7 @@ import ClienteDescuentos from './ClienteDescuentos/ClienteDescuentos';
 import ClienteListaPreciosModal from './ClienteListaPreciosModal/ClienteListaPreciosModal';
 import { useSucursales } from '../../../../context/SucursalContext';
 import styles from './ClienteForm.module.css';
+import ProvinciaSelect from './ProvinciaSelect';
 
 interface ClienteFormProps {
   title: string;
@@ -517,14 +518,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             tabIndex={12}
             onKeyDown={(e) => handleEnterAdvance(e, formRef)}
           />
-          <Input
-            label="Provincia"
-            name="provincia"
-            defaultValue={cliente?.provincia}
-            placeholder="Ej: Buenos Aires"
-            tabIndex={13}
-            onKeyDown={(e) => handleEnterAdvance(e, formRef)}
-          />
+          <ProvinciaSelect key={`${cliente?.id ?? 'nuevo'}:${cliente?.provincia ?? ''}`} valorAnterior={cliente?.provincia} disabled={isSaving} tabIndex={13} />
           <Input
             label="Código postal"
             name="codigoPostal"

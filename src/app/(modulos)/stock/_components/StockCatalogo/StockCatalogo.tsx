@@ -7,6 +7,7 @@ import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
 import { CeldaPrecioCompacta } from '../../../../../components/ui/Table/CeldaPrecio';
+import CeldaMargen from '../../../../../components/ui/Table/CeldaMargen';
 import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
 import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
 import Badge from '../../../../../components/ui/Badge/Badge';
@@ -25,7 +26,7 @@ const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'sucursal', 'estado'
 const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
-  { key: 'subtipo', label: 'Subtipo' },
+  { key: 'subtipo', label: 'Subcategoría' },
   { key: 'estado', label: 'Estado' },
 ];
 
@@ -90,6 +91,17 @@ export default function StockCatalogo() {
       sortable: true,
     },
     {
+      key: 'precioVentaArs',
+      header: 'Precio de venta',
+      render: (item) => (
+        <CeldaPrecioCompacta
+          ars={item.precio?.ars ?? item.precioVentaArs}
+          usd={item.precio?.usd ?? item.precioVentaUsd}
+        />
+      ),
+      sortable: true,
+    },
+    {
       key: 'costoReposicion',
       header: 'Costo de reposición',
       render: (item) => (
@@ -101,16 +113,17 @@ export default function StockCatalogo() {
       sortable: true,
     },
     {
-      // Ordena por el precio en ARS (como la columna Venta ARS anterior).
-      key: 'precioVentaArs',
-      header: 'Precio de venta',
+      key: 'margen',
+      header: 'Margen',
+      align: 'right',
       render: (item) => (
-        <CeldaPrecioCompacta
-          ars={item.precio?.ars ?? item.precioVentaArs}
-          usd={item.precio?.usd ?? item.precioVentaUsd}
+        <CeldaMargen
+          precioArs={item.precio?.ars ?? item.precioVentaArs}
+          precioUsd={item.precio?.usd ?? item.precioVentaUsd}
+          costoArs={item.costo ? item.costo.ars : item.costoReposicion}
+          costoUsd={item.costo?.usd}
         />
       ),
-      sortable: true,
     },
     {
       // Ordena por disponible, el dato principal de la celda.

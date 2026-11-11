@@ -43,7 +43,7 @@ export function useClasificacion(): UseClasificacionResult {
       setSubtipos(subtiposData);
     } catch (err) {
       console.error('[useClasificacion] Error cargando clasificación:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar tipos y subtipos');
+      setError(err instanceof Error ? err.message : 'Error al cargar categorías y subcategorías');
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export function useClasificacion(): UseClasificacionResult {
   }, [fetchData]);
 
   const getSubtipoNombre = useCallback(
-    (subtipoId: string) => subtipos.find((s) => s.id === subtipoId)?.nombre ?? 'Sin subtipo',
+    (subtipoId: string) => subtipos.find((s) => s.id === subtipoId)?.nombre ?? 'Sin subcategoría',
     [subtipos]
   );
 

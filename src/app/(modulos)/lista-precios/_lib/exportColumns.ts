@@ -14,7 +14,7 @@ export const EXPORT_COLUMNS: ExportColumn[] = [
   { key: 'nombre', label: 'Nombre', getValue: (item) => item.nombre },
   { key: 'marca', label: 'Marca', getValue: (item) => item.marca },
   { key: 'modelo', label: 'Modelo', getValue: (item) => item.modelo },
-  { key: 'subtipo', label: 'Subtipo', getValue: (_item, subtipoNombre) => subtipoNombre },
+  { key: 'subtipo', label: 'Subcategoría', getValue: (_item, subtipoNombre) => subtipoNombre },
   { key: 'sucursalNombre', label: 'Sucursal', getValue: (item) => item.sucursalNombre },
   { key: 'activo', label: 'Estado', getValue: (item) => (item.activo ? 'Habilitado' : 'Deshabilitado') },
   { key: 'costoReposicion', label: 'Costo de reposición', getValue: (item) => item.costoReposicion },
@@ -28,6 +28,11 @@ export const EXPORT_COLUMNS: ExportColumn[] = [
   { key: 'stockMinimo', label: 'Stock mínimo', getValue: (item) => item.stockMinimo },
   { key: 'cantidadDisponible', label: 'Cantidad disponible', getValue: (item) => item.cantidadDisponible },
   { key: 'cantidadReservada', label: 'Cantidad reservada', getValue: (item) => item.cantidadReservada },
+];
+
+export const PDF_EXPORT_COLUMNS: ExportColumn[] = [
+  ...EXPORT_COLUMNS,
+  { key: 'monedaReferencia', label: 'Moneda de referencia', getValue: (item) => item.precio?.moneda_referencia ?? 'ARS' },
 ];
 
 export const DEFAULT_EXPORT_COLUMN_KEYS = [

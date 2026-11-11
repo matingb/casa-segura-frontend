@@ -8,6 +8,7 @@ import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
 import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
 import { CeldaPrecioCompacta } from '../../../../../components/ui/Table/CeldaPrecio';
+import CeldaMargen from '../../../../../components/ui/Table/CeldaMargen';
 import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
@@ -22,12 +23,12 @@ import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import { useCotizacion } from '../../../../../context/CotizacionContext';
 import styles from './ProductosCatalogo.module.css';
 
-const SELECT_FILTER_FIELDS = ['marca', 'modelo', 'subtipo', 'estado'] as const;
+const SELECT_FILTER_FIELDS = ['marca', 'tipo', 'subtipo', 'estado'] as const;
 
 const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select' }[] = [
   { key: 'marca', label: 'Marca' },
-  { key: 'modelo', label: 'Modelo' },
-  { key: 'subtipo', label: 'Subtipo' },
+  { key: 'tipo', label: 'Categoría' },
+  { key: 'subtipo', label: 'Subcategoría' },
   { key: 'estado', label: 'Estado' },
 ];
 
@@ -91,11 +92,22 @@ export default function ProductosCatalogo({ busquedaInicial }: { busquedaInicial
     },
     {
       key: 'subtipo',
-      header: 'Subtipo',
+      header: 'Subcategoría',
       render: (producto) => {
-        const nombre = producto.subtipoId ? getSubtipoNombre(producto.subtipoId) : 'Sin subtipo';
+        const nombre = producto.subtipoId ? getSubtipoNombre(producto.subtipoId) : 'Sin subcategoría';
         return <ChipClasificacion texto={nombre} vacio={!producto.subtipoId} />;
       },
+      sortable: true,
+    },
+    {
+      key: 'precioBase',
+      header: 'Precio base',
+      render: (producto) => (
+        <CeldaPrecioCompacta
+          ars={producto.precio?.ars ?? producto.precioBase}
+          usd={producto.precio?.usd ?? producto.precioBaseUsd}
+        />
+      ),
       sortable: true,
     },
     {
@@ -110,16 +122,17 @@ export default function ProductosCatalogo({ busquedaInicial }: { busquedaInicial
       sortable: true,
     },
     {
-      // Ordena por el precio en ARS (como la columna Base ARS anterior).
-      key: 'precioBase',
-      header: 'Precio base',
+      key: 'margen',
+      header: 'Margen',
+      align: 'right',
       render: (producto) => (
-        <CeldaPrecioCompacta
-          ars={producto.precio?.ars ?? producto.precioBase}
-          usd={producto.precio?.usd ?? producto.precioBaseUsd}
+        <CeldaMargen
+          precioArs={producto.precio?.ars ?? producto.precioBase}
+          precioUsd={producto.precio?.usd ?? producto.precioBaseUsd}
+          costoArs={producto.costo ? producto.costo.ars : producto.costoReposicionBase}
+          costoUsd={producto.costo?.usd}
         />
       ),
-      sortable: true,
     },
     {
       key: 'estado',

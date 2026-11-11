@@ -21,7 +21,7 @@ export interface StockItem {
   // Datos específicos del stock (mezclados)
   activo: boolean; // Mezcla entre habilitado y producto_activo
   /** Costo de reposición en ARS con la cotización vigente. */
-  costoReposicion: number;
+  costoReposicion: number | null;
   costo?: PrecioResuelto;
   precioVentaArs: number | null;
   precioVentaUsd: number | null;

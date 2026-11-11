@@ -141,7 +141,7 @@ export default function ItemsEditor({
     const precioPorDefecto = modo === 'venta'
       ? { precioUnitArs: productoSeleccionado?.precioVentaArs ?? undefined, cotizacionVersionCatalogo: productoSeleccionado?.contextoMonetario?.cotizacion_version }
       : modo === 'compra'
-        ? { costoUnitArs: productoSeleccionado?.costoReposicion }
+        ? { costoUnitArs: productoSeleccionado?.costoReposicion ?? undefined }
         : {};
 
     actualizarItem(index, { productoSucursalId, ...precioPorDefecto });

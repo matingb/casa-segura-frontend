@@ -11,8 +11,9 @@ interface PaginationProps {
 
 function getPageNumbers(page: number, totalPages: number): (number | 'ellipsis')[] {
   const pages: (number | 'ellipsis')[] = [];
-  const windowStart = Math.max(2, page - 1);
-  const windowEnd = Math.min(totalPages - 1, page + 1);
+  const middlePages = 8;
+  const windowStart = Math.max(2, Math.min(page - 4, totalPages - middlePages));
+  const windowEnd = Math.min(totalPages - 1, windowStart + middlePages - 1);
 
   pages.push(1);
   if (windowStart > 2) pages.push('ellipsis');

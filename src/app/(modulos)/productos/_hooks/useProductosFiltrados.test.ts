@@ -5,7 +5,7 @@ import { productoClient } from '../../../../lib/api/producto.client';
 import { Producto } from '../../../../lib/types/Producto';
 
 const useProductosFiltrados = () =>
-  useCatalogoPaginado(productoClient, ['marca', 'modelo', 'subtipo', 'estado'] as const);
+  useCatalogoPaginado(productoClient, ['marca', 'tipo', 'subtipo', 'estado'] as const);
 
 vi.mock('../../../../lib/api/producto.client', () => ({
   productoClient: {
@@ -175,7 +175,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
     );
   });
 
-  it('debería filtrar por columna enviando el filtro al backend y volver a página 1', async () => {
+  it.each([['marca', 'DeWalt'], ['tipo', 'Herramientas'], ['subtipo', 'Taladros']])('envía el filtro %s al backend y vuelve a página 1', async (campo, valor) => {
     const mockFiltrado = { data: [mockProductos[0]], page: 1, totalPages: 1, total: 1 };
     (productoClient.obtenerPaginadoConTotal as any)
       .mockResolvedValueOnce({ data: mockProductos, page: 1, totalPages: 1, total: 2 })
@@ -188,12 +188,12 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
     });
 
     await act(async () => {
-      result.current.onFilterChange('marca', 'DeWalt');
+      result.current.onFilterChange(campo, valor);
       await Promise.resolve();
     });
 
     expect(productoClient.obtenerPaginadoConTotal).toHaveBeenLastCalledWith(
-      expect.objectContaining({ filtros: { marca: 'DeWalt' }, page: 1 })
+      expect.objectContaining({ filtros: { [campo]: valor }, page: 1 })
     );
     expect(result.current.items).toHaveLength(1);
     expect(result.current.items[0].nombre).toBe('Taladro Percutor');
@@ -255,7 +255,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
 
   it('debería cargar los valores únicos para los combobox de filtro', async () => {
     (productoClient.obtenerValoresUnicos as any).mockImplementation((campo: string) =>
-      Promise.resolve(campo === 'marca' ? ['DeWalt', 'Stanley'] : [])
+      Promise.resolve(campo === 'marca' ? ['DeWalt', 'Stanley'] : campo === 'tipo' ? ['Herramientas'] : [])
     );
 
     const { result } = renderHook(() => useProductosFiltrados());
@@ -268,6 +268,7 @@ describe('Filtro de Catálogo (useProductosFiltrados)', () => {
       { value: 'DeWalt', label: 'DeWalt' },
       { value: 'Stanley', label: 'Stanley' },
     ]);
+    expect(result.current.filterOptions.tipo).toEqual([{ value: 'Herramientas', label: 'Herramientas' }]);
   });
 
   it('debería filtrar por texto de búsqueda genérica (código o nombre) y reiniciar a página 1', async () => {

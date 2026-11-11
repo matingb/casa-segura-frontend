@@ -4,6 +4,7 @@ import ProductoForm from './ProductoForm';
 import { CatalogoApiError } from '../../../../lib/api/apiError';
 import { productoClient } from '../../../../lib/api/producto.client';
 import { Producto } from '../../../../lib/types/Producto';
+import { useSucursales } from '../../../../context/SucursalContext';
 
 const { cotizacion, toast, push } = vi.hoisted(() => ({
   cotizacion: { cotizacion_usd_ars: '1000.000000', cotizacion_version: '3', actualizada_at: null },
@@ -13,6 +14,7 @@ const { cotizacion, toast, push } = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../../../../context/ToastContext', () => ({ useToast: () => toast }));
 vi.mock('../../../../context/CotizacionContext', () => ({ useCotizacion: () => ({ datos: cotizacion, recargar: vi.fn(), error: null }) }));
+vi.mock('../../../../context/SucursalContext', () => ({ useSucursales: vi.fn() }));
 vi.mock('../../../../lib/hooks/useClasificacion', () => ({
   useClasificacion: () => ({
     tipos: [], loading: false, getSubtiposPorTipo: () => [], getTipoIdDeSubtipo: () => '',
@@ -32,10 +34,23 @@ const original = {
   precio: { moneda_referencia: 'ARS', importe_referencia: '5000.00', ars: '5000.00', usd: '5.0000', estado: 'VINCULADO' },
 } as unknown as Producto;
 
+const sucursales = [
+  { id: 's1', nombre: 'Casa Central', activo: true },
+  { id: 's2', nombre: 'Norte', activo: true },
+  { id: 's3', nombre: 'Sur', activo: false },
+];
+
+beforeEach(() => {
+  vi.mocked(useSucursales).mockReturnValue({
+    sucursales, isLoading: false, error: null, recargarSucursales: vi.fn(), sucursalOptions: [],
+  } as unknown as ReturnType<typeof useSucursales>);
+});
+
 it('muestra la imagen existente y la quita al guardar', async () => {
   const producto = { ...original, imagenUrl: '/camara.png' };
   vi.mocked(productoClient.actualizar).mockResolvedValue({ ...producto, codigo: 'CAM + 001/Ñ', imagenUrl: '' });
   render(<ProductoForm title="Editar producto" producto={producto} />);
+  expect(screen.queryByRole('combobox', { name: 'Agregar sucursal' })).not.toBeInTheDocument();
 
   expect(screen.getByRole('img', { name: 'Vista previa del producto' })).toHaveAttribute('src', '/camara.png');
   fireEvent.click(screen.getByRole('button', { name: 'Eliminar imagen' }));
@@ -45,6 +60,71 @@ it('muestra la imagen existente y la quita al guardar', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
   await waitFor(() => expect(productoClient.actualizar).toHaveBeenCalledWith('p1', expect.objectContaining({ imagen_url: null }), undefined));
   expect(push).toHaveBeenCalledWith('/productos?buscar=CAM+%2B+001%2F%C3%91');
+});
+
+describe('Sucursales al crear un producto', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(productoClient.obtenerTodos).mockResolvedValue([]);
+    vi.mocked(productoClient.crear).mockResolvedValue(original);
+  });
+
+  function completarProducto() {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Código' }), { target: { value: 'CAM-001' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Nombre' }), { target: { value: 'Cámara domo' } });
+  }
+
+  it('permite buscar y elegir varias sucursales con el teclado y quitar una antes de guardar', async () => {
+    render(<ProductoForm title="Nuevo producto" />);
+    completarProducto();
+    const selector = screen.getByRole('combobox', { name: 'Agregar sucursal' });
+    fireEvent.focus(selector);
+    expect(screen.queryByRole('option', { name: 'Sur' })).not.toBeInTheDocument();
+    fireEvent.change(selector, { target: { value: 'Central' } });
+    fireEvent.keyDown(selector, { key: 'Enter' });
+    expect(screen.getByRole('button', { name: 'Quitar Casa Central' })).toBeInTheDocument();
+    fireEvent.focus(selector);
+    expect(screen.queryByRole('option', { name: 'Casa Central' })).not.toBeInTheDocument();
+    fireEvent.change(selector, { target: { value: 'Norte' } });
+    fireEvent.keyDown(selector, { key: 'Enter' });
+    expect(screen.getByRole('button', { name: 'Quitar Norte' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar Casa Central' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(productoClient.crear).toHaveBeenCalledWith(expect.objectContaining({ sucursal_ids: ['s2'] }), undefined));
+  });
+
+  it('permite guardar solo en el catálogo general', async () => {
+    render(<ProductoForm title="Nuevo producto" />);
+    completarProducto();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(productoClient.crear).toHaveBeenCalledWith(expect.objectContaining({ sucursal_ids: [] }), undefined));
+  });
+
+  it('envía juntas todas las sucursales elegidas', async () => {
+    render(<ProductoForm title="Nuevo producto" />);
+    completarProducto();
+    const selector = screen.getByRole('combobox', { name: 'Agregar sucursal' });
+    for (const nombre of ['Casa Central', 'Norte']) {
+      fireEvent.focus(selector);
+      fireEvent.mouseDown(screen.getByRole('option', { name: nombre }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(productoClient.crear).toHaveBeenCalledWith(expect.objectContaining({ sucursal_ids: ['s1', 's2'] }), undefined));
+  });
+
+  it('bloquea guardar si una sucursal seleccionada pierde el acceso', () => {
+    const { rerender } = render(<ProductoForm title="Nuevo producto" />);
+    const selector = screen.getByRole('combobox', { name: 'Agregar sucursal' });
+    fireEvent.focus(selector);
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'Norte' }));
+    vi.mocked(useSucursales).mockReturnValue({
+      sucursales: [], isLoading: false, error: null, recargarSucursales: vi.fn(), sucursalOptions: [],
+    });
+    rerender(<ProductoForm title="Nuevo producto" />);
+    expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar Sucursal no disponible' }));
+    expect(screen.getByRole('button', { name: 'Guardar' })).toBeEnabled();
+  });
 });
 
 describe('Nuevo producto copiando otro', () => {

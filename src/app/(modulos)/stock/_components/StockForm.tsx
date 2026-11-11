@@ -341,7 +341,7 @@ export default function StockForm({ title, stockItem: stockItemProp, stockItemId
                 <DetailField label="Sucursal">{stockItem.sucursalNombre}</DetailField>
                 <DetailField label="Marca">{stockItem.marca || '—'}</DetailField>
                 <DetailField label="Modelo">{stockItem.modelo || '—'}</DetailField>
-                <DetailField label="Subtipo">{getSubtipoNombre(stockItem.subtipoId)}</DetailField>
+                <DetailField label="Subcategoría">{getSubtipoNombre(stockItem.subtipoId)}</DetailField>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
@@ -27,6 +27,7 @@ import { useMontoEdicion, usePrecioEdicion } from '../../../../lib/hooks/usePrec
 import { costoParaGuardar, PrecioEdicion, precioParaGuardar, resolverPrecioVista } from '../../../../lib/utils/precio';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
+import { useSucursales } from '../../../../context/SucursalContext';
 
 interface ProductoFormProps {
   title: string;
@@ -70,6 +71,16 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const { precio, setPrecio, resetPrecio } = usePrecioEdicion(producto);
   const { monto: costo, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(producto, producto?.costo, producto?.costoReposicionBase, producto?.contextoMonetario);
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
+  const { sucursales, isLoading: cargandoSucursales, error: errorSucursales, recargarSucursales } = useSucursales();
+  const [sucursalIds, setSucursalIds] = useState<string[]>([]);
+  const sucursalesActivas = sucursales.filter((sucursal) => sucursal.activo);
+  const sucursalesDisponibles = sucursalesActivas.filter((sucursal) => !sucursalIds.includes(sucursal.id));
+  const seleccionNoDisponible = sucursalIds.some((id) => !sucursalesActivas.some((sucursal) => sucursal.id === id));
+  const motivoSucursales = !producto && sucursalIds.length > 0
+    ? cargandoSucursales ? 'Esperá a que se carguen las sucursales.'
+      : errorSucursales ? 'Recargá las sucursales para verificar la selección.'
+        : seleccionNoDisponible ? 'Quitá las sucursales que ya no están disponibles.' : undefined
+    : undefined;
 
   const { tipos, loading: loadingClasificacion, getSubtiposPorTipo, getTipoIdDeSubtipo, getTipoNombre, getSubtipoNombre } = useClasificacion();
   const [tipoId, setTipoId] = useState('');
@@ -123,6 +134,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     entries.push(['unidadAncho', unidadAncho]);
     entries.push(['unidadProfundidad', unidadProfundidad]);
     entries.push(['unidadPeso', unidadPeso]);
+    if (!isEditing) entries.push(['sucursalIds', [...sucursalIds].sort().join(',')]);
     entries.sort(([a], [b]) => a.localeCompare(b));
     return JSON.stringify(entries);
   };
@@ -235,11 +247,15 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       checkForChanges();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso]);
+  }, [subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso, sucursalIds]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (savingRef.current) return;
+    if (motivoSucursales) {
+      setSubmitError(motivoSucursales);
+      return;
+    }
     if (copiaSinCambios) {
       setSubmitError(MENSAJE_COPIA_SIN_CAMBIOS);
       return;
@@ -278,6 +294,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       const costoInput = costoParaGuardar(costo, cotizacion);
       const payload = {
         ...body,
+        ...(!isEditing ? { sucursal_ids: sucursalIds } : {}),
         ...(!isEditing && imagen === undefined && base?.imagenUrl ? { imagen_url: base.imagenUrl } : {}),
         ...(imagen === null ? { imagen_url: null } : {}),
         ...(precioInput !== undefined ? { precio: precioInput } : {}),
@@ -413,8 +430,8 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 <DetailField label="Modelo">{text(producto.modelo)}</DetailField>
                 <DetailField label="Color">{text(producto.color)}</DetailField>
                 <DetailField label="Presentación">{text(producto.presentacion)}</DetailField>
-                <DetailField label="Tipo">{text(getTipoNombre(getTipoIdDeSubtipo(producto.subtipoId) ?? ''))}</DetailField>
-                <DetailField label="Subtipo">{text(getSubtipoNombre(producto.subtipoId))}</DetailField>
+                <DetailField label="Categoría">{text(getTipoNombre(getTipoIdDeSubtipo(producto.subtipoId) ?? ''))}</DetailField>
+                <DetailField label="Subcategoría">{text(getSubtipoNombre(producto.subtipoId))}</DetailField>
               </div>
             </div>
 
@@ -632,7 +649,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 onKeyDown={(e) => handleEnterAdvance(e, formRef)}
               />
               <Combobox
-                label="Tipo"
+                label="Categoría"
                 options={tipoOptions}
                 value={tipoId}
                 onChange={(val) => {
@@ -640,19 +657,19 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   setSubtipoId('');
                   checkForChanges();
                 }}
-                placeholder="Seleccionar tipo"
+                placeholder="Seleccionar categoría"
                 loading={loadingClasificacion}
                 tabIndex={9}
               />
               <Combobox
-                label="Subtipo"
+                label="Subcategoría"
                 options={subtipoOptions}
                 value={subtipoId}
                 onChange={(val) => {
                   setSubtipoId(val);
                   checkForChanges();
                 }}
-                placeholder={tipoId ? 'Seleccionar subtipo' : 'Elegí un tipo primero'}
+                placeholder={tipoId ? 'Seleccionar subcategoría' : 'Elegí una categoría primero'}
                 disabled={!tipoId}
                 loading={loadingClasificacion}
                 tabIndex={10}
@@ -805,17 +822,73 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             </div>
           </div>
 
+          {!isEditing && (
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Sucursales</h2>
+              <div className={styles.sucursalesPicker}>
+                <Combobox
+                  label="Agregar sucursal"
+                  options={sucursalesDisponibles.map((sucursal) => ({ value: sucursal.id, label: sucursal.nombre }))}
+                  value=""
+                  onChange={(id) => {
+                    if (id) setSucursalIds((actuales) => [...new Set([...actuales, id])]);
+                  }}
+                  placeholder={sucursalesActivas.length > 0 && sucursalesDisponibles.length === 0
+                    ? 'Todas las sucursales agregadas' : 'Seleccionar sucursales'}
+                  disabled={isSaving || Boolean(errorSucursales) || sucursalesDisponibles.length === 0}
+                  loading={cargandoSucursales}
+                  tabIndex={21}
+                />
+              </div>
+              {sucursalIds.length > 0 && (
+                <div className={styles.chipsSeleccion} aria-label="Sucursales seleccionadas">
+                  {sucursalIds.map((id) => {
+                    const nombre = sucursales.find((sucursal) => sucursal.id === id)?.nombre ?? 'Sucursal no disponible';
+                    return (
+                      <span key={id} className={styles.chipSeleccion}>
+                        {nombre}
+                        <button
+                          type="button"
+                          aria-label={`Quitar ${nombre}`}
+                          disabled={isSaving}
+                          tabIndex={21}
+                          onClick={() => setSucursalIds((actuales) => actuales.filter((seleccionada) => seleccionada !== id))}
+                        >
+                          <X size={12} aria-hidden="true" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+              <p className={styles.hintDescuento}>
+                {sucursalIds.length > 0
+                  ? 'Se agregará a las sucursales elegidas con stock en cero y el precio base del producto.'
+                  : 'Opcional. Si no elegís sucursales, se guardará en el catálogo general para asignarlo después desde Stock.'}
+              </p>
+              {errorSucursales && (
+                <div className={styles.validationError} role="alert">
+                  {errorSucursales}{' '}
+                  <button type="button" className={styles.linkQuitarCopia} onClick={() => void recargarSucursales()} disabled={isSaving} tabIndex={21}>
+                    Reintentar
+                  </button>
+                </div>
+              )}
+              {seleccionNoDisponible && <p className={styles.validationError} role="alert">Quitá las sucursales que ya no están disponibles.</p>}
+            </div>
+          )}
+
           <div className={styles.actions}>
             <Button
               type="button"
               variant="secondary"
               onClick={readOnly ? cancelInlineEdit : () => router.push('/productos')}
               disabled={isSaving}
-              tabIndex={22}
+              tabIndex={23}
             >
               Cancelar
             </Button>
-            <BotonConMotivo type="submit" disabled={isSaving} motivo={copiaSinCambios ? MENSAJE_COPIA_SIN_CAMBIOS : sinCambios ? SIN_CAMBIOS : undefined} tabIndex={21}>
+            <BotonConMotivo type="submit" disabled={isSaving} motivo={motivoSucursales ?? (copiaSinCambios ? MENSAJE_COPIA_SIN_CAMBIOS : sinCambios ? SIN_CAMBIOS : undefined)} tabIndex={22}>
               {isSaving ? 'Guardando...' : 'Guardar'}
             </BotonConMotivo>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Pencil, Eye, Plus, Phone, Mail, Building2 } from 'lucide-react';
+import { Pencil, Eye, Plus, Phone, Mail } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import ActionMenu from '../../../../../components/ui/ActionMenu/ActionMenu';
@@ -10,22 +10,20 @@ import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRec
 import Badge from '../../../../../components/ui/Badge/Badge';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
 import FilterBar from '../../../../../components/ui/FilterBar/FilterBar';
-import Combobox from '../../../../../components/ui/Combobox/Combobox';
 import Pagination from '../../../../../components/ui/Pagination/Pagination';
-import { Cliente, TIPOS_CLIENTE, tipoClienteLabel } from '../../../../../lib/types/Cliente';
+import { Cliente, tipoClienteLabel } from '../../../../../lib/types/Cliente';
 import { clienteClient } from '../../../../../lib/api/cliente.client';
 import { useCatalogoPaginado } from '../../../../../lib/hooks/useTableQuery';
 import { formatPorcentaje } from '../../../../../lib/utils/formatters';
 import styles from './ClientesCatalogo.module.css';
 
-const SELECT_FILTER_FIELDS = ['condicionIva', 'provincia', 'sucursal', 'estado'] as const;
-
-const FILTER_FIELDS: { key: string; label: string; type?: 'text' | 'select'; options?: { value: string; label: string }[] }[] = [
-  { key: 'tipoCliente', label: 'Tipo', options: TIPOS_CLIENTE },
-  { key: 'condicionIva', label: 'Condición IVA' },
+const FILTER_FIELDS = [
+  { key: 'region', label: 'Región' },
+  { key: 'sucursal', label: 'Sucursal' },
   { key: 'provincia', label: 'Provincia' },
   { key: 'estado', label: 'Estado' },
 ];
+const SELECT_FILTER_FIELDS = FILTER_FIELDS.map(({ key }) => key);
 
 export default function ClientesCatalogo() {
   const router = useRouter();
@@ -180,21 +178,7 @@ export default function ClientesCatalogo() {
           onFilterChange={onFilterChange}
           filterOptions={filterOptions}
           loading={filtersLoading}
-        >
-          <div className={styles.sucursalFilter}>
-            <Combobox
-              icon={<Building2 size={15} />}
-              options={[
-                { value: '', label: 'Todas las sucursales' },
-                ...(filterOptions.sucursal ?? []),
-              ]}
-              value={filters.sucursal ?? ''}
-              onChange={(value) => onFilterChange('sucursal', value)}
-              placeholder="Sucursal"
-              loading={filtersLoading}
-            />
-          </div>
-        </FilterBar>
+        />
       </div>
 
       {error && <p role="alert">{error}</p>}

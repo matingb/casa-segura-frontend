@@ -1,0 +1,12 @@
+.valor {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.negativo {
+  color: var(--color-danger);
+}
+
+.vacio {
+  color: var(--color-text-muted);
+}

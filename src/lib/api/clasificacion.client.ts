@@ -38,7 +38,7 @@ export function mapApiSubtipoToSubtipo(raw: any): Subtipo {
 export const clasificacionClient = {
   obtenerTipos: async (): Promise<Tipo[]> => {
     const res = await apiFetch('/api/tipos');
-    if (!res.ok) throw new Error('Error al cargar tipos');
+    if (!res.ok) throw new Error('Error al cargar categorías');
     const json = await res.json();
     if (json.status === 'success' && Array.isArray(json.data)) {
       return json.data.map(mapApiTipoToTipo);
@@ -48,7 +48,7 @@ export const clasificacionClient = {
 
   obtenerSubtipos: async (): Promise<Subtipo[]> => {
     const res = await apiFetch('/api/subtipos');
-    if (!res.ok) throw new Error('Error al cargar subtipos');
+    if (!res.ok) throw new Error('Error al cargar subcategorías');
     const json = await res.json();
     if (json.status === 'success' && Array.isArray(json.data)) {
       return json.data.map(mapApiSubtipoToSubtipo);
@@ -64,7 +64,7 @@ export const clasificacionClient = {
     });
     const json = await res.json();
     if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al crear tipo');
+      throw new Error(json.message || 'Error al crear categoría');
     }
     return mapApiTipoToTipo(json.data);
   },
@@ -87,7 +87,7 @@ export const clasificacionClient = {
     });
     const json = await res.json();
     if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al eliminar tipo');
+      throw new Error(json.message || 'Error al eliminar categoría');
     }
   },
 
@@ -99,7 +99,7 @@ export const clasificacionClient = {
     });
     const json = await res.json();
     if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al crear subtipo');
+      throw new Error(json.message || 'Error al crear subcategoría');
     }
     return mapApiSubtipoToSubtipo(json.data);
   },
@@ -122,7 +122,7 @@ export const clasificacionClient = {
     });
     const json = await res.json();
     if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al eliminar subtipo');
+      throw new Error(json.message || 'Error al eliminar subcategoría');
     }
   },
 

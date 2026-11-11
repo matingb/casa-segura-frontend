@@ -22,6 +22,8 @@ describe('Contrato monetario del formulario', () => {
     expect(item.precioVentaArs).toBe(120000);
     expect(item.precioVentaUsd).toBe(100);
     expect(mapApiProductoSucursalToStockItem({}).precioVentaArs).toBeNull();
+    expect(mapApiProductoSucursalToStockItem({}).costoReposicion).toBeNull();
+    expect(mapApiProductoSucursalToStockItem({ costo_reposicion: '0' }).costoReposicion).toBe(0);
     expect(mapApiProductoSucursalToStockItem({ precio_venta_ars: '0', iva: '0' })).toMatchObject({ precioVentaArs: 0, iva: 0 });
   });
 });

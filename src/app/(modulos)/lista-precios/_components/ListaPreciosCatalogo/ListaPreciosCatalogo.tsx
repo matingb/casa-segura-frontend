@@ -16,7 +16,7 @@ import { detalleCorto, detalleLargo } from '../../../../../lib/utils/niveles-des
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
-import { EXPORT_COLUMNS, DEFAULT_EXPORT_COLUMN_KEYS } from '../../_lib/exportColumns';
+import { EXPORT_COLUMNS, PDF_EXPORT_COLUMNS, DEFAULT_EXPORT_COLUMN_KEYS } from '../../_lib/exportColumns';
 import styles from './ListaPreciosCatalogo.module.css';
 import ContextoPrecios from '../../../../../components/ContextoPrecios';
 import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
@@ -29,7 +29,7 @@ import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacio
 const FILTER_FIELDS: FilterField[] = [
   { key: 'marca', label: 'Marca' },
   { key: 'modelo', label: 'Modelo' },
-  { key: 'subtipo', label: 'Subtipo' },
+  { key: 'subtipo', label: 'Subcategoría' },
 ];
 
 export default function ListaPreciosCatalogo() {
@@ -54,16 +54,24 @@ export default function ListaPreciosCatalogo() {
   } = useListaPrecios();
   const { getSubtipoNombre } = useClasificacion();
 
-  const [showExportModal, setShowExportModal] = useState(false);
+  const [formatoExportacion, setFormatoExportacion] = useState<'Excel' | 'PDF' | null>(null);
   const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
 
   const handleConfirmExport = (selectedKeys: string[]) => {
-    setShowExportModal(false);
-    void comprobar({ contexto, conservar: async () => { await revalidarAcceso(); exportarListaPreciosExcel(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios); }, actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosExcel(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
-  };
-
-  const handleExportPdf = () => {
-    void comprobar({ contexto, conservar: async () => { await revalidarAcceso(); exportarListaPreciosPdf(items, sucursalNombre, getSubtipoNombre, contexto, precios); }, actualizar: async () => { const nuevos = await actualizarSeleccion(); exportarListaPreciosPdf(nuevos.items, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios); } });
+    if (!formatoExportacion) return;
+    const exportar = formatoExportacion === 'PDF' ? exportarListaPreciosPdf : exportarListaPreciosExcel;
+    setFormatoExportacion(null);
+    void comprobar({
+      contexto,
+      conservar: async () => {
+        await revalidarAcceso();
+        exportar(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios);
+      },
+      actualizar: async () => {
+        const nuevos = await actualizarSeleccion();
+        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios);
+      },
+    });
   };
 
   // Producto | Clasificación | Precio | Descuento | Precio final | IVA, con las
@@ -161,7 +169,7 @@ export default function ListaPreciosCatalogo() {
         <Button
           variant="primary"
           className={styles.exportBtn}
-          onClick={() => setShowExportModal(true)}
+          onClick={() => setFormatoExportacion('Excel')}
           disabled={!canExport}
           title={!sucursalId ? 'Seleccioná una sucursal primero' : !items.length ? 'No hay productos habilitados' : 'Exportar lista a Excel'}
         >
@@ -171,7 +179,7 @@ export default function ListaPreciosCatalogo() {
         <Button
           variant="primary"
           className={styles.exportBtn}
-          onClick={handleExportPdf}
+          onClick={() => setFormatoExportacion('PDF')}
           disabled={!canExport}
           title="Exportar lista a PDF"
         >
@@ -239,12 +247,12 @@ export default function ListaPreciosCatalogo() {
         </>
       )}
 
-      {showExportModal && (
+      {formatoExportacion && (
         <ExportarColumnasModal
-          title="Exportar a Excel"
-          columnas={EXPORT_COLUMNS}
+          title={`Exportar a ${formatoExportacion}`}
+          columnas={formatoExportacion === 'PDF' ? PDF_EXPORT_COLUMNS : EXPORT_COLUMNS}
           seleccionInicial={DEFAULT_EXPORT_COLUMN_KEYS}
-          onClose={() => setShowExportModal(false)}
+          onClose={() => setFormatoExportacion(null)}
           onConfirm={handleConfirmExport}
         />
       )}
