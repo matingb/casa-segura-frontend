@@ -23,11 +23,13 @@ export interface ItemConMargenCalculado extends ItemListaCliente {
   costoReposicion: number | string | null; margenMinimo: number | string | null;
   noAlcanzaMargen: boolean; motivoMargen?: string;
 }
-/** Lista general de una sucursal: solo los descuentos que valen para todos los clientes. */
+/** Lista general de una sucursal: los descuentos que valen para todos los clientes, más el de la región elegida. */
 export interface ListaPreciosSucursal {
   items: ItemConMargenCalculado[];
   contexto_monetario: ContextoMonetario;
   sucursal: { id: string; nombre: string };
+  /** Región cuyo descuento se aplicó, o null si se calculó sin región. */
+  region?: { id: string; nombre: string; descuento: number | null } | null;
 }
 export interface ListaPreciosCliente {
   items: ItemConMargenCalculado[];

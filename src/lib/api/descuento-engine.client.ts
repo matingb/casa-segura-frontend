@@ -66,8 +66,10 @@ export const descuentoEngineClient = {
     if (!res.ok) return errorCatalogo(res, 'No se pudo calcular la lista de precios.');
     return (await res.json()).data;
   },
-  listaSucursal: async (sucursalId: string): Promise<ListaPreciosSucursal> => {
-    const res = await apiFetch(`/api/descuentos/lista-sucursal?${new URLSearchParams({ sucursalId })}`);
+  /** Lista general de la sucursal; con `regionId` suma el descuento de esa región. */
+  listaSucursal: async (sucursalId: string, regionId?: string | null): Promise<ListaPreciosSucursal> => {
+    const query = new URLSearchParams({ sucursalId, ...(regionId ? { regionId } : {}) });
+    const res = await apiFetch(`/api/descuentos/lista-sucursal?${query}`);
     if (!res.ok) return errorCatalogo(res, 'No se pudo calcular la lista de precios.');
     return (await res.json()).data;
   },

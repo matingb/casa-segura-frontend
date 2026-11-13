@@ -1,0 +1,55 @@
+.disparador {
+  display: inline-block;
+  max-width: 100%;
+  cursor: help;
+  border-radius: 3px;
+}
+
+.disparador:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Mismo estilo que los demás tooltips de la app (Sidebar, BotonConMotivo). */
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 16px));
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  /* Invisible hasta que se calcula su posición. */
+  visibility: hidden;
+}
+
+.tooltip[data-listo='true'] {
+  visibility: visible;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  left: var(--flecha-x, 50%);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+}
+
+.tooltip[data-lado='arriba']::after {
+  top: 100%;
+  border-top-color: #1e293b;
+}
+
+.tooltip[data-lado='abajo']::after {
+  bottom: 100%;
+  border-bottom-color: #1e293b;
+}

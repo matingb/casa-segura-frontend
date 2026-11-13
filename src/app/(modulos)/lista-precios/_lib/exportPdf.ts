@@ -9,7 +9,7 @@ import { PDF_EXPORT_COLUMNS } from './exportColumns';
 
 const MARGEN = 16;
 
-export function crearPdfListaPrecios(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios: PreciosSucursal = new Map()) {
+export function crearPdfListaPrecios(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios: PreciosSucursal = new Map(), regionNombre?: string | null) {
   validarSnapshotPrecios(items.map(i => i.contextoMonetario), contexto);
   const columnas = PDF_EXPORT_COLUMNS.filter(c => selectedKeys.includes(c.key));
   if (columnas.length === 0) throw new Error('Seleccioná al menos una columna para exportar.');
@@ -22,7 +22,7 @@ export function crearPdfListaPrecios(items: StockItem[], selectedKeys: string[],
   doc.setFontSize(16); doc.text('Lista de precios', 16, 16);
   doc.setFontSize(8);
   let y = 23;
-  for (const [label, value] of metadatosPrecios(contexto, items.some(i => i.precio?.estado === 'LEGADO_PENDIENTE_REVISION'), sucursalNombre)) {
+  for (const [label, value] of metadatosPrecios(contexto, items.some(i => i.precio?.estado === 'LEGADO_PENDIENTE_REVISION'), sucursalNombre, undefined, regionNombre)) {
     const lineas = doc.splitTextToSize(`${label}: ${value}`, anchoPagina - MARGEN * 2);
     doc.text(lineas, 16, y); y += lineas.length * 4;
   }
@@ -57,6 +57,7 @@ export function crearPdfListaPrecios(items: StockItem[], selectedKeys: string[],
   }
   return doc;
 }
-export function exportarListaPreciosPdf(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios?: PreciosSucursal) {
-  crearPdfListaPrecios(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios).save(`lista-precios-${sucursalNombre.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${fechaArchivoBuenosAires()}.pdf`);
+export function exportarListaPreciosPdf(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios?: PreciosSucursal, regionNombre?: string | null) {
+  const nombre = [sucursalNombre, regionNombre].filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  crearPdfListaPrecios(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios, regionNombre).save(`lista-precios-${nombre}-${fechaArchivoBuenosAires()}.pdf`);
 }

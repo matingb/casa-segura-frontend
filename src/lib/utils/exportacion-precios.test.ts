@@ -30,6 +30,15 @@ describe('Archivos del catálogo', () => {
     expect(Object.keys(fila).some(k => k.toLowerCase().includes('descuento'))).toBe(false);
     expect(crearPdfListaPrecios(items.slice(0, 2), DEFAULT_EXPORT_COLUMN_KEYS, 'Centro', () => 'Subtipo', contexto, precios).getNumberOfPages()).toBe(1);
   });
+  it('la lista general informa la región con la que se calcularon los precios', () => {
+    const conRegion = JSON.stringify(crearLibroListaPrecios(items.slice(0, 1), ['codigo'], 'Centro', () => '', contexto, new Map(), 'Cuyo').Sheets['Referencia']);
+    expect(conRegion).toContain('Región');
+    expect(conRegion).toContain('Cuyo');
+    expect(conRegion).toContain('con descuento de región');
+    const sinRegion = JSON.stringify(crearLibroListaPrecios(items.slice(0, 1), ['codigo'], 'Centro', () => '', contexto).Sheets['Referencia']);
+    expect(sinRegion).not.toContain('Región');
+    expect(crearPdfListaPrecios(items.slice(0, 1), ['codigo'], 'Centro', () => '', contexto, new Map(), 'Cuyo').output()).toContain('Cuyo');
+  });
   it('el PDF general incluye solo las columnas elegidas y pagina una selección ancha', () => {
     const pdf = crearPdfListaPrecios(items.slice(0, 1), ['codigo', 'precioFinalArs'], 'Centro', () => '', contexto);
     expect(pdf.output()).toContain('COD-0');

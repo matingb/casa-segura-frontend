@@ -12,6 +12,34 @@ const NIVELES: Record<NivelDescuentoLista, { corto: string; largo: string }> = {
   cliente: { corto: 'Habitual', largo: 'Descuento habitual del cliente' },
 };
 
+/** Nombre corto del nivel de descuento ("Región", "Categoría general"…). */
+export function nombreNivel(nivel: NivelDescuentoLista) {
+  return NIVELES[nivel]?.corto ?? nivel;
+}
+
+/**
+ * Orden en que se muestran los descuentos: producto, categoría, PDV y región;
+ * después los propios del cliente. Es solo visual: el precio final no depende
+ * del orden, porque los descuentos se encadenan multiplicando.
+ */
+const ORDEN_VISUAL: NivelDescuentoLista[] = [
+  'producto', 'categoria', 'sucursal', 'region-cliente', 'categoria-cliente', 'producto-cliente', 'cliente',
+];
+
+/** Copia de los aportes en el orden visual (los niveles desconocidos van al final). */
+export function ordenarAportes(aportes: AporteDescuentoLista[] = []) {
+  const posicion = (nivel: NivelDescuentoLista) => {
+    const i = ORDEN_VISUAL.indexOf(nivel);
+    return i === -1 ? ORDEN_VISUAL.length : i;
+  };
+  return [...aportes].sort((a, b) => posicion(a.nivel) - posicion(b.nivel));
+}
+
+/** Solo los porcentajes, en el orden recibido: "3% / 7%". */
+export function porcentajesDescuento(aportes: AporteDescuentoLista[] = []) {
+  return aportes.map(a => formatPorcentaje(a.porcentaje)).join(' / ');
+}
+
 export function detalleCorto(aportes: AporteDescuentoLista[] = []) {
   return aportes.map(a => `${NIVELES[a.nivel]?.corto ?? a.nivel} ${formatPorcentaje(a.porcentaje)}`).join(' · ');
 }

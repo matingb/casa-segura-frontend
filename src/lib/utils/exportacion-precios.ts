@@ -10,9 +10,13 @@ export function numeroExcel(valor: number | string | null | undefined): number |
   // Excel conserva 15 cifras significativas. Un valor mayor se conserva como texto.
   return decimal.precision() <= 15 ? decimal.toNumber() : decimal.toString();
 }
-export function metadatosPrecios(contexto: ContextoMonetario | null | undefined, legado: boolean, sucursal: string, cliente?: string) {
-  return [ ['Origen', cliente ? 'Precios de sucursal con descuentos del cliente' : 'Precios de sucursal sin descuentos de cliente'],
-    ['Sucursal', sucursal], ...(cliente ? [['Cliente', cliente]] : []),
+/** `region`: región cuyo descuento se aplicó a la lista general de la sucursal, si hubo. */
+export function metadatosPrecios(contexto: ContextoMonetario | null | undefined, legado: boolean, sucursal: string, cliente?: string, region?: string | null) {
+  const origen = cliente ? 'Precios de sucursal con descuentos del cliente'
+    : region ? 'Precios de sucursal con descuento de región, sin descuentos de cliente'
+      : 'Precios de sucursal sin descuentos de cliente';
+  return [ ['Origen', origen],
+    ['Sucursal', sucursal], ...(region ? [['Región', region]] : []), ...(cliente ? [['Cliente', cliente]] : []),
     ['1 USD = ARS', contexto?.cotizacion_usd_ars ?? 'Sin cotización: equivalente USD no disponible'],
     ['Origen de cotización', contexto?.origen === 'SUCURSAL' ? 'Propia del PDV' : 'General de la empresa'],
     ['PDV de la cotización', contexto?.sucursal_nombre ?? (contexto?.sucursal_id ? contexto.sucursal_id : 'Catálogo global')],

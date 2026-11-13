@@ -5,7 +5,7 @@ import { fechaArchivoBuenosAires, metadatosPrecios, numeroExcel, validarSnapshot
 import { EXPORT_COLUMNS } from './exportColumns';
 import { PreciosSucursal } from '../_hooks/useListaPrecios';
 
-export function crearLibroListaPrecios(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios: PreciosSucursal = new Map()) {
+export function crearLibroListaPrecios(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios: PreciosSucursal = new Map(), regionNombre?: string | null) {
   validarSnapshotPrecios(items.map(i => i.contextoMonetario), contexto);
   const columns = EXPORT_COLUMNS.filter(c => selectedKeys.includes(c.key));
   const rows = items.map(item => {
@@ -19,11 +19,11 @@ export function crearLibroListaPrecios(items: StockItem[], selectedKeys: string[
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Lista de precios');
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(metadatosPrecios(contexto, items.some(i => i.precio?.estado === 'LEGADO_PENDIENTE_REVISION'), sucursalNombre)), 'Referencia');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(metadatosPrecios(contexto, items.some(i => i.precio?.estado === 'LEGADO_PENDIENTE_REVISION'), sucursalNombre, undefined, regionNombre)), 'Referencia');
   return workbook;
 }
-export function exportarListaPreciosExcel(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios?: PreciosSucursal) {
-  const workbook = crearLibroListaPrecios(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios);
-  const sucursal = sucursalNombre.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  XLSX.writeFile(workbook, `lista-precios-${sucursal}-${fechaArchivoBuenosAires()}.xlsx`);
+export function exportarListaPreciosExcel(items: StockItem[], selectedKeys: string[], sucursalNombre: string, getSubtipoNombre: (id: string) => string, contexto?: ContextoMonetario | null, precios?: PreciosSucursal, regionNombre?: string | null) {
+  const workbook = crearLibroListaPrecios(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios, regionNombre);
+  const nombre = [sucursalNombre, regionNombre].filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  XLSX.writeFile(workbook, `lista-precios-${nombre}-${fechaArchivoBuenosAires()}.xlsx`);
 }

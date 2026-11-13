@@ -10,7 +10,11 @@ import { descuentoEngineClient } from '../../../../lib/api/descuento-engine.clie
 import { ItemConMargenCalculado } from '../../../../lib/types/ListaPreciosCliente';
 import { ContextoMonetario } from '../../../../lib/types/Moneda';
 import { useCotizacionSucursal } from '../../../../lib/hooks/useCotizacionSucursal';
+import { regionClient, Region } from '../../../../lib/api/region.client';
 export type { SucursalOption };
+
+/** Regiones activas que incluyen el punto de venta, ordenadas por nombre. */
+interface RegionesSucursal { sucursalId: string; regiones: Region[]; error: string | null }
 /** Precio con los descuentos generales de la sucursal, por id de producto_sucursal. */
 export type PreciosSucursal = Map<string, ItemConMargenCalculado>;
 
@@ -47,19 +51,55 @@ export function useListaPrecios() {
   const [errorPrecios, setErrorPrecios] = useState<string | null>(null);
   const [contextoLista, setContextoLista] = useState<ContextoMonetario | null>(null);
   const [contextoListaSucursalId, setContextoListaSucursalId] = useState('');
+  /** Nombre de la región con la que se calcularon los precios vigentes. */
+  const [regionLista, setRegionLista] = useState<string | null>(null);
+  const [regionesCarga, setRegionesCarga] = useState<RegionesSucursal>({ sucursalId: '', regiones: [], error: null });
+  const [regionSeleccionada, setRegionSeleccionada] = useState('');
   const requestPrecios = useRef(0);
   const sucursalActual = useRef('');
+  const regionActual = useRef('');
   const ultimoReintentoSnapshot = useRef('');
 
   const query = useTableQuery();
   const { getSubtipoNombre } = useClasificacion();
 
   const sucursalId = query.filters.sucursal ?? '';
+  const sucursalValida = sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo);
   const cotizacionSucursal = useCotizacionSucursal(sucursalId);
+  // Las regiones (y la elegida) solo valen para la sucursal con la que se cargaron.
+  const regionesListas = sucursalValida && regionesCarga.sucursalId === sucursalId;
+  const regionId = regionesListas ? regionSeleccionada : '';
 
   useEffect(() => {
     sucursalActual.current = sucursalId;
   }, [sucursalId]);
+
+  useEffect(() => {
+    regionActual.current = regionId;
+  }, [regionId]);
+
+  // Al cambiar de sucursal se cargan sus regiones y se elige la primera.
+  useEffect(() => {
+    if (!sucursalId || !sucursalValida) return;
+    let vigente = true;
+    regionClient.obtenerPorSucursal(sucursalId, true)
+      .then((lista) => {
+        if (!vigente) return;
+        setRegionesCarga({ sucursalId, regiones: lista, error: null });
+        setRegionSeleccionada(lista[0]?.id ?? '');
+      })
+      .catch((err) => {
+        if (!vigente) return;
+        // Sin regiones la lista se calcula igual, solo con los descuentos generales.
+        setRegionesCarga({
+          sucursalId,
+          regiones: [],
+          error: err instanceof Error ? err.message : 'No se pudieron cargar las regiones del punto de venta.',
+        });
+        setRegionSeleccionada('');
+      });
+    return () => { vigente = false; };
+  }, [sucursalId, sucursalValida]);
 
   useEffect(() => {
     const sigueAlcanzable = sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo);
@@ -68,6 +108,7 @@ export function useListaPrecios() {
       setPrecios(new Map());
       setContextoLista(null);
       setContextoListaSucursalId('');
+      setRegionLista(null);
       query.setFilters((prev) => ({ ...prev, sucursal: sucursales[0]?.id ?? '' }));
     } else if (sucursales.length > 0 && !sucursalId) {
       query.setFilters((prev) => ({ ...prev, sucursal: sucursales[0].id }));
@@ -103,34 +144,39 @@ export function useListaPrecios() {
   }, [sucursalId, sucursales]);
   useEffect(() => { void recargar().catch(() => {}); return () => { request.current++; }; }, [recargar, cotizacionSucursal.revision]);
 
-  const cargarPrecios = useCallback(async (): Promise<{ precios: PreciosSucursal; contexto: ContextoMonetario | null }> => {
+  const cargarPrecios = useCallback(async (): Promise<{ precios: PreciosSucursal; contexto: ContextoMonetario | null; region: string | null }> => {
     const id = ++requestPrecios.current;
     const sucursalSolicitada = sucursalId;
-    if (!sucursalId || !sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo)) {
-      setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); setErrorPrecios(null);
-      return { precios: new Map(), contexto: null };
+    const regionSolicitada = regionId;
+    const vigente = () => id === requestPrecios.current && sucursalActual.current === sucursalSolicitada && regionActual.current === regionSolicitada;
+    setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); setRegionLista(null); setErrorPrecios(null);
+    // Se espera a tener las regiones de la sucursal para calcular con la región elegida.
+    if (!sucursalId || !sucursalValida || !regionesListas) {
+      return { precios: new Map(), contexto: null, region: null };
     }
-    setPrecios(new Map()); setContextoLista(null); setContextoListaSucursalId(''); setErrorPrecios(null);
     try {
-      const lista = await descuentoEngineClient.listaSucursal(sucursalId);
+      const lista = await descuentoEngineClient.listaSucursal(sucursalId, regionSolicitada || null);
       const nuevos: PreciosSucursal = new Map(lista.items.map((item) => [item.id, item]));
-      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) {
+      const region = lista.region?.nombre ?? null;
+      if (vigente()) {
         setPrecios(nuevos);
         setContextoLista(lista.contexto_monetario ?? null);
         setContextoListaSucursalId(sucursalSolicitada);
+        setRegionLista(region);
         setErrorPrecios(null);
       }
-      return { precios: nuevos, contexto: lista.contexto_monetario ?? null };
+      return { precios: nuevos, contexto: lista.contexto_monetario ?? null, region };
     } catch (err) {
-      if (id === requestPrecios.current && sucursalActual.current === sucursalSolicitada) {
+      if (vigente()) {
         setPrecios(new Map());
         setContextoLista(null);
         setContextoListaSucursalId('');
+        setRegionLista(null);
         setErrorPrecios(err instanceof Error ? err.message : 'No se pudieron calcular los descuentos.');
       }
       throw err;
     }
-  }, [sucursalId, sucursales]);
+  }, [sucursalId, sucursalValida, regionesListas, regionId]);
   useEffect(() => {
     let vigente = true;
     const contador = requestPrecios;
@@ -138,7 +184,6 @@ export function useListaPrecios() {
     return () => { vigente = false; contador.current++; };
   }, [cargarPrecios, cotizacionSucursal.revision]);
 
-  const sucursalValida = sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo);
   const contextoActualLista = sucursalValida && contextoListaSucursalId === sucursalId ? contextoLista : null;
   const stockDeSucursal = useMemo(
     () => sucursalValida ? stockTotal.filter((item) => item.sucursalId === sucursalId && item.activo) : [],
@@ -164,6 +209,17 @@ export function useListaPrecios() {
     () => sucursales.find((s) => s.id === sucursalId)?.nombre ?? '',
     [sucursales, sucursalId]
   );
+
+  const regionOptions = useMemo(
+    () => (regionesListas ? regionesCarga.regiones : []).map((r) => ({ value: r.id, label: r.nombre })),
+    [regionesListas, regionesCarga.regiones]
+  );
+
+  const { setPage } = query;
+  const onRegionChange = useCallback((value: string) => {
+    setRegionSeleccionada(value);
+    setPage(1);
+  }, [setPage]);
 
   const itemsSucursal = useMemo(() => {
     if (!sucursalValida) return [];
@@ -201,20 +257,23 @@ export function useListaPrecios() {
     if (!solicitada || !sucursales.some((sucursal) => sucursal.id === solicitada && sucursal.activo)) {
       throw new Error('Seleccioná un punto de venta activo dentro de tu alcance antes de exportar.');
     }
+    const regionSolicitada = regionId;
     try {
-      await descuentoEngineClient.listaSucursal(solicitada);
+      await descuentoEngineClient.listaSucursal(solicitada, regionSolicitada || null);
       if (sucursalActual.current !== solicitada) throw new Error('El punto de venta cambió. Actualizá la lista antes de exportar.');
+      if (regionActual.current !== regionSolicitada) throw new Error('La región cambió. Actualizá la lista antes de exportar.');
     } catch (err) {
-      if (sucursalActual.current === solicitada) {
+      if (sucursalActual.current === solicitada && regionActual.current === regionSolicitada) {
         setStockTotal([]);
         setPrecios(new Map());
         setContextoLista(null);
         setContextoListaSucursalId('');
+        setRegionLista(null);
         setErrorPrecios(err instanceof Error ? err.message : 'La lista ya no está disponible.');
       }
       throw err;
     }
-  }, [sucursalId, sucursales]);
+  }, [sucursalId, sucursales, regionId]);
   const items = useMemo(
     () => sucursalValida && snapshotCompatible ? aplicarSeleccion(stockTotal, precios) : [],
     [sucursalValida, snapshotCompatible, aplicarSeleccion, stockTotal, precios]
@@ -223,13 +282,15 @@ export function useListaPrecios() {
     if (!sucursalId || !sucursales.some((sucursal) => sucursal.id === sucursalId && sucursal.activo)) {
       throw new Error('Seleccioná un punto de venta activo dentro de tu alcance antes de actualizar la lista.');
     }
+    if (!regionesListas) throw new Error('Esperá a que carguen las regiones del punto de venta.');
     const [stock, resultado] = await Promise.all([recargar(), cargarPrecios()]);
     if (sucursalActual.current !== sucursalId) throw new Error('El punto de venta cambió. Actualizá la lista antes de exportar.');
+    if (regionActual.current !== regionId) throw new Error('La región cambió. Actualizá la lista antes de exportar.');
     const filasSucursal = stock.filter((item) => item.sucursalId === sucursalId && item.activo);
     if (resultado.contexto && !filasSucursal.every((item) => mismoContexto(item.contextoMonetario, resultado.contexto))) {
       throw new Error('La cotización cambió durante la actualización. Volvé a actualizar la lista antes de exportar.');
     }
-    return { items: aplicarSeleccion(stock, resultado.precios), precios: resultado.precios, contexto: resultado.contexto };
+    return { items: aplicarSeleccion(stock, resultado.precios), precios: resultado.precios, contexto: resultado.contexto, regionNombre: resultado.region };
   };
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -244,15 +305,21 @@ export function useListaPrecios() {
     actualizarSeleccion,
     revalidarAcceso,
     contexto: contextoActualLista,
-    error: error ?? errorPrecios ?? cotizacionSucursal.error ?? (!snapshotCompatible ? 'La cotización del PDV cambió mientras se cargaba la lista; actualizando los precios.' : null),
+    error: error ?? errorPrecios ?? (regionesListas ? regionesCarga.error : null) ?? cotizacionSucursal.error ?? (!snapshotCompatible ? 'La cotización del PDV cambió mientras se cargaba la lista; actualizando los precios.' : null),
     precios,
     sucursalOptions,
+    regionId,
+    regionOptions,
+    onRegionChange,
+    /** Región con la que se calcularon los precios mostrados (para exportar). */
+    regionNombre: regionLista,
     items,
     pageItems,
     ...query,
     page: Math.min(query.page, totalPages),
     totalPages,
-    isLoading,
+    // Mientras cargan las regiones no se muestran precios sin el descuento de región.
+    isLoading: isLoading || (sucursalValida && !regionesListas),
     sucursalNombre,
     filterOptions,
   };

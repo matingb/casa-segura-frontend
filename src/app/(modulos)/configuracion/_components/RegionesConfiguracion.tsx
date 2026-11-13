@@ -105,10 +105,6 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
       showError('El descuento debe ser un porcentaje entre 0% y 100%.');
       return;
     }
-    if (form.sucursalIds.length === 0) {
-      showError('Elegí al menos un punto de venta para la región.');
-      return;
-    }
 
     setGuardando(true);
     try {
@@ -179,9 +175,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
       </div>
 
       <div className={styles.puntosVenta}>
-        <span className={styles.fieldLabel}>
-          Puntos de venta<span className={styles.required}>*</span>
-        </span>
+        <span className={styles.fieldLabel}>Puntos de venta</span>
         {(() => {
           // Un punto de venta dado de baja que ya estaba en la región se sigue mostrando.
           const opciones = [
@@ -237,7 +231,9 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
             </div>
           );
         })()}
-        <span className={styles.hint}>Una región puede agrupar uno o más puntos de venta.</span>
+        <span className={styles.hint}>
+          Una región puede agrupar varios puntos de venta, o ninguno por ahora. Sin puntos de venta no se puede asignar a clientes ni aplica en listas de precios.
+        </span>
       </div>
 
       <div className={styles.formActions}>
@@ -313,12 +309,18 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                     {!r.puedeModificar && <span className={styles.badgeCompartida}>Incluye puntos fuera de tu alcance</span>}
                   </div>
                   <div className={styles.chips}>
-                    <span className={styles.chipsLabel}>{r.sucursales.length === 1 ? 'Punto de venta:' : 'Puntos de venta:'}</span>
-                    {r.sucursales.map((s) => (
-                      <span key={s.id} className={styles.chip}>
-                        {s.nombre}
-                      </span>
-                    ))}
+                    {r.sucursales.length === 0 ? (
+                      <span className={styles.chipsLabel}>Sin puntos de venta asignados</span>
+                    ) : (
+                      <>
+                        <span className={styles.chipsLabel}>{r.sucursales.length === 1 ? 'Punto de venta:' : 'Puntos de venta:'}</span>
+                        {r.sucursales.map((s) => (
+                          <span key={s.id} className={styles.chip}>
+                            {s.nombre}
+                          </span>
+                        ))}
+                      </>
+                    )}
                   </div>
                   {!r.puedeModificar && <p className={styles.avisoCompartida}>Podés usar esta región en clientes de tus puntos de venta, pero su configuración pertenece a varios puntos.</p>}
                 </div>

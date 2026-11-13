@@ -4,14 +4,16 @@
   margin-bottom: 1rem;
 }
 
-.sucursalFilter {
+.sucursalFilter,
+.regionFilter {
   min-width: 210px;
   width: 200px;
   flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
-  .sucursalFilter {
+  .sucursalFilter,
+  .regionFilter {
     flex: 1 1 auto;
     width: 100%;
   }
@@ -95,6 +97,34 @@
 
 .sinDescuento {
   color: var(--color-text-muted);
+}
+
+/* "3% / 7%": cada descuento que se aplica, en orden */
+.porcentajes {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tooltip: nombre de cada descuento y su porcentaje */
+.nivelesTooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nivelesTooltip li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nivelPorcentaje {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .ajustado {

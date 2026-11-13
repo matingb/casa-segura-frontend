@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileDown, FileSpreadsheet, Building2 } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Building2, MapPin } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
 import Table, { TableColumn } from '../../../../../components/ui/Table/Table';
@@ -12,7 +12,7 @@ import { StockItem } from '../../../../../lib/types/Stock';
 import { useListaPrecios } from '../../_hooks/useListaPrecios';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { formatARS, formatPorcentaje, formatUSD } from '../../../../../lib/utils/formatters';
-import { detalleCorto, detalleLargo } from '../../../../../lib/utils/niveles-descuento';
+import { nombreNivel, ordenarAportes, porcentajesDescuento } from '../../../../../lib/utils/niveles-descuento';
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
@@ -23,7 +23,7 @@ import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
 import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
 import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
 import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
-import TextoRecortado from '../../../../../components/ui/TextoRecortado/TextoRecortado';
+import Tooltip from '../../../../../components/ui/Tooltip/Tooltip';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
 
 const FILTER_FIELDS: FilterField[] = [
@@ -36,6 +36,10 @@ export default function ListaPreciosCatalogo() {
   const {
     sucursalId,
     sucursalOptions,
+    regionId,
+    regionOptions,
+    onRegionChange,
+    regionNombre,
     contexto, error, actualizarSeleccion, revalidarAcceso, precios,
     items,
     pageItems,
@@ -65,11 +69,11 @@ export default function ListaPreciosCatalogo() {
       contexto,
       conservar: async () => {
         await revalidarAcceso();
-        exportar(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios);
+        exportar(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios, regionNombre);
       },
       actualizar: async () => {
         const nuevos = await actualizarSeleccion();
-        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios);
+        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios, nuevos.regionNombre);
       },
     });
   };
@@ -111,9 +115,11 @@ export default function ListaPreciosCatalogo() {
       render: (item) => {
         const precio = precios.get(item.id);
         if (!precio || !(precio.descuentoTotalPorcentaje > 0)) return <span className={styles.sinDescuento}>0%</span>;
-        // Segunda línea: el origen del descuento o, si se topeó, el aviso de
-        // precio mínimo. El detalle completo queda en el tooltip.
+        // Segunda línea: los porcentajes que se aplican ("3% / 7%": producto,
+        // categoría, PDV, región), con el nombre de cada uno en el tooltip; o,
+        // si se topeó, el aviso de precio mínimo.
         const ajustado = precio.noAlcanzaMargen && Number(precio.precioListaArs) > 0;
+        const aportes = ordenarAportes(precio.descuentosAportes);
         const segunda = ajustado ? (
           <span
             className={styles.ajustado}
@@ -121,8 +127,21 @@ export default function ListaPreciosCatalogo() {
           >
             Ajustado al precio mínimo
           </span>
-        ) : (
-          <TextoRecortado title={detalleLargo(precio.descuentosAportes)}>{detalleCorto(precio.descuentosAportes)}</TextoRecortado>
+        ) : aportes.length > 0 && (
+          <Tooltip
+            contenido={
+              <ul className={styles.nivelesTooltip}>
+                {aportes.map((aporte, i) => (
+                  <li key={i}>
+                    <span>{nombreNivel(aporte.nivel)}</span>
+                    <span className={styles.nivelPorcentaje}>{formatPorcentaje(aporte.porcentaje)}</span>
+                  </li>
+                ))}
+              </ul>
+            }
+          >
+            <span className={styles.porcentajes}>{porcentajesDescuento(aportes)}</span>
+          </Tooltip>
         );
         return (
           <div className={styles.descuentoCelda}>
@@ -207,6 +226,17 @@ export default function ListaPreciosCatalogo() {
               value={sucursalId}
               onChange={(value) => onFilterChange('sucursal', value)}
               placeholder="Sucursal"
+              loading={isLoading}
+            />
+          </div>
+          <div className={styles.regionFilter}>
+            <Combobox
+              icon={<MapPin size={15} />}
+              options={regionOptions}
+              value={regionId}
+              onChange={onRegionChange}
+              placeholder={sucursalId && !isLoading && regionOptions.length === 0 ? 'Sin regiones' : 'Región'}
+              disabled={regionOptions.length === 0}
               loading={isLoading}
             />
           </div>
