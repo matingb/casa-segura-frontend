@@ -72,11 +72,15 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   const { monto: costo, setMonto: setCosto, resetMonto: resetCosto } = useMontoEdicion(producto, producto?.costo, producto?.costoReposicionBase, producto?.contextoMonetario);
   const { datos: cotizacion, recargar: recargarCotizacion } = useCotizacion();
   const { sucursales, isLoading: cargandoSucursales, error: errorSucursales, recargarSucursales } = useSucursales();
-  const [sucursalIds, setSucursalIds] = useState<string[]>([]);
+  const [borradorSucursales, setBorradorSucursales] = useState<string[] | null>(null);
+  const sucursalesAsignadas = producto?.sucursales ?? [];
+  const idsAsignados = sucursalesAsignadas.map(sucursal => sucursal.id);
+  const sucursalIds = borradorSucursales ?? idsAsignados;
+  const cambiaronSucursales = sucursalIds.length !== idsAsignados.length || sucursalIds.some(id => !idsAsignados.includes(id));
   const sucursalesActivas = sucursales.filter((sucursal) => sucursal.activo);
   const sucursalesDisponibles = sucursalesActivas.filter((sucursal) => !sucursalIds.includes(sucursal.id));
-  const seleccionNoDisponible = sucursalIds.some((id) => !sucursalesActivas.some((sucursal) => sucursal.id === id));
-  const motivoSucursales = !producto && sucursalIds.length > 0
+  const seleccionNoDisponible = sucursalIds.some(id => !idsAsignados.includes(id) && !sucursalesActivas.some(sucursal => sucursal.id === id));
+  const motivoSucursales = cambiaronSucursales
     ? cargandoSucursales ? 'Esperá a que se carguen las sucursales.'
       : errorSucursales ? 'Recargá las sucursales para verificar la selección.'
         : seleccionNoDisponible ? 'Quitá las sucursales que ya no están disponibles.' : undefined
@@ -216,7 +220,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
     origen && montosOrigen && !hasChanges && imagen === undefined &&
     mismoMonto(precio, montosOrigen.precio) && mismoMonto(costo, montosOrigen.costo)
   );
-  const sinCambios = isEditing && !hasChanges && imagen === undefined && !precio.cambiado && !costo.cambiado;
+  const sinCambios = isEditing && !hasChanges && !cambiaronSucursales && imagen === undefined && !precio.cambiado && !costo.cambiado;
 
   useEffect(() => {
     if (!isReadOnlyView) codigoInputRef.current?.focus();
@@ -247,7 +251,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       checkForChanges();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso, sucursalIds]);
+  }, [subtipoId, codigoQr, unidadAlto, unidadAncho, unidadProfundidad, unidadPeso, borradorSucursales]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -294,7 +298,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
       const costoInput = costoParaGuardar(costo, cotizacion);
       const payload = {
         ...body,
-        ...(!isEditing ? { sucursal_ids: sucursalIds } : {}),
+        ...(!isEditing || cambiaronSucursales ? { sucursal_ids: sucursalIds } : {}),
         ...(!isEditing && imagen === undefined && base?.imagenUrl ? { imagen_url: base.imagenUrl } : {}),
         ...(imagen === null ? { imagen_url: null } : {}),
         ...(precioInput !== undefined ? { precio: precioInput } : {}),
@@ -325,6 +329,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
   };
 
   const cancelInlineEdit = () => {
+    setBorradorSucursales(null);
     if (!producto) return;
     resetPrecio();
     resetCosto();
@@ -456,6 +461,19 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               </div>
               {producto.descripcion && (
                 <DetailField label="Descripción">{producto.descripcion}</DetailField>
+              )}
+            </div>
+
+            <div className={`${styles.section} ${styles.sectionDetail}`}>
+              <h2 className={styles.sectionTitle}>Sucursales</h2>
+              {sucursalesAsignadas.length > 0 ? (
+                <div className={styles.chipsSeleccion}>
+                  {sucursalesAsignadas.map(sucursal => (
+                    <span key={sucursal.id} className={styles.chipSeleccion}>{sucursal.nombre}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.hintDescuento}>Sin sucursales asignadas en tu alcance.</p>
               )}
             </div>
 
@@ -822,7 +840,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
             </div>
           </div>
 
-          {!isEditing && (
+          {(!isEditing || producto?.sucursales !== undefined) && (
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Sucursales</h2>
               <div className={styles.sucursalesPicker}>
@@ -831,7 +849,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                   options={sucursalesDisponibles.map((sucursal) => ({ value: sucursal.id, label: sucursal.nombre }))}
                   value=""
                   onChange={(id) => {
-                    if (id) setSucursalIds((actuales) => [...new Set([...actuales, id])]);
+                    if (id) setBorradorSucursales([...sucursalIds, id]);
                   }}
                   placeholder={sucursalesActivas.length > 0 && sucursalesDisponibles.length === 0
                     ? 'Todas las sucursales agregadas' : 'Seleccionar sucursales'}
@@ -843,7 +861,8 @@ export default function ProductoForm({ title, producto: productoProp, productoId
               {sucursalIds.length > 0 && (
                 <div className={styles.chipsSeleccion} aria-label="Sucursales seleccionadas">
                   {sucursalIds.map((id) => {
-                    const nombre = sucursales.find((sucursal) => sucursal.id === id)?.nombre ?? 'Sucursal no disponible';
+                    const nombre = sucursalesAsignadas.find(sucursal => sucursal.id === id)?.nombre
+                      ?? sucursales.find(sucursal => sucursal.id === id)?.nombre ?? 'Sucursal no disponible';
                     return (
                       <span key={id} className={styles.chipSeleccion}>
                         {nombre}
@@ -852,7 +871,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                           aria-label={`Quitar ${nombre}`}
                           disabled={isSaving}
                           tabIndex={21}
-                          onClick={() => setSucursalIds((actuales) => actuales.filter((seleccionada) => seleccionada !== id))}
+                          onClick={() => setBorradorSucursales(sucursalIds.filter(seleccionada => seleccionada !== id))}
                         >
                           <X size={12} aria-hidden="true" />
                         </button>
@@ -862,7 +881,7 @@ export default function ProductoForm({ title, producto: productoProp, productoId
                 </div>
               )}
               <p className={styles.hintDescuento}>
-                {sucursalIds.length > 0
+                {isEditing ? 'Podés agregar sucursales o quitar las que no tengan stock disponible ni reservado.' : sucursalIds.length > 0
                   ? 'Se agregará a las sucursales elegidas con stock en cero y el precio base del producto.'
                   : 'Opcional. Si no elegís sucursales, se guardará en el catálogo general para asignarlo después desde Stock.'}
               </p>

@@ -16,6 +16,7 @@ export function mapApiProductoToProducto(apiProd: any): Producto {
   return {
     id: apiProd.id,
     subtipoId: apiProd.subtipo_id ?? '',
+    sucursales: Array.isArray(apiProd.sucursales) ? apiProd.sucursales : undefined,
     codigo: apiProd.codigo ?? '',
     codigoBarraProveedor: apiProd.codigo_barra_proveedor ?? '',
     nombre: apiProd.nombre ?? '',

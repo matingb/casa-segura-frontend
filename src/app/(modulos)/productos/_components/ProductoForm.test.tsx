@@ -62,6 +62,18 @@ it('muestra la imagen existente y la quita al guardar', async () => {
   expect(push).toHaveBeenCalledWith('/productos?buscar=CAM+%2B+001%2F%C3%91');
 });
 
+it('muestra las sucursales en el detalle y permite cambiar solo la asignación', async () => {
+  const producto = { ...original, sucursales: [{ id: 's1', nombre: 'Casa Central' }] };
+  vi.mocked(productoClient.actualizar).mockResolvedValue(producto);
+  render(<ProductoForm title="Producto" producto={producto} readOnly />);
+  expect(screen.getByText('Casa Central')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+  expect(screen.getByRole('button', { name: 'Quitar Casa Central' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Quitar Casa Central' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+  await waitFor(() => expect(productoClient.actualizar).toHaveBeenCalledWith('p1', expect.objectContaining({ sucursal_ids: [] }), undefined));
+});
+
 describe('Sucursales al crear un producto', () => {
   beforeEach(() => {
     vi.clearAllMocks();

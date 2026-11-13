@@ -4,6 +4,7 @@ export type UnidadPeso = 'g' | 'kg';
 
 export interface Producto {
   id: string;
+  sucursales?: { id: string; nombre: string }[];
   subtipoId: string;
   codigo: string;
   codigoBarraProveedor: string;
