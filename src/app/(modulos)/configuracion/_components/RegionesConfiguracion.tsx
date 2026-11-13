@@ -7,7 +7,7 @@ import { useToast } from '../../../../context/ToastContext';
 import { useSucursales } from '../../../../context/SucursalContext';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
 import Combobox from '../../../../components/ui/Combobox/Combobox';
-import { formatPorcentaje } from '../../../../lib/utils/formatters';
+import DescuentoEtiqueta from './DescuentoEtiqueta';
 import styles from './RegionesConfiguracion.module.css';
 
 interface FormState {
@@ -308,11 +308,7 @@ export default function RegionesConfiguracion({ onRegionesCargadas }: RegionesCo
                 <div className={styles.filaInfo}>
                   <div className={styles.filaNombre}>
                     <span className={styles.nombre}>{r.nombre}</span>
-                    {r.descuento > 0 ? (
-                      <span className={styles.descuentoBadge}>{formatPorcentaje(r.descuento)} de descuento</span>
-                    ) : (
-                      <span className={styles.sinDescuento}>Sin descuento</span>
-                    )}
+                    <DescuentoEtiqueta descuento={r.descuento} />
                     {!r.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
                     {!r.puedeModificar && <span className={styles.badgeCompartida}>Incluye puntos fuera de tu alcance</span>}
                   </div>

@@ -223,28 +223,6 @@
   color: var(--color-text);
 }
 
-.descuentoBadge,
-.sinDescuento {
-  display: inline-flex;
-  align-items: center;
-  height: 1.5rem;
-  padding: 0 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.descuentoBadge {
-  background: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.sinDescuento {
-  background: var(--color-neutral-bg);
-  color: var(--color-text-muted);
-}
-
 .badgeInactiva {
   display: inline-flex;
   align-items: center;

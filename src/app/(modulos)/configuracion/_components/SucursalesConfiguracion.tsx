@@ -8,7 +8,8 @@ import { useToast } from '../../../../context/ToastContext';
 import BotonConMotivo from '../../../../components/ui/Button/BotonConMotivo';
 import MarcaObligatoria from '../../../../components/ui/MarcaObligatoria/MarcaObligatoria';
 import ConfirmActionModal from '../../../../components/ui/ConfirmActionModal/ConfirmActionModal';
-import { formatARS, formatPorcentaje } from '../../../../lib/utils/formatters';
+import { formatARS } from '../../../../lib/utils/formatters';
+import DescuentoEtiqueta from './DescuentoEtiqueta';
 import styles from './SucursalesConfiguracion.module.css';
 import { useCotizacion } from '../../../../context/CotizacionContext';
 import { CatalogoApiError } from '../../../../lib/api/cotizacion.client';
@@ -420,6 +421,7 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                 <div className={styles.filaInfo}>
                   <div className={styles.filaNombre}>
                     <span className={styles.nombre}>{s.nombre}</span>
+                    <DescuentoEtiqueta descuento={s.descuento} />
                     {s.esCentral && <span className={styles.badgeCentral}>Casa central</span>}
                     {!s.activo && <span className={styles.badgeInactiva}>Inactiva</span>}
                   </div>
@@ -427,9 +429,6 @@ export default function SucursalesConfiguracion({ onSucursalesCargadas, onIrACot
                     <span>{s.valorDolar !== null
                       ? `Efectiva: ${formatARS(s.valorDolar)} · propia del PDV`
                       : `Efectiva: ${cotizacion?.cotizacion_usd_ars != null ? formatARS(cotizacion.cotizacion_usd_ars) : 'sin configurar'} · general heredada`}</span>
-                    <span>
-                      Descuento: {s.descuento !== null ? formatPorcentaje(s.descuento) : '—'}
-                    </span>
                   </div>
                 </div>
 
