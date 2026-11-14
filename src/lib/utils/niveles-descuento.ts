@@ -2,19 +2,23 @@ import { AporteDescuentoLista, NivelDescuentoLista } from '../types/ListaPrecios
 import { formatPorcentaje } from './formatters';
 
 /** Nombres simples de cada nivel del cálculo, en el orden en que se aplican. */
-const NIVELES: Record<NivelDescuentoLista, { corto: string; largo: string }> = {
-  sucursal: { corto: 'Sucursal', largo: 'Descuento de la sucursal' },
-  categoria: { corto: 'Categoría general', largo: 'Descuento general de la categoría' },
-  producto: { corto: 'Producto general', largo: 'Descuento general del producto (para todos los clientes)' },
-  'region-cliente': { corto: 'Región', largo: 'Descuento por región' },
-  'categoria-cliente': { corto: 'Categoría', largo: 'Descuento por categoría' },
-  'producto-cliente': { corto: 'Producto', largo: 'Descuento por producto' },
-  cliente: { corto: 'Habitual', largo: 'Descuento habitual del cliente' },
+const NIVELES: Record<NivelDescuentoLista, { corto: string; descripcion: string; catalogo: string; largo: string }> = {
+  sucursal: { corto: 'Sucursal', descripcion: 'Sucursal', catalogo: 'Sucursal', largo: 'Descuento de la sucursal' },
+  categoria: { corto: 'Categoría', descripcion: 'Categoría', catalogo: 'Categoría general', largo: 'Descuento general de la categoría' },
+  producto: { corto: 'Producto', descripcion: 'Producto', catalogo: 'Producto general', largo: 'Descuento general del producto (para todos los clientes)' },
+  'region-cliente': { corto: 'Región', descripcion: 'Región', catalogo: 'Región', largo: 'Descuento por región' },
+  'categoria-cliente': { corto: 'Categoría', descripcion: 'Categoría', catalogo: 'Categoría', largo: 'Descuento por categoría' },
+  'producto-cliente': { corto: 'Producto', descripcion: 'Producto', catalogo: 'Producto', largo: 'Descuento por producto' },
+  cliente: { corto: 'Cliente', descripcion: 'Cliente', catalogo: 'Habitual', largo: 'Descuento habitual del cliente' },
 };
 
-/** Nombre corto del nivel de descuento ("Región", "Categoría general"…). */
-export function nombreNivel(nivel: NivelDescuentoLista) {
-  return NIVELES[nivel]?.corto ?? nivel;
+/** Nombre del nivel de descuento en catálogo ("Región", "Categoría general"…). */
+export function nombreNivel(nivel: NivelDescuentoLista): string {
+  return NIVELES[nivel]?.catalogo ?? NIVELES[nivel]?.corto ?? nivel;
+}
+
+export function obtenerNombreNivel(nivel: NivelDescuentoLista): string {
+  return NIVELES[nivel]?.descripcion ?? NIVELES[nivel]?.corto ?? nivel;
 }
 
 /**
@@ -37,17 +41,45 @@ export function ordenarAportes(aportes: AporteDescuentoLista[] = []) {
 
 /** Solo los porcentajes, en el orden recibido: "3% / 7%". */
 export function porcentajesDescuento(aportes: AporteDescuentoLista[] = []) {
-  return aportes.map(a => formatPorcentaje(a.porcentaje)).join(' / ');
+  return aportes.map((a) => formatPorcentaje(a.porcentaje)).join(' / ');
+}
+
+/**
+ * Formatea los descuentos en cadena, ej. "10% / 15% / 6%".
+ * Si no hay aportes pero sí un porcentaje total mayor a 0, muestra ese valor.
+ */
+export function formatoDescuentosCadena(aportes: AporteDescuentoLista[] = [], descuentoTotal?: number): string {
+  const activos = aportes.filter((a) => Number(a.porcentaje) > 0);
+  if (activos.length > 0) {
+    return activos.map((a) => formatPorcentaje(a.porcentaje)).join(' / ');
+  }
+  if (descuentoTotal != null && Number(descuentoTotal) > 0) {
+    return formatPorcentaje(descuentoTotal);
+  }
+  return '0%';
 }
 
 export function detalleCorto(aportes: AporteDescuentoLista[] = []) {
-  return aportes.map(a => `${NIVELES[a.nivel]?.corto ?? a.nivel} ${formatPorcentaje(a.porcentaje)}`).join(' · ');
+  const activos = aportes.filter((a) => Number(a.porcentaje) > 0);
+  const lista = activos.length > 0 ? activos : aportes;
+  return lista.map((a) => `${NIVELES[a.nivel]?.corto ?? a.nivel} ${formatPorcentaje(a.porcentaje)}`).join(' · ');
 }
 
-export function detalleLargo(aportes: AporteDescuentoLista[] = []) {
-  if (!aportes.length) return 'Sin descuentos: se usa el precio de lista.';
-  return [
-    ...aportes.map(a => `${NIVELES[a.nivel]?.largo ?? a.nivel}: ${formatPorcentaje(a.porcentaje)}`),
-    'Los descuentos se aplican uno después del otro: 10% + 5% no es 15%, es 14,5%.',
-  ].join('\n');
+/**
+ * Detalle para tooltip al hacer hover sobre el descuento.
+ * Muestra la descripción de cada descuento en una línea, ej.:
+ * Sucursal: 10%
+ * Categoría: 15%
+ */
+export function detalleLargo(aportes: AporteDescuentoLista[] = [], descuentoTotal?: number) {
+  const activos = aportes.filter((a) => Number(a.porcentaje) > 0);
+  if (activos.length > 0) {
+    return activos
+      .map((a) => `${NIVELES[a.nivel]?.descripcion ?? NIVELES[a.nivel]?.corto ?? a.nivel}: ${formatPorcentaje(a.porcentaje)}`)
+      .join('\n');
+  }
+  if (descuentoTotal != null && Number(descuentoTotal) > 0) {
+    return `Descuento: ${formatPorcentaje(descuentoTotal)}`;
+  }
+  return 'Sin descuentos: se usa el precio de lista.';
 }

@@ -1,55 +1,73 @@
-.disparador {
-  display: inline-block;
+.disparador,
+.trigger {
+  display: inline-flex;
   max-width: 100%;
-  cursor: help;
-  border-radius: 3px;
+  cursor: pointer;
+  border-radius: 4px;
+  position: relative;
 }
 
-.disparador:focus-visible {
+.disparador:focus-visible,
+.trigger:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Mismo estilo que los demás tooltips de la app (Sidebar, BotonConMotivo). */
 .tooltip {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1000;
-  width: max-content;
-  max-width: min(18rem, calc(100vw - 16px));
-  padding: 0.45rem 0.75rem;
-  border-radius: 6px;
-  background: #1e293b;
-  color: #fff;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  line-height: 1.35;
-  text-align: left;
+  z-index: 9999;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
-  /* Invisible hasta que se calcula su posición. */
+  background: #ffffff;
+  color: var(--color-text, #111827);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 16px));
   visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .tooltip[data-listo='true'] {
   visibility: visible;
+  opacity: 1;
 }
 
-.tooltip::after {
-  content: '';
-  position: absolute;
-  left: var(--flecha-x, 50%);
-  transform: translateX(-50%);
-  border: 5px solid transparent;
+.tooltipTop {
+  transform-origin: bottom center;
+  animation: fadeInTop 0.15s ease forwards;
 }
 
-.tooltip[data-lado='arriba']::after {
-  top: 100%;
-  border-top-color: #1e293b;
+.tooltipBottom {
+  transform-origin: top center;
+  animation: fadeInBottom 0.15s ease forwards;
 }
 
-.tooltip[data-lado='abajo']::after {
-  bottom: 100%;
-  border-bottom-color: #1e293b;
+@keyframes fadeInTop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

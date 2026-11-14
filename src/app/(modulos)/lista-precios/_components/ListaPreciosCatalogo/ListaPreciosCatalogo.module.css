@@ -11,6 +11,12 @@
   flex-shrink: 0;
 }
 
+.regionFilter {
+  min-width: 200px;
+  width: 200px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 640px) {
   .sucursalFilter,
   .regionFilter {
@@ -103,32 +109,39 @@
 .porcentajes {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
 }
 
 /* Tooltip: nombre de cada descuento y su porcentaje */
 .nivelesTooltip {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
+  min-width: 9rem;
 }
 
 .nivelesTooltip li {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.25rem;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .nivelPorcentaje {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  color: var(--color-success, #15803d);
 }
 
 .ajustado {
   font-weight: 600;
   color: var(--color-warning);
-  cursor: help;
+  cursor: pointer;
 }

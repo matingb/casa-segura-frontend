@@ -242,14 +242,14 @@
   vertical-align: -2px;
   margin-right: 0.35rem;
   color: var(--color-warning);
-  cursor: help;
+  cursor: pointer;
 }
 
 .ajustado {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-warning);
-  cursor: help;
+  cursor: pointer;
 }
 
 .vacio {

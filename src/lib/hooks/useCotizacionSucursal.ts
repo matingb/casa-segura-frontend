@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cotizacionClient } from '../api/cotizacion.client';
-import { Cotizacion } from '../types/Moneda';
+import { Cotizacion, cotizacionCambio } from '../types/Moneda';
+import { getGlobalStaleTimeMs } from '../config/staleTime';
 
 interface Estado {
   sucursalId: string | null;
@@ -19,9 +20,13 @@ export function useCotizacionSucursal(sucursalId?: string | null) {
   const id = sucursalId || null;
   const [estado, setEstado] = useState<Estado>(VACIO);
   const pedido = useRef(0);
+  const datosRef = useRef<Cotizacion | null>(null);
+  datosRef.current = estado.datos;
+  const ultimaConsultaRef = useRef(0);
 
   const recargar = useCallback(async () => {
     const actual = ++pedido.current;
+    ultimaConsultaRef.current = Date.now();
     if (!id) {
       setEstado({ ...VACIO, sucursalId: null });
       return null;
@@ -35,7 +40,19 @@ export function useCotizacionSucursal(sucursalId?: string | null) {
     }));
     try {
       const datos = await cotizacionClient.obtener(id);
-      if (actual === pedido.current) setEstado((prev) => ({ sucursalId: id, datos, error: null, revision: prev.revision + 1, cargando: false }));
+      if (actual === pedido.current) {
+        setEstado((prev) => {
+          const previa = prev.sucursalId === id ? prev.datos : null;
+          const cambio = previa !== null && cotizacionCambio(previa, datos);
+          return {
+            sucursalId: id,
+            datos,
+            error: null,
+            revision: cambio ? prev.revision + 1 : prev.revision,
+            cargando: false,
+          };
+        });
+      }
       return datos;
     } catch (err) {
       if (actual === pedido.current) setEstado((prev) => ({
@@ -56,18 +73,29 @@ export function useCotizacionSucursal(sucursalId?: string | null) {
       return;
     }
     setEstado((prev) => ({ sucursalId: id, datos: null, error: null, revision: prev.revision, cargando: true }));
+    void recargar();
+    ultimaConsultaRef.current = Date.now();
+
+    const onFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (Date.now() - ultimaConsultaRef.current < getGlobalStaleTimeMs()) return;
+      void recargar();
+    };
+
     const refrescarSiCorresponde = (event?: Event) => {
       const detalle = (event as CustomEvent<{ alcance?: string; sucursal_id?: string }> | undefined)?.detail;
       if (detalle?.alcance === 'SUCURSAL' && detalle.sucursal_id !== id) return;
       void recargar();
     };
-    void recargar();
-    window.addEventListener('focus', refrescarSiCorresponde);
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
     window.addEventListener('cotizacion-actualizada', refrescarSiCorresponde);
     const contador = pedido;
     return () => {
       contador.current++;
-      window.removeEventListener('focus', refrescarSiCorresponde);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
       window.removeEventListener('cotizacion-actualizada', refrescarSiCorresponde);
     };
   }, [id, recargar]);

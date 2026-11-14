@@ -13,6 +13,7 @@ import { useListaPrecios } from '../../_hooks/useListaPrecios';
 import { useClasificacion } from '../../../../../lib/hooks/useClasificacion';
 import { formatARS, formatPorcentaje, formatUSD } from '../../../../../lib/utils/formatters';
 import { nombreNivel, ordenarAportes, porcentajesDescuento } from '../../../../../lib/utils/niveles-descuento';
+import Tooltip from '../../../../../components/ui/Tooltip/Tooltip';
 import { exportarListaPreciosExcel } from '../../_lib/exportExcel';
 import { exportarListaPreciosPdf } from '../../_lib/exportPdf';
 import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
@@ -23,7 +24,6 @@ import CeldaProducto from '../../../../../components/ui/Table/CeldaProducto';
 import CeldaPrecio from '../../../../../components/ui/Table/CeldaPrecio';
 import CeldaTexto from '../../../../../components/ui/Table/CeldaTexto';
 import ChipClasificacion from '../../../../../components/ui/Table/ChipClasificacion';
-import Tooltip from '../../../../../components/ui/Tooltip/Tooltip';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
 
 const FILTER_FIELDS: FilterField[] = [
@@ -40,6 +40,8 @@ export default function ListaPreciosCatalogo() {
     regionOptions,
     onRegionChange,
     regionNombre,
+    regionesDisponibles,
+    cargandoRegiones,
     contexto, error, actualizarSeleccion, revalidarAcceso, precios,
     items,
     pageItems,
@@ -73,7 +75,7 @@ export default function ListaPreciosCatalogo() {
       },
       actualizar: async () => {
         const nuevos = await actualizarSeleccion();
-        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios, nuevos.regionNombre);
+        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios, nuevos.regionNombre ?? regionNombre);
       },
     });
   };
@@ -121,13 +123,14 @@ export default function ListaPreciosCatalogo() {
         const ajustado = precio.noAlcanzaMargen && Number(precio.precioListaArs) > 0;
         const aportes = ordenarAportes(precio.descuentosAportes);
         const segunda = ajustado ? (
-          <span
-            className={styles.ajustado}
-            title={`Con los descuentos quedaba en ${formatARS(precio.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(precio.precioMinimo)}.`}
+          <Tooltip
+            content={`Con los descuentos quedaba en ${formatARS(precio.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(precio.precioMinimo)}.`}
           >
-            Ajustado al precio mínimo
-          </span>
-        ) : aportes.length > 0 && (
+            <span className={styles.ajustado}>
+              Ajustado al precio mínimo
+            </span>
+          </Tooltip>
+        ) : aportes.length > 0 ? (
           <Tooltip
             contenido={
               <ul className={styles.nivelesTooltip}>
@@ -142,12 +145,12 @@ export default function ListaPreciosCatalogo() {
           >
             <span className={styles.porcentajes}>{porcentajesDescuento(aportes)}</span>
           </Tooltip>
-        );
+        ) : null;
         return (
           <div className={styles.descuentoCelda}>
             <CeldaTexto
               principal={<span className={styles.descuento}>{formatPorcentaje(precio.descuentoTotalPorcentaje)}</span>}
-              secundarias={[segunda]}
+              secundarias={segunda ? [segunda] : []}
             />
           </div>
         );
@@ -232,12 +235,15 @@ export default function ListaPreciosCatalogo() {
           <div className={styles.regionFilter}>
             <Combobox
               icon={<MapPin size={15} />}
-              options={regionOptions}
+              options={filterOptions.region ?? regionOptions}
               value={regionId}
-              onChange={onRegionChange}
-              placeholder={sucursalId && !isLoading && regionOptions.length === 0 ? 'Sin regiones' : 'Región'}
-              disabled={regionOptions.length === 0}
-              loading={isLoading}
+              onChange={(value) => {
+                if (onRegionChange) onRegionChange(value);
+                onFilterChange('region', value);
+              }}
+              placeholder={!sucursalId ? 'Región' : ((regionesDisponibles === 0 || regionOptions.length <= 1) && !cargandoRegiones ? 'Sin regiones' : 'Región')}
+              loading={cargandoRegiones || isLoading}
+              disabled={!sucursalId || ((regionesDisponibles === 0 || regionOptions.length <= 1) && !cargandoRegiones)}
             />
           </div>
         </FilterBar>
@@ -256,9 +262,9 @@ export default function ListaPreciosCatalogo() {
         </div>
       ) : items.length === 0 ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyStateTitle}>Sin productos habilitados</p>
+          <p className={styles.emptyStateTitle}>No hay productos disponibles</p>
           <p className={styles.emptyStateHint}>
-            La sucursal <strong>{sucursalNombre}</strong> no tiene productos habilitados en stock.
+            No se encontraron productos activos con stock para los filtros seleccionados.
           </p>
         </div>
       ) : (

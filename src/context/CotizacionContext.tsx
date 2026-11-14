@@ -1,17 +1,8 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { cotizacionClient } from '../lib/api/cotizacion.client';
-import { Cotizacion } from '../lib/types/Moneda';
+import { Cotizacion, cotizacionCambio } from '../lib/types/Moneda';
 import { getGlobalStaleTimeMs } from '../lib/config/staleTime';
-
-function cotizacionCambio(a: Cotizacion, b: Cotizacion): boolean {
-  return (
-    a.cotizacion_usd_ars !== b.cotizacion_usd_ars ||
-    a.cotizacion_version !== b.cotizacion_version ||
-    a.origen !== b.origen ||
-    a.sucursal_id !== b.sucursal_id
-  );
-}
 
 export const COTIZACION_STALE_TIME_MS = getGlobalStaleTimeMs();
 

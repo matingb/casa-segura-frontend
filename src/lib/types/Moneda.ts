@@ -25,3 +25,12 @@ export interface Cotizacion extends ContextoMonetario {
   puede_actualizar: boolean;
   sugerencias_sucursales: Array<{ id: string; nombre: string; valor_dolar: string | null }>;
 }
+
+export function cotizacionCambio(a: Cotizacion, b: Cotizacion): boolean {
+  return (
+    a.cotizacion_usd_ars !== b.cotizacion_usd_ars ||
+    a.cotizacion_version !== b.cotizacion_version ||
+    a.origen !== b.origen ||
+    a.sucursal_id !== b.sucursal_id
+  );
+}

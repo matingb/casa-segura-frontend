@@ -4,7 +4,8 @@ import { AlertTriangle, Info, Search } from 'lucide-react';
 import Select from '../../../../../components/ui/Select/Select';
 import { formatARS, formatPorcentaje, formatUSD } from '../../../../../lib/utils/formatters';
 import { ajustadoAlMinimo, esPendienteRevision, ListaPreciosClienteEstado } from './useListaPreciosCliente';
-import { detalleCorto, detalleLargo } from '../../../../../lib/utils/niveles-descuento';
+import Tooltip from '../../../../../components/ui/Tooltip/Tooltip';
+import TooltipDescuento from '../../../../../components/ui/Tooltip/TooltipDescuento';
 import styles from './TablaPreciosCliente.module.css';
 
 const MOTIVO_PENDIENTE =
@@ -125,7 +126,7 @@ export default function TablaPreciosCliente({ lista, sucursales, onAsignarRegion
               <th>Producto</th>
               <th>Categoría</th>
               {mostrarDescuento && <th className={styles.num}>Precio de lista</th>}
-              {mostrarDescuento && <th className={styles.num} title={detalleLargo([])}>Descuento</th>}
+              {mostrarDescuento && <th className={styles.num}>Descuento</th>}
               <th className={styles.num}>Precio cliente</th>
               {mostrarUsd && <th className={styles.num}>Precio cliente USD</th>}
             </tr>
@@ -142,7 +143,6 @@ export default function TablaPreciosCliente({ lista, sucursales, onAsignarRegion
             ) : itemsFiltrados.map(item => {
               const conDescuento = item.descuentoTotalPorcentaje > 0;
               const pendiente = esPendienteRevision(item);
-              const detalle = detalleCorto(item.descuentosAportes);
               return (
                 <tr key={item.id}>
                   <td className={styles.codigo}>{item.codigo}</td>
@@ -153,15 +153,21 @@ export default function TablaPreciosCliente({ lista, sucursales, onAsignarRegion
                   <td>{item.subtipoNombre ? item.subtipoNombre : <span className={styles.muted}>Sin categoría</span>}</td>
                   {mostrarDescuento && <td className={`${styles.num} ${conDescuento ? styles.tachado : ''}`}>{formatARS(item.precioListaArs)}</td>}
                   {mostrarDescuento && (
-                    <td className={styles.num} title={detalleLargo(item.descuentosAportes)}>
+                    <td className={styles.num}>
                       {conDescuento ? (
                         <>
-                          <div className={styles.descuento}>{formatPorcentaje(item.descuentoTotalPorcentaje)}</div>
-                          {detalle && <div className={styles.secundario}>{detalle}</div>}
+                          <TooltipDescuento
+                            aportes={item.descuentosAportes}
+                            descuentoTotal={item.descuentoTotalPorcentaje}
+                          />
                           {ajustadoAlMinimo(item) && (
-                            <div className={styles.ajustado} title={`Con los descuentos quedaba en ${formatARS(item.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(item.precioMinimo)}.`}>
-                              Ajustado al precio mínimo
-                            </div>
+                            <Tooltip
+                              content={`Con los descuentos quedaba en ${formatARS(item.precioSinTope)}. Se cobra el mínimo para no perder margen: ${formatARS(item.precioMinimo)}.`}
+                            >
+                              <div className={styles.ajustado}>
+                                Ajustado al precio mínimo
+                              </div>
+                            </Tooltip>
                           )}
                         </>
                       ) : <span className={styles.ceroDescuento}>0%</span>}
