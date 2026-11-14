@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Building2, MapPin } from 'lucide-react';
 import Card from '../../../../../components/ui/Card/Card';
 import Button from '../../../../../components/ui/Button/Button';
@@ -38,11 +38,11 @@ export default function ListaPreciosCatalogo() {
     sucursalOptions,
     regionId,
     regionOptions,
-    onRegionChange,
     regionNombre,
     regionesDisponibles,
     cargandoRegiones,
     contexto, error, actualizarSeleccion, revalidarAcceso, precios,
+    puedeExportar, reintentar,
     items,
     pageItems,
     page,
@@ -62,20 +62,60 @@ export default function ListaPreciosCatalogo() {
 
   const [formatoExportacion, setFormatoExportacion] = useState<'Excel' | 'PDF' | null>(null);
   const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
+  const filtrosActuales = JSON.stringify([search, filters, sort]);
+  const vistaActual = useRef({ sucursalId, regionId, contexto, items, precios, regionNombre, sucursalNombre, puedeExportar, filtros: filtrosActuales });
+  useEffect(() => {
+    vistaActual.current = { sucursalId, regionId, contexto, items, precios, regionNombre, sucursalNombre, puedeExportar, filtros: filtrosActuales };
+  }, [sucursalId, regionId, contexto, items, precios, regionNombre, sucursalNombre, puedeExportar, filtrosActuales]);
+  const exportacionAbierta = useRef<{
+    formato: 'Excel' | 'PDF';
+    sucursalId: string;
+    regionId: string;
+    contexto: typeof contexto;
+    items: typeof items;
+    precios: typeof precios;
+    regionNombre: typeof regionNombre;
+    sucursalNombre: string;
+    filtros: string;
+  } | null>(null);
+
+  const vistaCapturadaVigente = (captura: NonNullable<typeof exportacionAbierta.current>) => {
+    const actual = vistaActual.current;
+    return actual.puedeExportar && actual.sucursalId === captura.sucursalId && actual.regionId === captura.regionId &&
+      actual.contexto === captura.contexto && actual.items === captura.items && actual.precios === captura.precios &&
+      actual.regionNombre === captura.regionNombre && actual.sucursalNombre === captura.sucursalNombre && actual.filtros === captura.filtros;
+  };
+
+  const abrirExportacion = (formato: 'Excel' | 'PDF') => {
+    if (!puedeExportar || isLoading || ocupado || !contexto) return;
+    exportacionAbierta.current = { formato, sucursalId, regionId, contexto, items, precios, regionNombre, sucursalNombre, filtros: filtrosActuales };
+    setFormatoExportacion(formato);
+  };
 
   const handleConfirmExport = (selectedKeys: string[]) => {
-    if (!formatoExportacion) return;
-    const exportar = formatoExportacion === 'PDF' ? exportarListaPreciosPdf : exportarListaPreciosExcel;
+    const captura = exportacionAbierta.current;
+    if (!captura) return;
     setFormatoExportacion(null);
+    exportacionAbierta.current = null;
+    if (!vistaCapturadaVigente(captura)) return;
+    const exportar = captura.formato === 'PDF' ? exportarListaPreciosPdf : exportarListaPreciosExcel;
     void comprobar({
-      contexto,
+      contexto: captura.contexto,
       conservar: async () => {
+        if (!vistaCapturadaVigente(captura)) throw new Error('La selección, los filtros o los precios cambiaron antes de exportar.');
         await revalidarAcceso();
-        exportar(items, selectedKeys, sucursalNombre, getSubtipoNombre, contexto, precios, regionNombre);
+        if (!vistaCapturadaVigente(captura)) throw new Error('La selección, los filtros o los precios cambiaron durante la comprobación.');
+        exportar(captura.items, selectedKeys, captura.sucursalNombre, getSubtipoNombre, captura.contexto, captura.precios, captura.regionNombre);
       },
       actualizar: async () => {
+        if (!vistaCapturadaVigente(captura)) throw new Error('La selección, los filtros o los precios cambiaron antes de actualizar la lista.');
         const nuevos = await actualizarSeleccion();
-        exportar(nuevos.items, selectedKeys, sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios, nuevos.regionNombre ?? regionNombre);
+        const despues = vistaActual.current;
+        if (despues.sucursalId !== captura.sucursalId || despues.regionId !== captura.regionId ||
+          despues.filtros !== captura.filtros || nuevos.sucursalId !== captura.sucursalId || nuevos.regionId !== captura.regionId) {
+          throw new Error('La selección cambió durante la actualización de la lista.');
+        }
+        exportar(nuevos.items, selectedKeys, nuevos.sucursalNombre, getSubtipoNombre, nuevos.contexto, nuevos.precios, nuevos.regionNombre ?? captura.regionNombre);
       },
     });
   };
@@ -164,8 +204,8 @@ export default function ListaPreciosCatalogo() {
         const precio = precios.get(item.id);
         return (
           <CeldaPrecio
-            ars={formatARS(precio?.precioFinalArs ?? item.precioVentaArs)}
-            usd={formatUSD(precio ? precio.precioFinalUsd : item.precioVentaUsd)}
+            ars={formatARS(precio?.precioFinalArs ?? null)}
+            usd={formatUSD(precio?.precioFinalUsd ?? null)}
           />
         );
       },
@@ -181,7 +221,7 @@ export default function ListaPreciosCatalogo() {
     },
   ];
 
-  const canExport = sucursalId && items.length > 0 && !isLoading && !ocupado;
+  const canExport = puedeExportar && !isLoading && !ocupado;
 
   return (
     <Card
@@ -191,7 +231,7 @@ export default function ListaPreciosCatalogo() {
         <Button
           variant="primary"
           className={styles.exportBtn}
-          onClick={() => setFormatoExportacion('Excel')}
+          onClick={() => abrirExportacion('Excel')}
           disabled={!canExport}
           title={!sucursalId ? 'Seleccioná una sucursal primero' : !items.length ? 'No hay productos habilitados' : 'Exportar lista a Excel'}
         >
@@ -201,7 +241,7 @@ export default function ListaPreciosCatalogo() {
         <Button
           variant="primary"
           className={styles.exportBtn}
-          onClick={() => setFormatoExportacion('PDF')}
+          onClick={() => abrirExportacion('PDF')}
           disabled={!canExport}
           title="Exportar lista a PDF"
         >
@@ -237,10 +277,7 @@ export default function ListaPreciosCatalogo() {
               icon={<MapPin size={15} />}
               options={filterOptions.region ?? regionOptions}
               value={regionId}
-              onChange={(value) => {
-                if (onRegionChange) onRegionChange(value);
-                onFilterChange('region', value);
-              }}
+              onChange={(value) => onFilterChange('region', value)}
               placeholder={!sucursalId ? 'Región' : ((regionesDisponibles === 0 || regionOptions.length <= 1) && !cargandoRegiones ? 'Sin regiones' : 'Región')}
               loading={cargandoRegiones || isLoading}
               disabled={!sucursalId || ((regionesDisponibles === 0 || regionOptions.length <= 1) && !cargandoRegiones)}
@@ -249,10 +286,18 @@ export default function ListaPreciosCatalogo() {
         </FilterBar>
       </div>
 
-      <ContextoPrecios contexto={contexto} error={error} legado={items.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />
+      <ContextoPrecios contexto={contexto} legado={items.some(item => item.precio?.estado === 'LEGADO_PENDIENTE_REVISION')} />
       {dialogo}
       {isLoading ? (
         <p className={styles.loadingText}>Cargando lista de precios…</p>
+      ) : error ? (
+        <div className={styles.emptyState} role="alert">
+          <p className={styles.emptyStateTitle}>No se pudo preparar la lista de precios</p>
+          <p className={styles.emptyStateHint}>{error}</p>
+          <Button variant="secondary" onClick={reintentar} disabled={!sucursalId || !sucursalOptions.some((sucursal) => sucursal.value === sucursalId)}>
+            Reintentar
+          </Button>
+        </div>
       ) : !sucursalId ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyStateTitle}>Seleccioná una sucursal</p>
@@ -288,7 +333,7 @@ export default function ListaPreciosCatalogo() {
           title={`Exportar a ${formatoExportacion}`}
           columnas={formatoExportacion === 'PDF' ? PDF_EXPORT_COLUMNS : EXPORT_COLUMNS}
           seleccionInicial={DEFAULT_EXPORT_COLUMN_KEYS}
-          onClose={() => setFormatoExportacion(null)}
+          onClose={() => { setFormatoExportacion(null); exportacionAbierta.current = null; }}
           onConfirm={handleConfirmExport}
         />
       )}

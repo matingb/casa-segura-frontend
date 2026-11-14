@@ -1,4 +1,5 @@
 import { apiFetch } from '../apiFetch';
+import { respuestaApi } from './apiError';
 import {
   ClienteRegion,
   ClienteDescuentoCategoria,
@@ -6,66 +7,74 @@ import {
   DescuentosClienteResumen,
 } from '../types/Region';
 
-function mapClienteRegion(r: any): ClienteRegion {
+type ApiRecord = Record<string, unknown>;
+
+function texto(valor: unknown, fallback = ''): string {
+  return typeof valor === 'string' ? valor : fallback;
+}
+
+function nullableTexto(valor: unknown): string | null {
+  return typeof valor === 'string' ? valor : null;
+}
+
+function mapClienteRegion(r: ApiRecord): ClienteRegion {
   return {
-    id: r.id,
-    clienteId: r.cliente_id,
-    sucursalId: r.sucursal_id,
-    sucursalNombre: r.sucursal_nombre ?? '',
-    regionId: r.region_id,
-    regionNombre: r.region_nombre ?? '',
+    id: texto(r.id),
+    clienteId: texto(r.cliente_id),
+    sucursalId: texto(r.sucursal_id),
+    sucursalNombre: texto(r.sucursal_nombre),
+    regionId: texto(r.region_id),
+    regionNombre: texto(r.region_nombre),
     descuento: Number(r.descuento ?? 0),
-    createdAt: r.created_at,
+    createdAt: nullableTexto(r.created_at) ?? undefined,
   };
 }
 
-function mapClienteDescuentoCategoria(c: any): ClienteDescuentoCategoria {
+function mapClienteDescuentoCategoria(c: ApiRecord): ClienteDescuentoCategoria {
   return {
-    id: c.id,
-    clienteId: c.cliente_id,
-    tipoId: c.tipo_id ?? null,
-    tipoNombre: c.tipo_nombre ?? null,
-    subtipoId: c.subtipo_id ?? null,
-    subtipoNombre: c.subtipo_nombre ?? null,
-    categoriaPadreId: c.categoria_padre_id ?? null,
-    categoriaPadreNombre: c.categoria_padre_nombre ?? null,
+    id: texto(c.id),
+    clienteId: texto(c.cliente_id),
+    tipoId: nullableTexto(c.tipo_id),
+    tipoNombre: nullableTexto(c.tipo_nombre),
+    subtipoId: nullableTexto(c.subtipo_id),
+    subtipoNombre: nullableTexto(c.subtipo_nombre),
+    categoriaPadreId: nullableTexto(c.categoria_padre_id),
+    categoriaPadreNombre: nullableTexto(c.categoria_padre_nombre),
     porcentaje: Number(c.porcentaje ?? 0),
-    nota: c.nota ?? null,
-    createdAt: c.created_at,
-    updatedAt: c.updated_at,
+    nota: nullableTexto(c.nota),
+    createdAt: nullableTexto(c.created_at) ?? undefined,
+    updatedAt: nullableTexto(c.updated_at) ?? undefined,
   };
 }
 
-function mapClienteDescuentoProducto(p: any): ClienteDescuentoProducto {
+function mapClienteDescuentoProducto(p: ApiRecord): ClienteDescuentoProducto {
   return {
-    id: p.id,
-    clienteId: p.cliente_id,
-    productoId: p.producto_id,
-    productoCodigo: p.producto_codigo ?? '',
-    productoNombre: p.producto_nombre ?? '',
+    id: texto(p.id),
+    clienteId: texto(p.cliente_id),
+    productoId: texto(p.producto_id),
+    productoCodigo: texto(p.producto_codigo),
+    productoNombre: texto(p.producto_nombre),
     productoPrecioBase: p.producto_precio_base == null ? null : Number(p.producto_precio_base),
     porcentaje: Number(p.porcentaje ?? 0),
-    nota: p.nota ?? null,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
+    nota: nullableTexto(p.nota),
+    createdAt: nullableTexto(p.created_at) ?? undefined,
+    updatedAt: nullableTexto(p.updated_at) ?? undefined,
   };
 }
 
 export const clienteDescuentoClient = {
   obtenerDescuentos: async (clienteId: string): Promise<DescuentosClienteResumen> => {
     const res = await apiFetch(`/api/clientes/${clienteId}/descuentos`);
-    if (!res.ok) throw new Error('Error al cargar descuentos del cliente');
-    const json = await res.json();
-    if (json.status !== 'success' || !json.data) {
-      throw new Error(json.message || 'Error al cargar descuentos');
-    }
-    const d = json.data;
+    const d = await respuestaApi<ApiRecord>(res, 'Error al cargar descuentos del cliente');
+    const regiones = Array.isArray(d.regiones) ? d.regiones as ApiRecord[] : [];
+    const categorias = Array.isArray(d.categorias) ? d.categorias as ApiRecord[] : [];
+    const productos = Array.isArray(d.productos) ? d.productos as ApiRecord[] : [];
     return {
-      clienteId: d.clienteId,
+      clienteId: texto(d.clienteId),
       descuentoGeneral: d.descuentoGeneral != null ? Number(d.descuentoGeneral) : null,
-      regiones: Array.isArray(d.regiones) ? d.regiones.map(mapClienteRegion) : [],
-      categorias: Array.isArray(d.categorias) ? d.categorias.map(mapClienteDescuentoCategoria) : [],
-      productos: Array.isArray(d.productos) ? d.productos.map(mapClienteDescuentoProducto) : [],
+      regiones: regiones.map(mapClienteRegion),
+      categorias: categorias.map(mapClienteDescuentoCategoria),
+      productos: productos.map(mapClienteDescuentoProducto),
     };
   },
 
@@ -78,21 +87,14 @@ export const clienteDescuentoClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al asignar descuento de categoría');
-    }
-    return mapClienteDescuentoCategoria(json.data);
+    return mapClienteDescuentoCategoria(await respuestaApi<ApiRecord>(res, 'Error al asignar descuento de categoría'));
   },
 
   quitarCategoria: async (clienteId: string, descuentoId: string): Promise<void> => {
     const res = await apiFetch(`/api/clientes/${clienteId}/descuentos/categoria/${descuentoId}`, {
       method: 'DELETE',
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al quitar descuento de categoría');
-    }
+    await respuestaApi<void>(res, 'Error al quitar descuento de categoría');
   },
 
   asignarProducto: async (
@@ -104,21 +106,14 @@ export const clienteDescuentoClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al asignar descuento de producto');
-    }
-    return mapClienteDescuentoProducto(json.data);
+    return mapClienteDescuentoProducto(await respuestaApi<ApiRecord>(res, 'Error al asignar descuento de producto'));
   },
 
   quitarProducto: async (clienteId: string, descuentoId: string): Promise<void> => {
     const res = await apiFetch(`/api/clientes/${clienteId}/descuentos/producto/${descuentoId}`, {
       method: 'DELETE',
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al quitar descuento de producto');
-    }
+    await respuestaApi<void>(res, 'Error al quitar descuento de producto');
   },
 
   asignarRegion: async (
@@ -130,20 +125,13 @@ export const clienteDescuentoClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al asignar región');
-    }
-    return mapClienteRegion(json.data);
+    return mapClienteRegion(await respuestaApi<ApiRecord>(res, 'Error al asignar región'));
   },
 
   quitarRegion: async (clienteId: string, sucursalId: string): Promise<void> => {
     const res = await apiFetch(`/api/clientes/${clienteId}/region/${sucursalId}`, {
       method: 'DELETE',
     });
-    const json = await res.json();
-    if (!res.ok || json.status !== 'success') {
-      throw new Error(json.message || 'Error al quitar región');
-    }
+    await respuestaApi<void>(res, 'Error al quitar región');
   },
 };

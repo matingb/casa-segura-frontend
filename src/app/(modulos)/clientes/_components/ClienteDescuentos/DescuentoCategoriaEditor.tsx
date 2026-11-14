@@ -55,8 +55,8 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
   const destino: Destino | null = modo === 'tipo' ? (tipoId ? { modo, id: tipoId } : null) : (subtipoId ? { modo, id: subtipoId } : null);
   const existente = destino ? categorias.find(c => (destino.modo === 'tipo' ? c.tipoId === destino.id && !c.subtipoId : c.subtipoId === destino.id)) : undefined;
   const { valor, error } = validarPorcentaje(porcentaje);
-  const afectados = destino ? productosAfectados(lista.items, destino, subtiposConDescuento) : [];
-  const excluidosPorSubcategoria = destino?.modo === 'tipo' ? lista.items.filter(i => i.tipoId === destino.id).length - afectados.length : 0;
+  const afectados = lista.disponible && destino ? productosAfectados(lista.items, destino, subtiposConDescuento) : [];
+  const excluidosPorSubcategoria = lista.disponible && destino?.modo === 'tipo' ? lista.items.filter(i => i.tipoId === destino.id).length - afectados.length : 0;
   const ejemplo = afectados[0];
   const vistaPrevia = ejemplo && valor != null ? simularPrecio(ejemplo, { 'categoria-cliente': valor }) : null;
   const debajoDelMargen = valor != null ? afectados.filter(i => simularPrecio(i, { 'categoria-cliente': valor }).debajoDelMargen).length : 0;
@@ -120,8 +120,9 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
   };
 
   const nombreCategoria = (c: ClienteDescuentoCategoria) => (c.subtipoId ? c.subtipoNombre : c.tipoNombre) ?? 'Categoría';
-  const afectadosDe = (c: ClienteDescuentoCategoria) =>
-    productosAfectados(lista.items, c.subtipoId ? { modo: 'subtipo', id: c.subtipoId } : { modo: 'tipo', id: c.tipoId ?? '' }, subtiposConDescuento).length;
+  const afectadosDe = (c: ClienteDescuentoCategoria) => lista.disponible
+    ? productosAfectados(lista.items, c.subtipoId ? { modo: 'subtipo', id: c.subtipoId } : { modo: 'tipo', id: c.tipoId ?? '' }, subtiposConDescuento).length
+    : null;
 
   return (
     <div className={styles.nivel}>
@@ -178,8 +179,10 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
               </p>
             )}
             <p>
-              Se aplica a {plural(afectados.length, 'producto', 'productos')} de {sucursalNombre}.
-              {excluidosPorSubcategoria > 0 && ` ${plural(excluidosPorSubcategoria, 'producto tiene', 'productos tienen')} un descuento propio de subcategoría, que tiene prioridad.`}
+              {lista.disponible
+                ? <>Se aplica a {plural(afectados.length, 'producto', 'productos')} de {sucursalNombre}.
+                  {excluidosPorSubcategoria > 0 && ` ${plural(excluidosPorSubcategoria, 'producto tiene', 'productos tienen')} un descuento propio de subcategoría, que tiene prioridad.`}</>
+                : 'Los descuentos se pueden administrar, pero la lista no está disponible para calcular productos afectados.'}
             </p>
             {ejemplo && vistaPrevia && (
               <p className={styles.vistaPrevia}>
@@ -222,7 +225,7 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
                   <td className={styles.num}>
                     <PorcentajeEditable id={`pct-${c.id}`} valor={Number(c.porcentaje)} etiqueta={`descuento de ${nombreCategoria(c)}`} onGuardar={(n) => cambiarPorcentaje(c, n)} />
                   </td>
-                  <td className={styles.num}>{afectadosDe(c)}</td>
+                  <td className={styles.num}>{afectadosDe(c) ?? <span className={styles.muted}>No disponible</span>}</td>
                   <td className={styles.nota}>{c.nota || <span className={styles.muted}>—</span>}</td>
                   <td className={styles.acciones}>
                     <button type="button" className={styles.btnQuitar} onClick={() => setAQuitar(c)}><Trash2 size={14} aria-hidden="true" />Quitar</button>
@@ -237,7 +240,9 @@ export default function DescuentoCategoriaEditor({ clienteId, categorias, lista,
       {aQuitar && (
         <ConfirmActionModal
           title="Quitar descuento"
-          description={`¿Quitar el descuento de ${nombreCategoria(aQuitar)}? ${plural(afectadosDe(aQuitar), 'producto vuelve', 'productos vuelven')} a su precio sin este descuento.`}
+          description={`¿Quitar el descuento de ${nombreCategoria(aQuitar)}?${afectadosDe(aQuitar) == null
+            ? ' La lista no está disponible para estimar cuántos productos cambia.'
+            : ` ${plural(afectadosDe(aQuitar)!, 'producto vuelve', 'productos vuelven')} a su precio sin este descuento.`}`}
           confirmLabel="Quitar"
           isConfirming={quitando}
           onConfirm={quitar}

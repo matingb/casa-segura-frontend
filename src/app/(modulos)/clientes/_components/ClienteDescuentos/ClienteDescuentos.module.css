@@ -10,6 +10,43 @@
   font-size: 0.875rem;
 }
 
+.resumenError,
+.avisoPrecios {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-warning, #d97706);
+  border-radius: 8px;
+  background: var(--color-warning-bg, #fffbeb);
+  color: var(--color-text, #1f2937);
+  font-size: 0.85rem;
+}
+
+.resumenError p {
+  margin: 0;
+}
+
+.avisoPrecios {
+  margin-bottom: 1rem;
+}
+
+.bannerBoton {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bannerBoton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ── Introducción ─────────────── */
 .intro {
   display: flex;

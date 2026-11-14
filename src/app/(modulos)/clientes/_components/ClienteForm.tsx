@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, FileDown, Pencil, User, Percent, Building2, MapPin, ArrowLeft, Trash2 } from 'lucide-react';
 import Card from '../../../../components/ui/Card/Card';
@@ -60,7 +60,7 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const { sucursales: sucursalesActivasContexto } = useSucursales();
-  const { cliente: clienteCargado, isLoading, error, reload, clear: limpiarClienteCargado } = useClienteDetalle(clienteId ?? '');
+  const { cliente: clienteCargado, isLoading, error, reload, revalidarSilencioso, clear: limpiarClienteCargado } = useClienteDetalle(clienteId ?? '');
   const cliente = clienteId ? clienteCargado ?? undefined : clienteProp;
 
   // Solo puntos de venta asignados al usuario. Los inactivos pueden seguir
@@ -68,6 +68,10 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loadingSucursales, setLoadingSucursales] = useState(true);
   const requestSucursales = useRef(0);
+  const [tipoCliente, setTipoCliente] = useState<TipoCliente>('persona');
+  const [tipoDocumento, setTipoDocumento] = useState('');
+  const [condicionIva, setCondicionIva] = useState('');
+  const [sucursalIds, setSucursalIds] = useState<string[]>([]);
   useEffect(() => {
     const cargar = async () => {
       const version = ++requestSucursales.current;
@@ -100,11 +104,6 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
       window.removeEventListener('focus', recargarPorAlcance);
     };
   }, [showError, sucursalesActivasContexto]);
-  const [tipoCliente, setTipoCliente] = useState<TipoCliente>('persona');
-  const [tipoDocumento, setTipoDocumento] = useState('');
-  const [condicionIva, setCondicionIva] = useState('');
-  const [sucursalIds, setSucursalIds] = useState<string[]>([]);
-
   const agregarSucursal = (id: string) => {
     setSucursalIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
@@ -143,6 +142,34 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
     () => (cliente?.sucursales ?? []).filter((asociada) => sucursalesActivasContexto.some((sucursal) => sucursal.id === asociada.id)),
     [cliente?.sucursales, sucursalesActivasContexto]
   );
+  const revalidacionesLista = useRef(new Map<string, { generation: number; promise: Promise<void> | null }>());
+  const revisarRecursoNoDisponible = useCallback((detalle: { clienteId: string; sucursalId: string; generation: number; origen: string }) => {
+    if (!clienteId || detalle.clienteId !== clienteId) return Promise.resolve();
+    const clave = `${detalle.clienteId}|${detalle.sucursalId}`;
+    const existente = revalidacionesLista.current.get(clave);
+    if (existente?.promise) return existente.promise;
+    if (existente?.generation === detalle.generation) return Promise.resolve();
+    const registro = { generation: detalle.generation, promise: null as Promise<void> | null };
+    revalidacionesLista.current.set(clave, registro);
+    const comprobacion = (async () => {
+      try {
+        const resultado = await revalidarSilencioso();
+        if (resultado.estado === 'obsoleta') return;
+        if (!resultado.cliente) limpiarClienteCargado('Cliente no encontrado');
+      } catch (err) {
+        if (err instanceof CatalogoApiError && (err.status === 404 || err.code === 'RECURSO_NO_DISPONIBLE')) {
+          limpiarClienteCargado('El cliente ya no está disponible dentro de tu alcance.');
+          return;
+        }
+        showError(`No se pudo confirmar la disponibilidad del cliente. ${err instanceof Error ? err.message : 'Reintentá manualmente.'}`);
+      }
+    })();
+    registro.promise = comprobacion;
+    void comprobacion.finally(() => {
+      if (revalidacionesLista.current.get(clave) === registro) registro.promise = null;
+    });
+    return comprobacion;
+  }, [clienteId, revalidarSilencioso, limpiarClienteCargado, showError]);
 
   const serializeForm = (): string => {
     if (!formRef.current) return '';
@@ -641,7 +668,12 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
               type="button"
               variant="secondary"
               onClick={() => setShowListaPreciosModal(true)}
-              title="Ver los precios finales del cliente y exportarlos en PDF o Excel"
+              disabled={!cliente.activo || sucursalesClienteActivas.length === 0}
+              title={!cliente.activo
+                ? 'El cliente está inactivo. Reactivalo para consultar o exportar su lista de precios.'
+                : sucursalesClienteActivas.length === 0
+                  ? 'El cliente no tiene puntos de venta activos disponibles.'
+                  : 'Ver los precios finales del cliente y exportarlos en PDF o Excel'}
             >
               <FileDown size={16} style={{ marginRight: '0.4rem' }} />
               Ver lista de precios
@@ -820,7 +852,9 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             sucursales={sucursalesClienteActivas}
             descuentoHabitual={cliente.descuentoPorcentaje}
             onTotalDescuentosChange={setTotalDescuentos}
-            visible={activeTab === 'descuentos'}
+            clienteActivo={cliente.activo}
+            visible={activeTab === 'descuentos' && !showListaPreciosModal}
+            onRecursoNoDisponible={revisarRecursoNoDisponible}
             focoRegion={focoRegion}
           />
         </div>
@@ -845,7 +879,9 @@ export default function ClienteForm({ title, cliente: clienteProp, clienteId, re
             clienteRazonSocial={cliente.razonSocial}
             clienteNroDocumento={cliente.nroDocumento}
             descuentoHabitual={cliente.descuentoPorcentaje}
+            clienteActivo={cliente.activo}
             sucursales={sucursalesClienteActivas}
+            onRecursoNoDisponible={revisarRecursoNoDisponible}
             onAsignarRegion={() => {
               setShowListaPreciosModal(false);
               setActiveTab('descuentos');

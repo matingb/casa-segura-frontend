@@ -48,7 +48,7 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
   const sucursalNombre = lista.datos?.sucursal.nombre ?? 'este punto de venta';
 
   const opciones = useMemo(() => catalogo.map(p => {
-    const precio = itemPorProducto.get(p.id)?.precioListaArs ?? p.precioBase;
+    const precio = itemPorProducto.get(p.id)?.precioListaArs;
     return { value: p.id, label: [p.codigo, p.nombre, p.marca, precio != null ? formatARS(precio) : null].filter(Boolean).join(' · ') };
   }), [catalogo, itemPorProducto]);
 
@@ -160,6 +160,8 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
                   <p className={styles.avisoMargen}>Con este descuento quedaría debajo del margen mínimo, así que se cobra el precio mínimo permitido.</p>
                 )}
               </>
+            ) : !lista.disponible ? (
+              <p className={styles.muted}>La lista de precios no está disponible; el descuento se conserva, pero no se puede simular su efecto.</p>
             ) : (
               <p className={styles.muted}>Este producto no se vende en {sucursalNombre}: no se puede mostrar cómo queda el precio acá.</p>
             )}
@@ -199,7 +201,7 @@ export default function DescuentoProductoEditor({ clienteId, productos, lista, o
                     </td>
                     <td className={styles.num}>{fila ? formatPorcentaje(fila.descuentoTotalPorcentaje) : <span className={styles.muted}>—</span>}</td>
                     <td className={`${styles.num} ${styles.precio}`}>
-                      {fila ? formatARS(fila.precioFinalArs) : <span className={styles.muted} title={`No se vende en ${sucursalNombre}`}>No disponible</span>}
+                      {fila ? formatARS(fila.precioFinalArs) : <span className={styles.muted} title={lista.disponible ? `No se vende en ${sucursalNombre}` : 'La lista de precios no está disponible'}>No disponible</span>}
                     </td>
                     <td className={styles.nota}>{p.nota || <span className={styles.muted}>—</span>}</td>
                     <td className={styles.acciones}>

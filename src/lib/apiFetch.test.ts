@@ -91,6 +91,30 @@ describe('apiFetch', () => {
     expect(replaceMock).toHaveBeenCalledWith('/login');
   });
 
+  it('solo emite el evento global de alcance para 403 SUCURSAL_FUERA_DE_ALCANCE', async () => {
+    const listener = vi.fn();
+    window.addEventListener('alcance-pdv-revocado', listener);
+    const fetchSpy = vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'SUCURSAL_FUERA_DE_ALCANCE' }), { status: 403 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'OTRO_403' }), { status: 403 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'RECURSO_NO_DISPONIBLE' }), { status: 404 }));
+
+    try {
+      await apiFetch('/api/lista');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener.mock.calls[0][0]).toMatchObject({ detail: { code: 'SUCURSAL_FUERA_DE_ALCANCE' } });
+
+      await apiFetch('/api/otra-lista');
+      await apiFetch('/api/lista-no-disponible');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+    } finally {
+      window.removeEventListener('alcance-pdv-revocado', listener);
+    }
+  });
+
   it('agrupa llamadas concurrentes de 401 para hacer un único llamado a /api/auth/refresh', async () => {
     const mock401_1 = new Response(null, { status: 401 });
     const mock401_2 = new Response(null, { status: 401 });

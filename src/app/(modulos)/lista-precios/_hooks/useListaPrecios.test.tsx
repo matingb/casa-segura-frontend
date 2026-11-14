@@ -112,13 +112,33 @@ describe('useListaPrecios con selección por defecto y selector de región', () 
     }));
   });
 
-  it('si hay múltiples sucursales, no selecciona ninguna por defecto hasta que el usuario elija', async () => {
+  it('si hay múltiples sucursales, selecciona la primera y su primera región por defecto', async () => {
     const { result } = renderHook(() => useListaPrecios());
 
-    // Con 2 sucursales, sucursalId queda en blanco
-    expect(result.current.sucursalId).toBe('');
-    expect(result.current.regionId).toBe('');
-    expect(result.current.regionOptions).toEqual([{ value: '', label: 'Sin región' }]);
+    await waitFor(() => {
+      expect(result.current.sucursalId).toBe('suc-1');
+      expect(result.current.regionId).toBe('reg-1');
+    });
+    await waitFor(() => {
+      expect(descuentoEngineClient.listaSucursal).toHaveBeenCalledWith('suc-1', 'reg-1');
+    });
+  });
+
+  it('si la sucursal seleccionada queda fuera de alcance, vuelve a la primera activa', async () => {
+    const { result, rerender } = renderHook(() => useListaPrecios());
+
+    await act(async () => {
+      result.current.onFilterChange('sucursal', 'suc-2');
+    });
+    await waitFor(() => expect(result.current.sucursalId).toBe('suc-2'));
+
+    sucursalesMock = [
+      { id: 'suc-1', nombre: 'Sucursal Central', activo: true },
+      { id: 'suc-2', nombre: 'Sucursal Norte', activo: false },
+    ];
+    rerender();
+
+    await waitFor(() => expect(result.current.sucursalId).toBe('suc-1'));
   });
 
   it('si hay una única sucursal, aparece esa por defecto', async () => {
@@ -169,7 +189,18 @@ describe('useListaPrecios con selección por defecto y selector de región', () 
 
     await waitFor(() => {
       expect(result.current.sucursalId).toBe('suc-1');
-      expect(result.current.regionId).toBe(''); // suc-1 tiene 2 regiones, por defecto Sin región
+      expect(result.current.regionId).toBe('reg-1'); // por defecto, la primera región del PDV
+    });
+
+    // El usuario pasa a «Sin región»: se calcula sin el descuento regional.
+    await act(async () => {
+      result.current.onFilterChange('region', '');
+    });
+
+    await waitFor(() => {
+      expect(result.current.regionId).toBe('');
+      expect(descuentoEngineClient.listaSucursal).toHaveBeenCalledWith('suc-1', null);
+      expect(result.current.precios.get('p1')?.precioFinalArs).toBe(1000);
     });
 
     await act(async () => {

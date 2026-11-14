@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, X } from 'lucide-react';
 import { ListaPreciosCliente } from '../../../../../lib/types/ListaPreciosCliente';
+import { ListaClienteNoDisponible } from '../ListaPreciosCliente/useListaPreciosCliente';
 import { useToast } from '../../../../../context/ToastContext';
 import ExportarColumnasModal from '../../../../../components/ExportarColumnasModal/ExportarColumnasModal';
 import { useExportacionCotizacion } from '../../../../../lib/hooks/useExportacionCotizacion';
@@ -20,7 +21,9 @@ interface Props {
   clienteRazonSocial?: string | null;
   clienteNroDocumento?: string | null;
   descuentoHabitual?: number | null;
+  clienteActivo: boolean;
   sucursales: Array<{ id: string; nombre: string }>;
+  onRecursoNoDisponible?: (detalle: ListaClienteNoDisponible) => void | Promise<void>;
   /** Cierra el modal y lleva a la asignación de región del cliente. */
   onAsignarRegion?: () => void;
 }
@@ -31,14 +34,30 @@ export default function ClienteListaPreciosModal({
   clienteNombre,
   clienteRazonSocial,
   clienteNroDocumento,
+  clienteActivo,
   sucursales,
+  onRecursoNoDisponible,
   onAsignarRegion,
 }: Props) {
   const { showError, showSuccess } = useToast();
   const { comprobar, ocupado, dialogo } = useExportacionCotizacion();
-  const lista = useListaPreciosCliente({ clienteId, sucursales, activo: isOpen });
+  const lista = useListaPreciosCliente({ clienteId, sucursales, clienteActivo, activo: isOpen, onRecursoNoDisponible });
   const { datos, itemsFiltrados, cargando, hayCotizacion, filtroActivo, revalidarAcceso } = lista;
   const [formatoExportacion, setFormatoExportacion] = useState<'pdf' | 'excel' | null>(null);
+  const exportacionAbierta = useRef<{
+    formato: 'pdf' | 'excel';
+    datos: ListaPreciosCliente;
+    sucursalId: string;
+    filtrar: typeof lista.filtrar;
+    filas: ReturnType<typeof aFilaExportCliente>[];
+    filtroActivo: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (isOpen && !clienteActivo) {
+      exportacionAbierta.current = null;
+      onClose();
+    }
+  }, [isOpen, clienteActivo, onClose]);
   useEffect(() => {
     const cerrar = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -52,9 +71,7 @@ export default function ClienteListaPreciosModal({
     razonSocial: clienteRazonSocial,
     nroDocumento: clienteNroDocumento,
   });
-  const exportar = (formato: 'pdf' | 'excel', data: ListaPreciosCliente, columnas: string[]) => {
-    // Mismos filtros que la tabla en pantalla; al archivo solo pasan las columnas de la lista blanca.
-    const filas = lista.filtrar(data.items).map(aFilaExportCliente);
+  const exportar = (formato: 'pdf' | 'excel', data: ListaPreciosCliente, columnas: string[], filas: ReturnType<typeof aFilaExportCliente>[]) => {
     if (!filas.length) throw new Error('No hay productos para exportar con el filtro actual.');
     const params = {
       filas,
@@ -68,28 +85,58 @@ export default function ClienteListaPreciosModal({
     showSuccess('Lista exportada');
   };
   const confirmarExportacion = (columnas: string[]) => {
-    const formato = formatoExportacion;
+    const captura = exportacionAbierta.current;
     setFormatoExportacion(null);
-    if (!formato) return;
-    if (!datos) {
-      showError('Esperá a que cargue la lista antes de exportar.');
+    exportacionAbierta.current = null;
+    if (!captura) return;
+    if (!clienteActivo || lista.sucursalId !== captura.sucursalId || !lista.esSnapshotVigente(captura.datos)) {
+      showError('La selección o disponibilidad cambió. Volvé a cargar la lista antes de exportar.');
       return;
     }
     void comprobar({
-      contexto: datos.contexto_monetario,
+      contexto: captura.datos.contexto_monetario,
       conservar: async () => {
+        if (!clienteActivo || lista.sucursalId !== captura.sucursalId || !lista.esSnapshotVigente(captura.datos)) {
+          throw new Error('La lista cambió o dejó de estar disponible antes de exportar.');
+        }
         await revalidarAcceso();
-        exportar(formato, datos, columnas);
+        if (!clienteActivo || lista.sucursalId !== captura.sucursalId || !lista.esSnapshotVigente(captura.datos)) {
+          throw new Error('La lista cambió o dejó de estar disponible durante la comprobación.');
+        }
+        exportar(captura.formato, captura.datos, columnas, captura.filas);
       },
-      actualizar: async () => exportar(formato, await lista.recargar(), columnas),
+      actualizar: async () => {
+        if (!clienteActivo || lista.sucursalId !== captura.sucursalId) throw new Error('La selección cambió antes de actualizar la lista.');
+        const nuevos = await lista.recargar();
+        if (!clienteActivo || !lista.esSnapshotVigente(nuevos) || nuevos.sucursal.id !== captura.sucursalId) {
+          throw new Error('La lista cambió o dejó de estar disponible durante la actualización.');
+        }
+        exportar(captura.formato, nuevos, columnas, captura.filtrar(nuevos.items).map(aFilaExportCliente));
+      },
     });
   };
   const resumenExportacion = (cantidadColumnas: number) => {
-    const productos = itemsFiltrados.length === 1 ? '1 producto' : `${itemsFiltrados.length} productos`;
+    const captura = exportacionAbierta.current;
+    const cantidad = captura?.filas.length ?? 0;
+    const productos = cantidad === 1 ? '1 producto' : `${cantidad} productos`;
     const columnas = cantidadColumnas === 1 ? '1 columna' : `${cantidadColumnas} columnas`;
-    return `Se van a exportar ${productos}${filtroActivo ? ' (filtro activo)' : ''} con ${columnas}.`;
+    return `Se van a exportar ${productos}${captura?.filtroActivo ? ' (filtro activo)' : ''} con ${columnas}.`;
   };
-  const exportarDeshabilitado = cargando || ocupado || itemsFiltrados.length === 0;
+  const exportarDeshabilitado = !clienteActivo || cargando || ocupado || !lista.disponible || !lista.esSnapshotVigente(datos) || itemsFiltrados.length === 0;
+
+  const abrirExportacion = (formato: 'pdf' | 'excel') => {
+    if (!clienteActivo || !datos || !lista.esSnapshotVigente(datos) || exportarDeshabilitado) {
+      showError('Esperá a que la lista esté completa y disponible antes de exportar.');
+      return;
+    }
+    const filas = lista.filtrar(datos.items).map(aFilaExportCliente);
+    if (!filas.length) {
+      showError('No hay productos para exportar con el filtro actual.');
+      return;
+    }
+    exportacionAbierta.current = { formato, datos, sucursalId: lista.sucursalId, filtrar: lista.filtrar, filas, filtroActivo };
+    setFormatoExportacion(formato);
+  };
 
   if (!isOpen) return null;
 
@@ -119,7 +166,11 @@ export default function ClienteListaPreciosModal({
 
           <div className={styles.body}>
             {dialogo}
-            <TablaPreciosCliente lista={lista} sucursales={sucursales} onAsignarRegion={onAsignarRegion} className={styles.vista} />
+            {!clienteActivo ? (
+              <p role="status">El cliente está inactivo. Reactivalo para consultar o exportar su lista de precios.</p>
+            ) : (
+              <TablaPreciosCliente lista={lista} sucursales={sucursales} onAsignarRegion={onAsignarRegion} className={styles.vista} />
+            )}
           </div>
 
           <div className={styles.footer}>
@@ -133,7 +184,7 @@ export default function ClienteListaPreciosModal({
               <button
                 type="button"
                 className={styles.btnExcel}
-                onClick={() => setFormatoExportacion('excel')}
+                onClick={() => abrirExportacion('excel')}
                 disabled={exportarDeshabilitado}
               >
                 <FileSpreadsheet size={15} />
@@ -142,7 +193,7 @@ export default function ClienteListaPreciosModal({
               <button
                 type="button"
                 className={styles.btnPdf}
-                onClick={() => setFormatoExportacion('pdf')}
+                onClick={() => abrirExportacion('pdf')}
                 disabled={exportarDeshabilitado}
               >
                 <FileDown size={15} />
@@ -159,7 +210,7 @@ export default function ClienteListaPreciosModal({
           seleccionInicial={[]}
           resumen={resumenExportacion}
           confirmLabel={formatoExportacion === 'pdf' ? 'Exportar PDF' : 'Exportar Excel'}
-          onClose={() => setFormatoExportacion(null)}
+          onClose={() => { setFormatoExportacion(null); exportacionAbierta.current = null; }}
           onConfirm={confirmarExportacion}
         />
       )}

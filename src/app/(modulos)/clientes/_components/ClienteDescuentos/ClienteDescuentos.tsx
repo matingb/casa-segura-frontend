@@ -6,9 +6,8 @@ import { DescuentosClienteResumen } from '../../../../../lib/types/Region';
 import { clienteDescuentoClient } from '../../../../../lib/api/cliente-descuento.client';
 import { CatalogoApiError } from '../../../../../lib/api/apiError';
 import { formatPorcentaje } from '../../../../../lib/utils/formatters';
-import { useToast } from '../../../../../context/ToastContext';
 import Select from '../../../../../components/ui/Select/Select';
-import { useListaPreciosCliente } from '../ListaPreciosCliente/useListaPreciosCliente';
+import { ListaClienteNoDisponible, nuevaGeneracionNotificacionListaCliente, useListaPreciosCliente } from '../ListaPreciosCliente/useListaPreciosCliente';
 import SeccionDescuento from './SeccionDescuento';
 import RegionSelector from './RegionSelector';
 import DescuentoCategoriaEditor from './DescuentoCategoriaEditor';
@@ -24,19 +23,24 @@ interface Props {
   onTotalDescuentosChange?: (count: number) => void;
   /** La pestaña está a la vista: recién ahí se calcula la lista de precios. */
   visible?: boolean;
+  clienteActivo?: boolean;
+  onRecursoNoDisponible?: (detalle: ListaClienteNoDisponible) => void | Promise<void>;
   /** Cada cambio de valor abre la sección de región y la trae a la vista. */
   focoRegion?: number;
 }
 
 const plural = (n: number, uno: string, varios: string) => (n === 1 ? `1 ${uno}` : `${n} ${varios}`);
 
-export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabitual, onTotalDescuentosChange, visible = true, focoRegion = 0 }: Props) {
-  const { showError } = useToast();
+export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabitual, onTotalDescuentosChange, visible = true, clienteActivo = true, onRecursoNoDisponible, focoRegion = 0 }: Props) {
   const [resumen, setResumen] = useState<DescuentosClienteResumen | null>(null);
+  const [cargandoResumen, setCargandoResumen] = useState(true);
+  const [errorResumen, setErrorResumen] = useState<string | null>(null);
   const [abiertas, setAbiertas] = useState<Set<Seccion>>(new Set());
   const [focoAnterior, setFocoAnterior] = useState(focoRegion);
   const request = useRef(0);
-  const lista = useListaPreciosCliente({ clienteId, sucursales, activo: visible });
+  const lista = useListaPreciosCliente({ clienteId, sucursales, clienteActivo, activo: visible, onRecursoNoDisponible });
+  const sucursalIdActual = useRef(lista.sucursalId);
+  useEffect(() => { sucursalIdActual.current = lista.sucursalId; }, [lista.sucursalId]);
 
   // Pedido de "Asignar región" desde otra parte de la pantalla.
   if (focoRegion !== focoAnterior) {
@@ -50,6 +54,8 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
   const cargar = useCallback(async () => {
     const version = ++request.current;
     setResumen(null);
+    setErrorResumen(null);
+    setCargandoResumen(true);
     try {
       const data = await clienteDescuentoClient.obtenerDescuentos(clienteId);
       if (version !== request.current) return;
@@ -58,13 +64,15 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
     } catch (err) {
       if (version !== request.current) return;
       setResumen(null);
+      setErrorResumen(err instanceof Error ? err.message : 'No se pudieron cargar los descuentos del cliente.');
       onTotalDescuentosChange?.(0);
-      if (err instanceof CatalogoApiError && err.code === 'RECURSO_NO_DISPONIBLE') {
-        window.dispatchEvent(new CustomEvent('alcance-pdv-revocado'));
+      if (err instanceof CatalogoApiError && (err.code === 'RECURSO_NO_DISPONIBLE' || err.status === 404)) {
+        void Promise.resolve(onRecursoNoDisponible?.({ clienteId, sucursalId: sucursalIdActual.current, generation: nuevaGeneracionNotificacionListaCliente(), origen: 'descuentos' })).catch(() => undefined);
       }
-      showError(err instanceof Error ? err.message : 'No se pudieron cargar los descuentos del cliente.');
+    } finally {
+      if (version === request.current) setCargandoResumen(false);
     }
-  }, [clienteId, showError, onTotalDescuentosChange]);
+  }, [clienteId, onRecursoNoDisponible, onTotalDescuentosChange]);
 
   useEffect(() => {
     if (!clienteId) return;
@@ -73,9 +81,10 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
     return () => { vigente = false; request.current += 1; };
   }, [clienteId, cargar]);
 
+  const recargarLista = lista.recargar;
   const alCambiar = useCallback(async () => {
-    await Promise.all([cargar(), lista.recargar().catch(() => undefined)]);
-  }, [cargar, lista]);
+    await Promise.all([cargar(), recargarLista().catch(() => undefined)]);
+  }, [cargar, recargarLista]);
 
   const alternar = (seccion: Seccion) => setAbiertas(prev => {
     const next = new Set(prev);
@@ -83,8 +92,16 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
     return next;
   });
 
-  if (!resumen) {
+  if (cargandoResumen && !resumen) {
     return <div className={styles.cargando}>Cargando descuentos del cliente…</div>;
+  }
+  if (!resumen) {
+    return <div className={styles.resumenError} role="alert">
+      <p>{errorResumen ?? 'No se pudieron cargar los descuentos del cliente.'}</p>
+      <button type="button" className={styles.bannerBoton} onClick={() => void cargar()} disabled={cargandoResumen}>
+        {cargandoResumen ? 'Reintentando…' : 'Reintentar'}
+      </button>
+    </div>;
   }
 
   const { regiones, categorias, productos } = resumen;
@@ -101,7 +118,7 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
           Los descuentos se aplican uno después del otro: 10% + 5% no es 15%, es 14,5%.
           {habitual > 0 && ` Además, el descuento habitual de ${formatPorcentaje(habitual)} se aplica al final, también sobre el saldo (se cambia en Información del cliente).`}
         </p>
-        {sucursales.length > 1 && (
+        {clienteActivo && sucursales.length > 1 && (
           <div className={styles.sucursalPrecios}>
             <Select id="descuentos-sucursal" label="Ver precios de" value={lista.sucursalId} onChange={(e) => lista.setSucursalId(e.target.value)}>
               {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
@@ -109,6 +126,22 @@ export default function ClienteDescuentos({ clienteId, sucursales, descuentoHabi
           </div>
         )}
       </div>
+      {!clienteActivo && (
+        <div className={styles.avisoPrecios} role="status">
+          El cliente está inactivo. Reactivalo para consultar o exportar su lista de precios. Los descuentos configurados se conservan y pueden administrarse.
+        </div>
+      )}
+      {lista.cargando && clienteActivo && (
+        <div className={styles.avisoPrecios} role="status">Calculando la lista de precios para mostrar simulaciones…</div>
+      )}
+      {lista.error && clienteActivo && !lista.cargando && (
+        <div className={styles.avisoPrecios} role="status">
+          <p>{lista.error} Los descuentos configurados siguen visibles y administrables.</p>
+          <button type="button" className={styles.bannerBoton} onClick={() => void lista.recargar().catch(() => undefined)} disabled={lista.cargando}>
+            {lista.cargando ? 'Reintentando…' : 'Reintentar lista'}
+          </button>
+        </div>
+      )}
 
       <SeccionDescuento
         id="descuento-region" paso={1} icono={<MapPin size={16} />} titulo="Descuento por región"

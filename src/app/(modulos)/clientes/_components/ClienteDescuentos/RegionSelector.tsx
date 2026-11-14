@@ -24,27 +24,27 @@ interface Props {
 
 export default function RegionSelector({ clienteId, sucursales, regionesAsignadas, lista, onChanged }: Props) {
   const { showSuccess, showError } = useToast();
-  const [regionesPorSucursal, setRegionesPorSucursal] = useState<Record<string, Region[]>>({});
-  const [cargando, setCargando] = useState(true);
+  const [resultadoRegiones, setResultadoRegiones] = useState<{ clave: string; estado: 'loading' | 'success' | 'error'; regiones: Record<string, Region[]> }>({ clave: '', estado: 'loading', regiones: {} });
   const [eleccion, setEleccion] = useState<Record<string, string>>({});
   const [guardandoId, setGuardandoId] = useState<string | null>(null);
   const [aQuitar, setAQuitar] = useState<ClienteRegion | null>(null);
+  const sucursalIdsKey = sucursales.map((sucursal) => sucursal.id).sort().join('|');
+  const regionesPorSucursal = resultadoRegiones.clave === sucursalIdsKey && resultadoRegiones.estado === 'success' ? resultadoRegiones.regiones : {};
+  const cargando = resultadoRegiones.clave !== sucursalIdsKey || resultadoRegiones.estado === 'loading';
 
   useEffect(() => {
     let cancelado = false;
-    setCargando(true);
-    setRegionesPorSucursal({});
-    Promise.all(sucursales.map(async s => [s.id, await regionClient.obtenerPorSucursal(s.id, true)] as const))
-      .then(pares => { if (!cancelado) setRegionesPorSucursal(Object.fromEntries(pares)); })
+    const ids = sucursalIdsKey ? sucursalIdsKey.split('|') : [];
+    Promise.all(ids.map(async id => [id, await regionClient.obtenerPorSucursal(id, true)] as const))
+      .then(pares => { if (!cancelado) setResultadoRegiones({ clave: sucursalIdsKey, estado: 'success', regiones: Object.fromEntries(pares) }); })
       .catch(() => {
         if (!cancelado) {
-          setRegionesPorSucursal({});
+          setResultadoRegiones({ clave: sucursalIdsKey, estado: 'error', regiones: {} });
           showError('No se pudieron cargar las regiones de los puntos de venta.');
         }
       })
-      .finally(() => { if (!cancelado) setCargando(false); });
     return () => { cancelado = true; };
-  }, [sucursales, showError]);
+  }, [sucursalIdsKey, showError]);
 
   const asignar = async (sucursalId: string, regionId: string, reemplaza: boolean) => {
     setGuardandoId(sucursalId);

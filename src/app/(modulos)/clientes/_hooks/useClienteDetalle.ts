@@ -7,6 +7,8 @@ interface UseClienteDetalleResult {
   isLoading: boolean;
   error: string | null;
   reload: () => Promise<void>;
+  /** Reconsulta sin desmontar el detalle mientras llega la respuesta. */
+  revalidarSilencioso: () => Promise<{ estado: 'vigente'; cliente: Cliente | null } | { estado: 'obsoleta' }>;
   clear: (message: string) => void;
 }
 
@@ -43,6 +45,22 @@ export function useClienteDetalle(clienteId: string): UseClienteDetalleResult {
     }
   }, [clienteId]);
 
+  const revalidarSilencioso = useCallback(async () => {
+    const version = ++request.current;
+    if (!clienteId) return { estado: 'vigente', cliente: null } as const;
+    try {
+      const data = await clienteClient.obtenerPorId(clienteId);
+      if (version !== request.current) return { estado: 'obsoleta' } as const;
+      setCliente(data);
+      setError(data ? null : 'Cliente no encontrado');
+      setIsLoading(false);
+      return { estado: 'vigente', cliente: data } as const;
+    } catch (err) {
+      if (version !== request.current) return { estado: 'obsoleta' } as const;
+      throw err;
+    }
+  }, [clienteId]);
+
   const clear = useCallback((message: string) => {
     request.current += 1;
     setCliente(null);
@@ -65,6 +83,7 @@ export function useClienteDetalle(clienteId: string): UseClienteDetalleResult {
     isLoading,
     error,
     reload: fetchData,
+    revalidarSilencioso,
     clear,
   };
 }
